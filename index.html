@@ -1774,7 +1774,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-     // ========== MÓDULO DE PRUEBA (BOTONES FLOTANTES VISIBLES) ==========
+// ========== MÓDULO DE PRUEBA (BOTONES EN BARRA INFERIOR) ==========
 // Pegar justo antes de root.render(...)
 
 const TestFloatingButton = () => {
@@ -1782,21 +1782,6 @@ const TestFloatingButton = () => {
     
     return (
         <>
-            <button 
-                onClick={() => setShowModal(true)}
-                className="fixed bottom-20 left-4 z-50 bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-full shadow-xl"
-                title="Entrenamiento Avanzado"
-            >
-                <Icon name="graduation-cap" className="w-6 h-6" />
-            </button>
-            <button 
-                onClick={() => alert('🎧 Modo Audiolibro activado (simulado)')}
-                className="fixed bottom-20 left-20 z-50 bg-amber-600 hover:bg-amber-500 text-white p-3 rounded-full shadow-xl"
-                title="Modo Audiolibro"
-            >
-                <Icon name="headphones" className="w-6 h-6" />
-            </button>
-            
             {showModal && (
                 <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" style={{top: '60px'}}>
                     <div className="bg-gray-800 p-6 rounded-2xl max-w-md w-full">
@@ -1806,18 +1791,97 @@ const TestFloatingButton = () => {
                     </div>
                 </div>
             )}
+            <div style={{ display: 'none' }}> {/* Este div es solo para retornar algo, el render real se hace en el DOM */} </div>
         </>
     );
 };
 
-// Inyectar en el root
+// Función para inyectar los botones en la barra inferior
+const injectButtonsIntoBar = () => {
+    // Buscar la barra inferior (contiene el título de la historia y los controles de reproducción)
+    const bar = document.querySelector('.bg-gray-950.p-3.md\\:p-6.flex.flex-col.sm\\:flex-row');
+    if (!bar) return false;
+    
+    // Evitar duplicados
+    if (document.getElementById('injected-advanced-btn')) return true;
+    
+    // Crear contenedor para los botones
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'flex items-center gap-2 mr-3';
+    btnContainer.id = 'injected-advanced-btn';
+    
+    // Botón morado (Práctica)
+    const btn1 = document.createElement('button');
+    btn1.className = 'bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full shadow-md transition';
+    btn1.innerHTML = '<i data-lucide="graduation-cap" class="w-5 h-5"></i>';
+    btn1.title = 'Entrenamiento Avanzado';
+    btn1.onclick = () => {
+        // Mostrar modal (usaremos un estado global simple)
+        window.dispatchEvent(new Event('toggleAdvancedModal'));
+    };
+    
+    // Botón ámbar (Audiolibro)
+    const btn2 = document.createElement('button');
+    btn2.className = 'bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-full shadow-md transition';
+    btn2.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
+    btn2.title = 'Modo Audiolibro';
+    btn2.onclick = () => {
+        alert('🎧 Modo Audiolibro activado (próximamente funcional)');
+    };
+    
+    btnContainer.appendChild(btn1);
+    btnContainer.appendChild(btn2);
+    
+    // Insertar al principio de la barra (antes del título)
+    const firstChild = bar.firstChild;
+    bar.insertBefore(btnContainer, firstChild);
+    
+    // Refrescar iconos de Lucide
+    if (window.lucide) window.lucide.createIcons();
+    
+    return true;
+};
+
+// Componente wrapper que maneja el modal vía eventos
+const AdvancedModalController = () => {
+    const [showModal, setShowModal] = useState(false);
+    
+    useEffect(() => {
+        const handler = () => setShowModal(true);
+        window.addEventListener('toggleAdvancedModal', handler);
+        return () => window.removeEventListener('toggleAdvancedModal', handler);
+    }, []);
+    
+    if (!showModal) return null;
+    
+    return (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" style={{top: '60px'}}>
+            <div className="bg-gray-800 p-6 rounded-2xl max-w-md w-full">
+                <h2 className="text-xl font-bold text-white mb-4">🚀 Módulos de Práctica</h2>
+                <p className="text-gray-300 mb-4">Aquí aparecerán los entrenadores de Artículos, Plurales, etc.</p>
+                <button onClick={() => setShowModal(false)} className="bg-purple-600 px-4 py-2 rounded-lg w-full">Cerrar</button>
+            </div>
+        </div>
+    );
+};
+
+// Inyectar todo después del renderizado
 setTimeout(() => {
-    if (!document.getElementById('test-modules-container')) {
-        const container = document.createElement('div');
-        container.id = 'test-modules-container';
-        document.getElementById('root').appendChild(container);
-        const testRoot = ReactDOM.createRoot(container);
-        testRoot.render(<TestFloatingButton />);
+    // Intentar inyectar botones
+    const tryInject = () => {
+        if (injectButtonsIntoBar()) return true;
+        // Si no está lista la barra, reintentar
+        setTimeout(tryInject, 1000);
+    };
+    tryInject();
+    
+    // Renderizar el controlador del modal
+    if (!document.getElementById('advanced-modal-root')) {
+        const modalRoot = document.createElement('div');
+        modalRoot.id = 'advanced-modal-root';
+        document.getElementById('root').appendChild(modalRoot);
+        const modalRootRender = ReactDOM.createRoot(modalRoot);
+        modalRootRender.render(<AdvancedModalController />);
     }
 }, 500);
         root.render(
