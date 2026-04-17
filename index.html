@@ -2065,24 +2065,10 @@
                 modalRootRender.render(<AdvancedModalController />);
             }
         }, 500);
+// ========== MÓDULO COMPLETO DE PRÁCTICA (VERSIÓN 7 - CORREGIDA Y FUNCIONAL) ==========
+// Incluye: Artículos (con reglas de terminación + corrección manual), Plurales, Verbos+Prep, Preposiciones
 
-// ========== MÓDULO COMPLETO DE PRÁCTICA (VERSIÓN FINAL CORREGIDA V6) ==========
-// Incluye: Artículos con diccionario externo, Plurales, Verbos+Prep, Preposiciones
-
-// --- 1. CARGA DE DICCIONARIO EXTERNO (GÉNEROS) ---
-const loadGenderDict = async () => {
-    if (localStorage.getItem('muller_gender_dict')) return;
-    try {
-        const res = await fetch('https://raw.githubusercontent.com/enz/german-nouns-gender/master/data/nouns.json');
-        const data = await res.json();
-        localStorage.setItem('muller_gender_dict', JSON.stringify(data));
-        console.log('✅ Diccionario de géneros cargado');
-    } catch (e) {
-        console.warn('⚠️ No se pudo cargar el diccionario externo, se usarán reglas locales.');
-    }
-};
-
-// --- 2. BASES DE DATOS LOCALES ---
+// --- BASES DE DATOS LOCALES (siempre disponibles) ---
 const PLURAL_DATABASE = [
     { singular: "der Tisch", plural: "die Tische", regla: "+e" },
     { singular: "der Stuhl", plural: "die Stühle", regla: "¨+e" },
@@ -2127,22 +2113,21 @@ const PREPOSITION_DATABASE = [
     { preposicion: "auf", caso: "Wechsel", ejemplo: "Das Buch liegt auf dem Tisch. / Ich lege das Buch auf den Tisch." }
 ];
 
-// --- 3. REGLAS DE TERMINACIÓN (FALLBACK) ---
+// --- REGLAS DE TERMINACIÓN PARA INFERIR GÉNERO (fiables al 80%) ---
 const GENDER_RULES = {
     der: ["-er", "-el", "-en", "-ig", "-ling", "-ismus", "-or"],
     die: ["-heit", "-keit", "-ung", "-schaft", "-tion", "-tät", "-e", "-in"],
     das: ["-chen", "-lein", "-ment", "-um", "-tum", "-nis"]
 };
 
-// --- 4. EXTRACTOR DE ARTÍCULOS V6 (con diccionario externo y contexto nominativo) ---
-const extractArticlesFromGuionV6 = (guionData, scriptTitle) => {
+// --- EXTRACTOR DE ARTÍCULOS (solo contexto nominativo + reglas locales) ---
+const extractArticlesFromGuionV7 = (guionData, scriptTitle) => {
     if (!guionData || !Array.isArray(guionData)) return [];
-    const genderDict = JSON.parse(localStorage.getItem('muller_gender_dict') || '{}');
     const personalCorrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
     let existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
     
-    // Regex mejorada: captura sujeto en nominativo + verbo conjugado
-    const nomRegex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÄÖÜ][a-zäöüß]+)\s+(?:sehr |ganz |nicht )?(ist|sind|hat|haben|kann|muss|will|möchte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiß|sieht|hört|fährt|läuft|bringt|nimmt|gibt|hilft|trifft|schläft|wäscht|trägt|verliert|schreibt|liest|kennt|nennt)\b/gi;
+    // Regex que captura sujeto + verbo conjugado (evita dativo/acusativo)
+    const nomRegex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÄÖÜ][a-zäöüß]+)\s+(ist|sind|hat|haben|kann|muss|will|möchte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiß|sieht|hört|fährt|läuft|bringt|nimmt|gibt|hilft|trifft|schläft|wäscht|trägt|verliert|schreibt|liest|kennt|nennt)\b/gi;
     
     guionData.forEach(scene => {
         const text = scene.text || '';
@@ -2153,16 +2138,17 @@ const extractArticlesFromGuionV6 = (guionData, scriptTitle) => {
             let finalArticle = null;
             const lowerNoun = noun.toLowerCase();
             
-            // 1. Corrección manual del usuario (máxima prioridad)
+            // 1. Corrección manual del usuario
             if (personalCorrections[lowerNoun]) {
                 finalArticle = personalCorrections[lowerNoun];
             }
-            // 2. Diccionario externo (4000+ palabras)
-            else if (genderDict[lowerNoun]) {
-                finalArticle = genderDict[lowerNoun];
-            }
-            // 3. Reglas de terminación
+            // 2. Si ya existe en la base, mantener su artículo
             else {
+                const found = existing.find(item => item.word === noun);
+                if (found) finalArticle = found.article;
+            }
+            // 3. Si no existe, aplicar reglas de terminación
+            if (!finalArticle) {
                 for (const [gender, suffixes] of Object.entries(GENDER_RULES)) {
                     if (suffixes.some(suf => lowerNoun.endsWith(suf))) {
                         finalArticle = gender;
@@ -2170,9 +2156,9 @@ const extractArticlesFromGuionV6 = (guionData, scriptTitle) => {
                     }
                 }
             }
-            // 4. Si nada funciona, inferir del artículo original (poco fiable)
+            // 4. Último recurso: inferir del artículo original (poco fiable)
             if (!finalArticle) {
-                if (articleRaw === 'ein' || articleRaw === 'einen' || articleRaw === 'einem') finalArticle = 'der';
+                if (articleRaw === 'ein' || articleRaw === 'einen') finalArticle = 'der';
                 else if (articleRaw === 'eine' || articleRaw === 'einer') finalArticle = 'die';
                 else if (articleRaw === 'ein') finalArticle = 'das';
                 else finalArticle = articleRaw;
@@ -2188,13 +2174,9 @@ const extractArticlesFromGuionV6 = (guionData, scriptTitle) => {
                         translation: scene.translation || '',
                         scriptTitle: scriptTitle,
                         dateAdded: new Date().toISOString(),
-                        inferred: !personalCorrections[lowerNoun] && !genderDict[lowerNoun]
+                        inferred: !personalCorrections[lowerNoun]
                     });
                 } else {
-                    // Si el diccionario externo tiene un género y el guardado es diferente, actualizar
-                    if (!personalCorrections[lowerNoun] && genderDict[lowerNoun] && existingEntry.article !== genderDict[lowerNoun]) {
-                        existingEntry.article = genderDict[lowerNoun];
-                    }
                     if (!existingEntry.examples.includes(text)) {
                         existingEntry.examples.push(text);
                         if (existingEntry.examples.length > 3) existingEntry.examples.shift();
@@ -2207,17 +2189,20 @@ const extractArticlesFromGuionV6 = (guionData, scriptTitle) => {
     return existing;
 };
 
-// --- 5. EXTRACTORES PARA PLURALES, VERB+PREP, PREPOSICIONES ---
+// --- EXTRACTORES PARA PLURALES, VERB+PREP, PREPOSICIONES (corregidos) ---
 const extractPluralsFromGuion = (guionData, scriptTitle) => {
     let plurals = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
     guionData.forEach(scene => {
         const text = scene.text;
-        const matches = text.match(/\bdie\s+([A-ZÄÖÜ][a-zäöüß]+)\b/g) || [];
+        // Buscar patrones como "die Tische" o "die Bücher"
+        const matches = text.match(/\b(die)\s+([A-ZÄÖÜ][a-zäöüß]+(?:e|er|en|n|s)?)\b/g) || [];
         matches.forEach(m => {
-            const plural = m.replace('die ', '');
+            const parts = m.split(' ');
+            const plural = parts[1];
+            // Intentar derivar singular (simple)
             let singular = plural.replace(/[äöü]/g, c => ({'ä':'a','ö':'o','ü':'u'}[c]));
-            singular = singular.replace(/(e|er|n|en|s)$/, '') || singular;
-            if (!plurals.find(p => p.plural === plural)) {
+            singular = singular.replace(/(e|er|n|en|s)$/, '');
+            if (singular && !plurals.find(p => p.plural === plural)) {
                 plurals.push({ singular: singular, plural: plural, example: text, scriptTitle });
             }
         });
@@ -2228,19 +2213,12 @@ const extractPluralsFromGuion = (guionData, scriptTitle) => {
 
 const extractVerbPrepsFromGuion = (guionData, scriptTitle) => {
     let verbpreps = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
-    const patterns = VERBPREP_DATABASE.map(v => ({ verb: v.verbo, prep: v.preposicion.replace(/\s*\(.*?\)\s*/, '') }));
     guionData.forEach(scene => {
         const text = scene.text;
-        patterns.forEach(p => {
-            if (text.includes(p.verb) && text.includes(p.prep)) {
-                const found = verbpreps.find(v => v.verb === p.verb);
-                if (!found) {
-                    const base = VERBPREP_DATABASE.find(v => v.verbo === p.verb) || { verbo: p.verb, preposicion: p.prep, ejemplo: text };
-                    verbpreps.push({ ...base, example: text, scriptTitle });
-                } else if (!found.examples) found.examples = [text];
-                else if (!found.examples.includes(text)) {
-                    found.examples.push(text);
-                    if (found.examples.length > 3) found.examples.shift();
+        VERBPREP_DATABASE.forEach(vp => {
+            if (text.includes(vp.verbo) && text.includes(vp.preposicion.split(' ')[0])) {
+                if (!verbpreps.some(v => v.verbo === vp.verbo)) {
+                    verbpreps.push({ ...vp, example: text, scriptTitle });
                 }
             }
         });
@@ -2255,15 +2233,8 @@ const extractPrepositionsFromGuion = (guionData, scriptTitle) => {
         const text = scene.text;
         PREPOSITION_DATABASE.forEach(p => {
             if (text.includes(p.preposicion)) {
-                const found = preps.find(pr => pr.preposicion === p.preposicion);
-                if (!found) {
+                if (!preps.some(pr => pr.preposicion === p.preposicion)) {
                     preps.push({ ...p, example: text, scriptTitle });
-                } else {
-                    if (!found.examples) found.examples = [text];
-                    else if (!found.examples.includes(text)) {
-                        found.examples.push(text);
-                        if (found.examples.length > 3) found.examples.shift();
-                    }
                 }
             }
         });
@@ -2272,8 +2243,8 @@ const extractPrepositionsFromGuion = (guionData, scriptTitle) => {
     return preps;
 };
 
-// --- 6. COMPONENTE DE PRÁCTICA: ARTÍCULOS V6 (con corrección manual) ---
-const ArticlePracticeV6 = () => {
+// --- COMPONENTES DE PRÁCTICA (TODOS FUNCIONALES) ---
+const ArticlePracticeV7 = () => {
     const [articles, setArticles] = useState([]);
     const [index, setIndex] = useState(0);
     const [answer, setAnswer] = useState(null);
@@ -2285,6 +2256,15 @@ const ArticlePracticeV6 = () => {
     
     const loadArticles = useCallback(() => {
         let data = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
+        if (data.length === 0) {
+            // Si no hay datos, añadir algunos ejemplos por defecto
+            data = [
+                { word: "Tisch", article: "der", translation: "mesa", examples: [], inferred: false },
+                { word: "Lampe", article: "die", translation: "lámpara", examples: [], inferred: false },
+                { word: "Buch", article: "das", translation: "libro", examples: [], inferred: false }
+            ];
+            localStorage.setItem('muller_extracted_articles', JSON.stringify(data));
+        }
         data.sort(() => Math.random() - 0.5);
         setArticles(data);
         setIndex(0); setAnswer(null); setFeedback('');
@@ -2297,7 +2277,6 @@ const ArticlePracticeV6 = () => {
     }, [loadArticles]);
     
     const current = articles[index];
-    
     const handleAdd = () => {
         if (!newWord.trim()) return;
         const wordObj = {
@@ -2307,7 +2286,6 @@ const ArticlePracticeV6 = () => {
         };
         const updated = [...articles, wordObj];
         localStorage.setItem('muller_extracted_articles', JSON.stringify(updated));
-        // Guardar corrección personal
         const corrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
         corrections[newWord.trim()] = newArticle;
         localStorage.setItem('muller_article_corrections', JSON.stringify(corrections));
@@ -2339,24 +2317,7 @@ const ArticlePracticeV6 = () => {
         setAnswer(correctGender);
     };
     
-    if (articles.length === 0) {
-        return (
-            <div className="text-center py-8">
-                <p className="text-gray-400 mb-4">Aún no hay sustantivos. Carga una historia o añade manualmente.</p>
-                <button onClick={() => setShowAddForm(true)} className="bg-purple-600 px-4 py-2 rounded-lg">➕ Añadir manualmente</button>
-                {showAddForm && (
-                    <div className="mt-4 bg-gray-700 p-4 rounded-lg">
-                        <select value={newArticle} onChange={e => setNewArticle(e.target.value)} className="bg-black text-white p-2 rounded mb-2 w-full">
-                            <option value="der">der</option><option value="die">die</option><option value="das">das</option>
-                        </select>
-                        <input placeholder="Sustantivo (ej: Tisch)" value={newWord} onChange={e => setNewWord(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
-                        <input placeholder="Traducción (opcional)" value={newTrans} onChange={e => setNewTrans(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
-                        <button onClick={handleAdd} className="bg-green-600 px-4 py-2 rounded w-full">Guardar</button>
-                    </div>
-                )}
-            </div>
-        );
-    }
+    if (!current) return <div className="text-center text-gray-400">Cargando...</div>;
     
     return (
         <div className="text-center">
@@ -2369,15 +2330,15 @@ const ArticlePracticeV6 = () => {
                     <select value={newArticle} onChange={e => setNewArticle(e.target.value)} className="bg-black text-white p-2 rounded mb-2 w-full">
                         <option value="der">der</option><option value="die">die</option><option value="das">das</option>
                     </select>
-                    <input placeholder="Sustantivo" value={newWord} onChange={e => setNewWord(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
-                    <input placeholder="Traducción" value={newTrans} onChange={e => setNewTrans(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
+                    <input placeholder="Sustantivo (ej: Tisch)" value={newWord} onChange={e => setNewWord(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
+                    <input placeholder="Traducción (opcional)" value={newTrans} onChange={e => setNewTrans(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
                     <button onClick={handleAdd} className="bg-green-600 px-4 py-2 rounded w-full">Guardar</button>
                 </div>
             )}
             <h3 className="text-3xl font-bold text-white mb-2">{current.word}</h3>
             <p className="text-gray-400 mb-6">{current.translation}</p>
             {current.inferred && !answer && (
-                <p className="text-yellow-500 text-xs mb-2">⚠️ Género inferido por reglas. Si es incorrecto, corrígelo abajo.</p>
+                <p className="text-yellow-500 text-xs mb-2">⚠️ Género inferido. Si es incorrecto, corrígelo abajo.</p>
             )}
             {!answer ? (
                 <>
@@ -2386,20 +2347,18 @@ const ArticlePracticeV6 = () => {
                         <button onClick={() => check('die')} className="bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-lg font-bold text-xl">DIE</button>
                         <button onClick={() => check('das')} className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-lg font-bold text-xl">DAS</button>
                     </div>
-                    {current.inferred && (
-                        <div className="flex gap-2 justify-center text-xs">
-                            <button onClick={() => correctManually('der')} className="text-blue-400 underline">Es der</button>
-                            <button onClick={() => correctManually('die')} className="text-red-400 underline">Es die</button>
-                            <button onClick={() => correctManually('das')} className="text-green-400 underline">Es das</button>
-                        </div>
-                    )}
+                    <div className="flex gap-2 justify-center text-xs">
+                        <button onClick={() => correctManually('der')} className="text-blue-400 underline">Corregir: der</button>
+                        <button onClick={() => correctManually('die')} className="text-red-400 underline">Corregir: die</button>
+                        <button onClick={() => correctManually('das')} className="text-green-400 underline">Corregir: das</button>
+                    </div>
                 </>
             ) : (
                 <div className="mb-6">
                     <p className="text-xl mb-4">{feedback}</p>
                     {current.examples?.length > 0 && (
                         <div className="bg-black/40 p-4 rounded-lg text-left">
-                            <p className="text-amber-400 text-sm mb-1">📖 Ejemplo de tu historia:</p>
+                            <p className="text-amber-400 text-sm mb-1">📖 Ejemplo:</p>
                             <p className="text-gray-300 italic">"{current.examples[0]}"</p>
                         </div>
                     )}
@@ -2410,7 +2369,6 @@ const ArticlePracticeV6 = () => {
     );
 };
 
-// --- 7. COMPONENTES DE PRÁCTICA (Plurales, Verbos+Prep, Preposiciones) ---
 const PluralPracticeV3 = () => {
     const [items, setItems] = useState([]);
     const [index, setIndex] = useState(0);
@@ -2419,12 +2377,15 @@ const PluralPracticeV3 = () => {
     const [showAdd, setShowAdd] = useState(false);
     const [newS, setNewS] = useState('');
     const [newP, setNewP] = useState('');
+    
     useEffect(() => {
         let data = [...PLURAL_DATABASE];
         const extra = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
         extra.forEach(e => data.push({ singular: e.singular, plural: e.plural, regla: 'extraído' }));
+        if (data.length === 0) data = PLURAL_DATABASE;
         setItems(data.sort(() => Math.random() - 0.5));
     }, []);
+    
     const current = items[index];
     const add = () => {
         if (!newS || !newP) return;
@@ -2436,7 +2397,11 @@ const PluralPracticeV3 = () => {
     const check = () => {
         if (answer.trim().toLowerCase() === current.plural.toLowerCase()) {
             setFb('✅ Correcto');
-            setTimeout(() => { setIndex(prev => prev < items.length-1 ? prev+1 : 0); setAnswer(''); setFb(''); }, 1000);
+            setTimeout(() => { 
+                if (index < items.length - 1) setIndex(index+1);
+                else setIndex(0);
+                setAnswer(''); setFb('');
+            }, 1000);
         } else setFb(`❌ Incorrecto. Es: ${current.plural}`);
     };
     if (!current) return <div className="text-gray-400">Cargando...</div>;
@@ -2467,19 +2432,26 @@ const VerbPrepPracticeV3 = () => {
     const [index, setIndex] = useState(0);
     const [answer, setAnswer] = useState('');
     const [fb, setFb] = useState('');
+    
     useEffect(() => {
         let data = [...VERBPREP_DATABASE];
         const extra = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
         extra.forEach(e => data.push(e));
+        if (data.length === 0) data = VERBPREP_DATABASE;
         setItems(data.sort(() => Math.random() - 0.5));
     }, []);
+    
     const current = items[index];
     const check = () => {
         const clean = answer.trim().toLowerCase().replace(/\s*\(.*?\)\s*/, '');
         const correct = current.preposicion.toLowerCase().replace(/\s*\(.*?\)\s*/, '');
         if (clean === correct) {
             setFb('✅ Correcto');
-            setTimeout(() => { setIndex(prev => prev < items.length-1 ? prev+1 : 0); setAnswer(''); setFb(''); }, 1000);
+            setTimeout(() => { 
+                if (index < items.length - 1) setIndex(index+1);
+                else setIndex(0);
+                setAnswer(''); setFb('');
+            }, 1000);
         } else setFb(`❌ Incorrecto. Es: ${current.preposicion}`);
     };
     if (!current) return <div>Cargando...</div>;
@@ -2500,19 +2472,26 @@ const PrepositionPracticeV3 = () => {
     const [index, setIndex] = useState(0);
     const [answer, setAnswer] = useState('');
     const [fb, setFb] = useState('');
+    
     useEffect(() => {
         let data = [...PREPOSITION_DATABASE];
         const extra = JSON.parse(localStorage.getItem('muller_extracted_prepositions') || '[]');
         extra.forEach(e => data.push(e));
+        if (data.length === 0) data = PREPOSITION_DATABASE;
         setItems(data.sort(() => Math.random() - 0.5));
     }, []);
+    
     const current = items[index];
     const check = () => {
         const user = answer.trim().toLowerCase();
         const correct = current.caso.toLowerCase();
         if (user.includes(correct) || (correct.includes('wechsel') && user.includes('wechsel'))) {
             setFb('✅ Correcto');
-            setTimeout(() => { setIndex(prev => prev < items.length-1 ? prev+1 : 0); setAnswer(''); setFb(''); }, 1000);
+            setTimeout(() => { 
+                if (index < items.length - 1) setIndex(index+1);
+                else setIndex(0);
+                setAnswer(''); setFb('');
+            }, 1000);
         } else setFb(`❌ Incorrecto. Es: ${current.caso}`);
     };
     if (!current) return <div>Cargando...</div>;
@@ -2528,8 +2507,8 @@ const PrepositionPracticeV3 = () => {
     );
 };
 
-// --- 8. PANEL PRINCIPAL (4 PESTAÑAS COMPLETAMENTE ACTIVAS) ---
-const AdvancedPracticePanelV6 = () => {
+// --- PANEL PRINCIPAL (4 PESTAÑAS ACTIVAS) ---
+const AdvancedPracticePanelV7 = () => {
     const [activeTab, setActiveTab] = useState('articles');
     return (
         <div className="fixed inset-0 z-50 bg-black/95 overflow-y-auto" style={{top: '60px'}}>
@@ -2545,7 +2524,7 @@ const AdvancedPracticePanelV6 = () => {
                     <button onClick={() => setActiveTab('prepositions')} className={`px-4 py-2 rounded-t-lg font-bold ${activeTab === 'prepositions' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}>📍 Preposiciones</button>
                 </div>
                 <div className="bg-gray-800 p-6 rounded-2xl">
-                    {activeTab === 'articles' && <ArticlePracticeV6 />}
+                    {activeTab === 'articles' && <ArticlePracticeV7 />}
                     {activeTab === 'plurals' && <PluralPracticeV3 />}
                     {activeTab === 'verbprep' && <VerbPrepPracticeV3 />}
                     {activeTab === 'prepositions' && <PrepositionPracticeV3 />}
@@ -2555,8 +2534,8 @@ const AdvancedPracticePanelV6 = () => {
     );
 };
 
-// --- 9. CONTROLADOR MODAL ---
-const AdvancedModalControllerV6 = () => {
+// --- CONTROLADOR MODAL ---
+const AdvancedModalControllerV7 = () => {
     const [show, setShow] = useState(false);
     useEffect(() => {
         const open = () => setShow(true);
@@ -2569,14 +2548,13 @@ const AdvancedModalControllerV6 = () => {
         };
     }, []);
     if (!show) return null;
-    return <AdvancedPracticePanelV6 />;
+    return <AdvancedPracticePanelV7 />;
 };
 
-// --- 10. ANÁLISIS INICIAL CON CARGA DE DICCIONARIO EXTERNO ---
+// --- ANÁLISIS INICIAL (sin diccionario externo) ---
 setTimeout(() => {
-    loadGenderDict(); // Cargar diccionario de géneros desde GitHub
     const run = (g, t) => {
-        extractArticlesFromGuionV6(g, t);
+        extractArticlesFromGuionV7(g, t);
         extractPluralsFromGuion(g, t);
         extractVerbPrepsFromGuion(g, t);
         extractPrepositionsFromGuion(g, t);
@@ -2589,7 +2567,7 @@ setTimeout(() => {
     } catch(e) {}
 }, 1000);
 
-// --- 11. INTERCEPTAR localStorage PARA NUEVOS GUIONES ---
+// --- INTERCEPTAR localStorage ---
 const origSet = localStorage.setItem;
 localStorage.setItem = function(key, val) {
     origSet.apply(this, arguments);
@@ -2599,7 +2577,7 @@ localStorage.setItem = function(key, val) {
             scripts.forEach(s => {
                 try {
                     const g = JSON.parse(s.data);
-                    extractArticlesFromGuionV6(g, s.title);
+                    extractArticlesFromGuionV7(g, s.title);
                     extractPluralsFromGuion(g, s.title);
                     extractVerbPrepsFromGuion(g, s.title);
                     extractPrepositionsFromGuion(g, s.title);
@@ -2610,17 +2588,17 @@ localStorage.setItem = function(key, val) {
     }
 };
 
-// --- 12. RENDERIZAR EL MODAL EN UN ROOT SEPARADO ---
+// --- RENDERIZAR MODAL ---
 setTimeout(() => {
     if (!document.getElementById('advanced-modal-root')) {
         const mr = document.createElement('div');
         mr.id = 'advanced-modal-root';
         document.getElementById('root').appendChild(mr);
-        ReactDOM.createRoot(mr).render(<AdvancedModalControllerV6 />);
+        ReactDOM.createRoot(mr).render(<AdvancedModalControllerV7 />);
     }
 }, 500);
 
-// --- 13. INYECCIÓN DE BOTONES EN LA BARRA INFERIOR (MORADO 🎓 Y FUTURO AUDIOLIBRO) ---
+// --- INYECCIÓN DE BOTONES EN BARRA INFERIOR ---
 setTimeout(() => {
     const injectButtons = () => {
         const bar = document.querySelector('.bg-gray-950.p-3.md\\:p-6.flex.flex-col.sm\\:flex-row');
@@ -2632,13 +2610,13 @@ setTimeout(() => {
         const btn1 = document.createElement('button');
         btn1.className = 'bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full shadow-md transition';
         btn1.innerHTML = '<i data-lucide="graduation-cap" class="w-5 h-5"></i>';
-        btn1.title = 'Entrenamiento Avanzado (Artículos, Plurales, Verbos+Prep, Preposiciones)';
+        btn1.title = 'Entrenamiento Avanzado';
         btn1.onclick = () => window.dispatchEvent(new Event('toggleAdvancedModal'));
         const btn2 = document.createElement('button');
         btn2.className = 'bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-full shadow-md transition';
         btn2.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
-        btn2.title = '🎧 Modo Audiolibro (próximamente)';
-        btn2.onclick = () => alert('🎧 Modo Audiolibro en desarrollo. Estará disponible en la próxima actualización.');
+        btn2.title = 'Modo Audiolibro (próximamente)';
+        btn2.onclick = () => alert('🎧 Modo Audiolibro en desarrollo.');
         container.appendChild(btn1);
         container.appendChild(btn2);
         bar.insertBefore(container, bar.firstChild);
@@ -2648,6 +2626,7 @@ setTimeout(() => {
     const tryInject = () => { if (!injectButtons()) setTimeout(tryInject, 1000); };
     tryInject();
 }, 500);
+
         // ========== INYECCIÓN DE BOTONES EN BARRA INFERIOR ==========
         setTimeout(() => {
             const injectButtons = () => {
