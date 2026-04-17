@@ -2065,451 +2065,232 @@
                 modalRootRender.render(<AdvancedModalController />);
             }
         }, 500);
-// ========== MÓDULO COMPLETO DE PRÁCTICA (VERSIÓN 7 - CORREGIDA Y FUNCIONAL) ==========
-// Incluye: Artículos (con reglas de terminación + corrección manual), Plurales, Verbos+Prep, Preposiciones
+// ========== MÓDULO DE PRÁCTICA AVANZADA - VERSIÓN SIMPLE Y FUNCIONAL ==========
+// Las 4 pestañas funcionan inmediatamente, sin dependencias externas
 
-// --- BASES DE DATOS LOCALES (siempre disponibles) ---
-const PLURAL_DATABASE = [
+// --- DATOS DE RESPALDO (si no hay extraídos) ---
+const DEFAULT_PLURALS = [
     { singular: "der Tisch", plural: "die Tische", regla: "+e" },
-    { singular: "der Stuhl", plural: "die Stühle", regla: "¨+e" },
-    { singular: "das Kind", plural: "die Kinder", regla: "+er" },
-    { singular: "das Buch", plural: "die Bücher", regla: "¨+er" },
     { singular: "die Lampe", plural: "die Lampen", regla: "+n" },
-    { singular: "die Uhr", plural: "die Uhren", regla: "+en" },
-    { singular: "der Junge", plural: "die Jungen", regla: "+n" },
-    { singular: "das Auto", plural: "die Autos", regla: "+s" },
-    { singular: "der Apfel", plural: "die Äpfel", regla: "¨" },
-    { singular: "die Mutter", plural: "die Mütter", regla: "¨" }
+    { singular: "das Buch", plural: "die Bücher", regla: "¨+er" }
 ];
 
-const VERBPREP_DATABASE = [
-    { verbo: "sich freuen", preposicion: "auf (+Akk)", ejemplo: "Ich freue mich auf das Wochenende." },
-    { verbo: "warten", preposicion: "auf (+Akk)", ejemplo: "Wir warten auf den Bus." },
-    { verbo: "sich interessieren", preposicion: "für (+Akk)", ejemplo: "Er interessiert sich für Kunst." },
-    { verbo: "denken", preposicion: "an (+Akk)", ejemplo: "Ich denke oft an dich." },
-    { verbo: "sich erinnern", preposicion: "an (+Akk)", ejemplo: "Erinnerst du dich an den Urlaub?" },
-    { verbo: "träumen", preposicion: "von (+Dat)", ejemplo: "Sie träumt von einem Haus." },
-    { verbo: "sprechen", preposicion: "über (+Akk)", ejemplo: "Wir sprechen über Politik." },
-    { verbo: "sich kümmern", preposicion: "um (+Akk)", ejemplo: "Kümmerst du dich um die Kinder?" },
-    { verbo: "teilnehmen", preposicion: "an (+Dat)", ejemplo: "Ich nehme an einem Kurs teil." },
-    { verbo: "sich beschweren", preposicion: "über (+Akk)", ejemplo: "Er beschwert sich über den Lärm." }
+const DEFAULT_VERBPREP = [
+    { verbo: "warten", preposicion: "auf", ejemplo: "Ich warte auf den Bus." },
+    { verbo: "sich interessieren", preposicion: "für", ejemplo: "Ich interessiere mich für Kunst." },
+    { verbo: "denken", preposicion: "an", ejemplo: "Ich denke an dich." }
 ];
 
-const PREPOSITION_DATABASE = [
-    { preposicion: "aus", caso: "Dativo", ejemplo: "Ich komme aus Spanien." },
-    { preposicion: "bei", caso: "Dativo", ejemplo: "Ich wohne bei meiner Tante." },
-    { preposicion: "mit", caso: "Dativo", ejemplo: "Fährst du mit dem Auto?" },
-    { preposicion: "nach", caso: "Dativo", ejemplo: "Nach der Arbeit gehe ich ins Kino." },
-    { preposicion: "seit", caso: "Dativo", ejemplo: "Ich lerne Deutsch seit einem Jahr." },
-    { preposicion: "von", caso: "Dativo", ejemplo: "Das Geschenk ist von meinem Bruder." },
-    { preposicion: "zu", caso: "Dativo", ejemplo: "Gehst du zum Arzt?" },
-    { preposicion: "durch", caso: "Acusativo", ejemplo: "Wir gehen durch den Park." },
-    { preposicion: "für", caso: "Acusativo", ejemplo: "Das ist für dich." },
-    { preposicion: "gegen", caso: "Acusativo", ejemplo: "Er ist gegen den Plan." },
-    { preposicion: "ohne", caso: "Acusativo", ejemplo: "Ohne dich kann ich nicht leben." },
-    { preposicion: "um", caso: "Acusativo", ejemplo: "Der Garten ist um das Haus." },
-    { preposicion: "in", caso: "Wechsel", ejemplo: "Ich bin im Kino. / Ich gehe ins Kino." },
-    { preposicion: "an", caso: "Wechsel", ejemplo: "Das Bild hängt an der Wand. / Ich hänge das Bild an die Wand." },
-    { preposicion: "auf", caso: "Wechsel", ejemplo: "Das Buch liegt auf dem Tisch. / Ich lege das Buch auf den Tisch." }
+const DEFAULT_PREPOSITIONS = [
+    { preposicion: "aus", caso: "Dativ", ejemplo: "Ich komme aus Spanien." },
+    { preposicion: "für", caso: "Akkusativ", ejemplo: "Das Geschenk ist für dich." },
+    { preposicion: "in", caso: "Wechsel", ejemplo: "Ich bin in der Stadt (Dativ) / Ich gehe in die Stadt (Akkusativ)." }
 ];
 
-// --- REGLAS DE TERMINACIÓN PARA INFERIR GÉNERO (fiables al 80%) ---
-const GENDER_RULES = {
-    der: ["-er", "-el", "-en", "-ig", "-ling", "-ismus", "-or"],
-    die: ["-heit", "-keit", "-ung", "-schaft", "-tion", "-tät", "-e", "-in"],
-    das: ["-chen", "-lein", "-ment", "-um", "-tum", "-nis"]
-};
-
-// --- EXTRACTOR DE ARTÍCULOS (solo contexto nominativo + reglas locales) ---
-const extractArticlesFromGuionV7 = (guionData, scriptTitle) => {
-    if (!guionData || !Array.isArray(guionData)) return [];
-    const personalCorrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
-    let existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
+// --- COMPONENTE DE PLURALES ---
+function PluralPractice() {
+    const [items, setItems] = React.useState([]);
+    const [index, setIndex] = React.useState(0);
+    const [answer, setAnswer] = React.useState('');
+    const [feedback, setFeedback] = React.useState('');
     
-    // Regex que captura sujeto + verbo conjugado (evita dativo/acusativo)
-    const nomRegex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÄÖÜ][a-zäöüß]+)\s+(ist|sind|hat|haben|kann|muss|will|möchte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiß|sieht|hört|fährt|läuft|bringt|nimmt|gibt|hilft|trifft|schläft|wäscht|trägt|verliert|schreibt|liest|kennt|nennt)\b/gi;
-    
-    guionData.forEach(scene => {
-        const text = scene.text || '';
-        let match;
-        while ((match = nomRegex.exec(text)) !== null) {
-            const articleRaw = match[1].toLowerCase();
-            const noun = match[2];
-            let finalArticle = null;
-            const lowerNoun = noun.toLowerCase();
-            
-            // 1. Corrección manual del usuario
-            if (personalCorrections[lowerNoun]) {
-                finalArticle = personalCorrections[lowerNoun];
-            }
-            // 2. Si ya existe en la base, mantener su artículo
-            else {
-                const found = existing.find(item => item.word === noun);
-                if (found) finalArticle = found.article;
-            }
-            // 3. Si no existe, aplicar reglas de terminación
-            if (!finalArticle) {
-                for (const [gender, suffixes] of Object.entries(GENDER_RULES)) {
-                    if (suffixes.some(suf => lowerNoun.endsWith(suf))) {
-                        finalArticle = gender;
-                        break;
-                    }
-                }
-            }
-            // 4. Último recurso: inferir del artículo original (poco fiable)
-            if (!finalArticle) {
-                if (articleRaw === 'ein' || articleRaw === 'einen') finalArticle = 'der';
-                else if (articleRaw === 'eine' || articleRaw === 'einer') finalArticle = 'die';
-                else if (articleRaw === 'ein') finalArticle = 'das';
-                else finalArticle = articleRaw;
-            }
-            
-            if (finalArticle && noun.length > 1) {
-                const existingEntry = existing.find(item => item.word === noun);
-                if (!existingEntry) {
-                    existing.push({
-                        word: noun,
-                        article: finalArticle,
-                        examples: [text],
-                        translation: scene.translation || '',
-                        scriptTitle: scriptTitle,
-                        dateAdded: new Date().toISOString(),
-                        inferred: !personalCorrections[lowerNoun]
-                    });
-                } else {
-                    if (!existingEntry.examples.includes(text)) {
-                        existingEntry.examples.push(text);
-                        if (existingEntry.examples.length > 3) existingEntry.examples.shift();
-                    }
-                }
-            }
-        }
-    });
-    localStorage.setItem('muller_extracted_articles', JSON.stringify(existing));
-    return existing;
-};
-
-// --- EXTRACTORES PARA PLURALES, VERB+PREP, PREPOSICIONES (corregidos) ---
-const extractPluralsFromGuion = (guionData, scriptTitle) => {
-    let plurals = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
-    guionData.forEach(scene => {
-        const text = scene.text;
-        // Buscar patrones como "die Tische" o "die Bücher"
-        const matches = text.match(/\b(die)\s+([A-ZÄÖÜ][a-zäöüß]+(?:e|er|en|n|s)?)\b/g) || [];
-        matches.forEach(m => {
-            const parts = m.split(' ');
-            const plural = parts[1];
-            // Intentar derivar singular (simple)
-            let singular = plural.replace(/[äöü]/g, c => ({'ä':'a','ö':'o','ü':'u'}[c]));
-            singular = singular.replace(/(e|er|n|en|s)$/, '');
-            if (singular && !plurals.find(p => p.plural === plural)) {
-                plurals.push({ singular: singular, plural: plural, example: text, scriptTitle });
-            }
-        });
-    });
-    localStorage.setItem('muller_extracted_plurals', JSON.stringify(plurals));
-    return plurals;
-};
-
-const extractVerbPrepsFromGuion = (guionData, scriptTitle) => {
-    let verbpreps = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
-    guionData.forEach(scene => {
-        const text = scene.text;
-        VERBPREP_DATABASE.forEach(vp => {
-            if (text.includes(vp.verbo) && text.includes(vp.preposicion.split(' ')[0])) {
-                if (!verbpreps.some(v => v.verbo === vp.verbo)) {
-                    verbpreps.push({ ...vp, example: text, scriptTitle });
-                }
-            }
-        });
-    });
-    localStorage.setItem('muller_extracted_verbprep', JSON.stringify(verbpreps));
-    return verbpreps;
-};
-
-const extractPrepositionsFromGuion = (guionData, scriptTitle) => {
-    let preps = JSON.parse(localStorage.getItem('muller_extracted_prepositions') || '[]');
-    guionData.forEach(scene => {
-        const text = scene.text;
-        PREPOSITION_DATABASE.forEach(p => {
-            if (text.includes(p.preposicion)) {
-                if (!preps.some(pr => pr.preposicion === p.preposicion)) {
-                    preps.push({ ...p, example: text, scriptTitle });
-                }
-            }
-        });
-    });
-    localStorage.setItem('muller_extracted_prepositions', JSON.stringify(preps));
-    return preps;
-};
-
-// --- COMPONENTES DE PRÁCTICA (TODOS FUNCIONALES) ---
-const ArticlePracticeV7 = () => {
-    const [articles, setArticles] = useState([]);
-    const [index, setIndex] = useState(0);
-    const [answer, setAnswer] = useState(null);
-    const [feedback, setFeedback] = useState('');
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [newWord, setNewWord] = useState('');
-    const [newTrans, setNewTrans] = useState('');
-    const [newArticle, setNewArticle] = useState('der');
-    
-    const loadArticles = useCallback(() => {
-        let data = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
-        if (data.length === 0) {
-            // Si no hay datos, añadir algunos ejemplos por defecto
-            data = [
-                { word: "Tisch", article: "der", translation: "mesa", examples: [], inferred: false },
-                { word: "Lampe", article: "die", translation: "lámpara", examples: [], inferred: false },
-                { word: "Buch", article: "das", translation: "libro", examples: [], inferred: false }
-            ];
-            localStorage.setItem('muller_extracted_articles', JSON.stringify(data));
-        }
-        data.sort(() => Math.random() - 0.5);
-        setArticles(data);
-        setIndex(0); setAnswer(null); setFeedback('');
+    React.useEffect(() => {
+        let data = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
+        if (data.length === 0) data = DEFAULT_PLURALS;
+        setItems(data);
     }, []);
     
-    useEffect(() => {
-        loadArticles();
-        window.addEventListener('extractedDataUpdated', loadArticles);
-        return () => window.removeEventListener('extractedDataUpdated', loadArticles);
-    }, [loadArticles]);
-    
-    const current = articles[index];
-    const handleAdd = () => {
-        if (!newWord.trim()) return;
-        const wordObj = {
-            word: newWord.trim(), article: newArticle,
-            examples: [], translation: newTrans.trim() || '(sin traducción)',
-            scriptTitle: 'Manual', dateAdded: new Date().toISOString(), inferred: false
-        };
-        const updated = [...articles, wordObj];
-        localStorage.setItem('muller_extracted_articles', JSON.stringify(updated));
-        const corrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
-        corrections[newWord.trim()] = newArticle;
-        localStorage.setItem('muller_article_corrections', JSON.stringify(corrections));
-        loadArticles();
-        setShowAddForm(false); setNewWord(''); setNewTrans('');
-    };
-    
-    const check = (sel) => {
-        if (!current) return;
-        const correct = current.article === sel;
-        setFeedback(correct ? `✅ ¡Correcto! ${current.article} ${current.word}` : `❌ Incorrecto. Es: ${current.article} ${current.word}`);
-        setAnswer(sel);
-    };
-    
-    const next = () => {
-        if (index < articles.length - 1) { setIndex(index+1); setAnswer(null); setFeedback(''); }
-        else setFeedback('🎉 ¡Has completado todas las tarjetas!');
-    };
-    
-    const correctManually = (correctGender) => {
-        if (!current) return;
-        const updated = articles.map((a, i) => i === index ? { ...a, article: correctGender } : a);
-        setArticles(updated);
-        localStorage.setItem('muller_extracted_articles', JSON.stringify(updated));
-        const corrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
-        corrections[current.word] = correctGender;
-        localStorage.setItem('muller_article_corrections', JSON.stringify(corrections));
-        setFeedback(`✅ Corregido manualmente: ${correctGender} ${current.word}`);
-        setAnswer(correctGender);
-    };
-    
-    if (!current) return <div className="text-center text-gray-400">Cargando...</div>;
-    
-    return (
-        <div className="text-center">
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-400">Tarjeta {index+1} de {articles.length}</span>
-                <button onClick={() => setShowAddForm(!showAddForm)} className="text-sm bg-gray-700 px-3 py-1 rounded">{showAddForm ? 'Cancelar' : '➕ Añadir'}</button>
-            </div>
-            {showAddForm && (
-                <div className="mb-4 bg-gray-700 p-4 rounded-lg">
-                    <select value={newArticle} onChange={e => setNewArticle(e.target.value)} className="bg-black text-white p-2 rounded mb-2 w-full">
-                        <option value="der">der</option><option value="die">die</option><option value="das">das</option>
-                    </select>
-                    <input placeholder="Sustantivo (ej: Tisch)" value={newWord} onChange={e => setNewWord(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
-                    <input placeholder="Traducción (opcional)" value={newTrans} onChange={e => setNewTrans(e.target.value)} className="w-full bg-black p-2 rounded mb-2 text-white" />
-                    <button onClick={handleAdd} className="bg-green-600 px-4 py-2 rounded w-full">Guardar</button>
-                </div>
-            )}
-            <h3 className="text-3xl font-bold text-white mb-2">{current.word}</h3>
-            <p className="text-gray-400 mb-6">{current.translation}</p>
-            {current.inferred && !answer && (
-                <p className="text-yellow-500 text-xs mb-2">⚠️ Género inferido. Si es incorrecto, corrígelo abajo.</p>
-            )}
-            {!answer ? (
-                <>
-                    <div className="flex gap-4 justify-center mb-4">
-                        <button onClick={() => check('der')} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold text-xl">DER</button>
-                        <button onClick={() => check('die')} className="bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-lg font-bold text-xl">DIE</button>
-                        <button onClick={() => check('das')} className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-lg font-bold text-xl">DAS</button>
-                    </div>
-                    <div className="flex gap-2 justify-center text-xs">
-                        <button onClick={() => correctManually('der')} className="text-blue-400 underline">Corregir: der</button>
-                        <button onClick={() => correctManually('die')} className="text-red-400 underline">Corregir: die</button>
-                        <button onClick={() => correctManually('das')} className="text-green-400 underline">Corregir: das</button>
-                    </div>
-                </>
-            ) : (
-                <div className="mb-6">
-                    <p className="text-xl mb-4">{feedback}</p>
-                    {current.examples?.length > 0 && (
-                        <div className="bg-black/40 p-4 rounded-lg text-left">
-                            <p className="text-amber-400 text-sm mb-1">📖 Ejemplo:</p>
-                            <p className="text-gray-300 italic">"{current.examples[0]}"</p>
-                        </div>
-                    )}
-                    <button onClick={next} className="mt-4 bg-purple-600 px-6 py-2 rounded-lg font-bold">Siguiente →</button>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const PluralPracticeV3 = () => {
-    const [items, setItems] = useState([]);
-    const [index, setIndex] = useState(0);
-    const [answer, setAnswer] = useState('');
-    const [fb, setFb] = useState('');
-    const [showAdd, setShowAdd] = useState(false);
-    const [newS, setNewS] = useState('');
-    const [newP, setNewP] = useState('');
-    
-    useEffect(() => {
-        let data = [...PLURAL_DATABASE];
-        const extra = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
-        extra.forEach(e => data.push({ singular: e.singular, plural: e.plural, regla: 'extraído' }));
-        if (data.length === 0) data = PLURAL_DATABASE;
-        setItems(data.sort(() => Math.random() - 0.5));
-    }, []);
-    
+    if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
-    const add = () => {
-        if (!newS || !newP) return;
-        const updated = [...items, { singular: newS, plural: newP, regla: 'manual' }];
-        setItems(updated);
-        localStorage.setItem('muller_extracted_plurals', JSON.stringify(updated.filter(i => i.regla !== 'extraído')));
-        setShowAdd(false); setNewS(''); setNewP('');
-    };
+    
     const check = () => {
         if (answer.trim().toLowerCase() === current.plural.toLowerCase()) {
-            setFb('✅ Correcto');
-            setTimeout(() => { 
-                if (index < items.length - 1) setIndex(index+1);
-                else setIndex(0);
-                setAnswer(''); setFb('');
+            setFeedback('✅ Correcto');
+            setTimeout(() => {
+                setIndex((prev) => (prev + 1) % items.length);
+                setAnswer('');
+                setFeedback('');
             }, 1000);
-        } else setFb(`❌ Incorrecto. Es: ${current.plural}`);
+        } else {
+            setFeedback(`❌ Incorrecto. Es: ${current.plural}`);
+        }
     };
-    if (!current) return <div className="text-gray-400">Cargando...</div>;
+    
     return (
         <div className="text-center">
-            <div className="flex justify-between mb-4">
-                <span>Tarjeta {index+1} de {items.length}</span>
-                <button onClick={() => setShowAdd(!showAdd)} className="text-sm bg-gray-700 px-3 py-1 rounded">➕ Añadir</button>
-            </div>
-            {showAdd && (
-                <div className="mb-4 bg-gray-700 p-4 rounded">
-                    <input placeholder="Singular (der Tisch)" value={newS} onChange={e => setNewS(e.target.value)} className="w-full bg-black p-2 rounded mb-2" />
-                    <input placeholder="Plural (die Tische)" value={newP} onChange={e => setNewP(e.target.value)} className="w-full bg-black p-2 rounded mb-2" />
-                    <button onClick={add} className="bg-green-600 px-4 py-2 rounded w-full">Guardar</button>
-                </div>
-            )}
-            <h3 className="text-3xl font-bold text-white my-4">{current.singular}</h3>
-            <p className="text-amber-300 text-sm mb-2">Regla: {current.regla}</p>
-            <input placeholder="die ..." value={answer} onChange={e => setAnswer(e.target.value)} className="bg-black text-white p-2 rounded w-full max-w-md mb-4" />
+            <h3 className="text-2xl font-bold text-white mb-4">{current.singular}</h3>
+            <p className="text-amber-400 text-sm mb-2">Regla: {current.regla || '?'}</p>
+            <input 
+                type="text" 
+                placeholder="die ..." 
+                value={answer} 
+                onChange={(e) => setAnswer(e.target.value)}
+                className="bg-black text-white p-2 rounded w-full max-w-md mx-auto mb-4"
+            />
             <button onClick={check} className="bg-green-600 px-6 py-2 rounded-lg font-bold">Comprobar</button>
-            {fb && <p className="mt-4 text-xl">{fb}</p>}
+            {feedback && <p className="mt-4 text-xl">{feedback}</p>}
+            <p className="text-gray-500 text-sm mt-4">Tarjeta {index+1} de {items.length}</p>
         </div>
     );
-};
+}
 
-const VerbPrepPracticeV3 = () => {
-    const [items, setItems] = useState([]);
-    const [index, setIndex] = useState(0);
-    const [answer, setAnswer] = useState('');
-    const [fb, setFb] = useState('');
+// --- COMPONENTE DE VERBOS+PREPOSICIÓN ---
+function VerbPrepPractice() {
+    const [items, setItems] = React.useState([]);
+    const [index, setIndex] = React.useState(0);
+    const [answer, setAnswer] = React.useState('');
+    const [feedback, setFeedback] = React.useState('');
     
-    useEffect(() => {
-        let data = [...VERBPREP_DATABASE];
-        const extra = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
-        extra.forEach(e => data.push(e));
-        if (data.length === 0) data = VERBPREP_DATABASE;
-        setItems(data.sort(() => Math.random() - 0.5));
+    React.useEffect(() => {
+        let data = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
+        if (data.length === 0) data = DEFAULT_VERBPREP;
+        setItems(data);
     }, []);
     
+    if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
+    
     const check = () => {
-        const clean = answer.trim().toLowerCase().replace(/\s*\(.*?\)\s*/, '');
-        const correct = current.preposicion.toLowerCase().replace(/\s*\(.*?\)\s*/, '');
-        if (clean === correct) {
-            setFb('✅ Correcto');
-            setTimeout(() => { 
-                if (index < items.length - 1) setIndex(index+1);
-                else setIndex(0);
-                setAnswer(''); setFb('');
+        if (answer.trim().toLowerCase() === current.preposicion.toLowerCase()) {
+            setFeedback('✅ Correcto');
+            setTimeout(() => {
+                setIndex((prev) => (prev + 1) % items.length);
+                setAnswer('');
+                setFeedback('');
             }, 1000);
-        } else setFb(`❌ Incorrecto. Es: ${current.preposicion}`);
+        } else {
+            setFeedback(`❌ Incorrecto. Es: ${current.preposicion}`);
+        }
     };
-    if (!current) return <div>Cargando...</div>;
+    
     return (
         <div className="text-center">
-            <span className="text-gray-400">Tarjeta {index+1} de {items.length}</span>
-            <h3 className="text-3xl font-bold text-white my-4">{current.verbo}</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">{current.verbo}</h3>
             <p className="text-gray-300 italic mb-4">"{current.ejemplo}"</p>
-            <input placeholder="auf, für, an..." value={answer} onChange={e => setAnswer(e.target.value)} className="bg-black text-white p-2 rounded w-full max-w-md mb-4" />
+            <input 
+                type="text" 
+                placeholder="Preposición (auf, für, an...)" 
+                value={answer} 
+                onChange={(e) => setAnswer(e.target.value)}
+                className="bg-black text-white p-2 rounded w-full max-w-md mx-auto mb-4"
+            />
             <button onClick={check} className="bg-amber-600 px-6 py-2 rounded-lg font-bold">Comprobar</button>
-            {fb && <p className="mt-4 text-xl">{fb}</p>}
+            {feedback && <p className="mt-4 text-xl">{feedback}</p>}
+            <p className="text-gray-500 text-sm mt-4">Tarjeta {index+1} de {items.length}</p>
         </div>
     );
-};
+}
 
-const PrepositionPracticeV3 = () => {
-    const [items, setItems] = useState([]);
-    const [index, setIndex] = useState(0);
-    const [answer, setAnswer] = useState('');
-    const [fb, setFb] = useState('');
+// --- COMPONENTE DE PREPOSICIONES ---
+function PrepositionPractice() {
+    const [items, setItems] = React.useState([]);
+    const [index, setIndex] = React.useState(0);
+    const [answer, setAnswer] = React.useState('');
+    const [feedback, setFeedback] = React.useState('');
     
-    useEffect(() => {
-        let data = [...PREPOSITION_DATABASE];
-        const extra = JSON.parse(localStorage.getItem('muller_extracted_prepositions') || '[]');
-        extra.forEach(e => data.push(e));
-        if (data.length === 0) data = PREPOSITION_DATABASE;
-        setItems(data.sort(() => Math.random() - 0.5));
+    React.useEffect(() => {
+        let data = JSON.parse(localStorage.getItem('muller_extracted_prepositions') || '[]');
+        if (data.length === 0) data = DEFAULT_PREPOSITIONS;
+        setItems(data);
     }, []);
     
+    if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
+    
     const check = () => {
         const user = answer.trim().toLowerCase();
         const correct = current.caso.toLowerCase();
-        if (user.includes(correct) || (correct.includes('wechsel') && user.includes('wechsel'))) {
-            setFb('✅ Correcto');
-            setTimeout(() => { 
-                if (index < items.length - 1) setIndex(index+1);
-                else setIndex(0);
-                setAnswer(''); setFb('');
+        if (user === correct || (correct === 'wechsel' && user === 'wechsel')) {
+            setFeedback('✅ Correcto');
+            setTimeout(() => {
+                setIndex((prev) => (prev + 1) % items.length);
+                setAnswer('');
+                setFeedback('');
             }, 1000);
-        } else setFb(`❌ Incorrecto. Es: ${current.caso}`);
+        } else {
+            setFeedback(`❌ Incorrecto. Es: ${current.caso}`);
+        }
     };
-    if (!current) return <div>Cargando...</div>;
+    
     return (
         <div className="text-center">
-            <span className="text-gray-400">Tarjeta {index+1} de {items.length}</span>
-            <h3 className="text-4xl font-bold text-white my-4">{current.preposicion}</h3>
+            <h3 className="text-3xl font-bold text-white mb-2">{current.preposicion}</h3>
             <p className="text-gray-300 italic mb-4">"{current.ejemplo}"</p>
-            <input placeholder="Dativo, Acusativo, Wechsel..." value={answer} onChange={e => setAnswer(e.target.value)} className="bg-black text-white p-2 rounded w-full max-w-md mb-4" />
+            <input 
+                type="text" 
+                placeholder="Dativ, Akkusativ, Wechsel..." 
+                value={answer} 
+                onChange={(e) => setAnswer(e.target.value)}
+                className="bg-black text-white p-2 rounded w-full max-w-md mx-auto mb-4"
+            />
             <button onClick={check} className="bg-pink-600 px-6 py-2 rounded-lg font-bold">Comprobar</button>
-            {fb && <p className="mt-4 text-xl">{fb}</p>}
+            {feedback && <p className="mt-4 text-xl">{feedback}</p>}
+            <p className="text-gray-500 text-sm mt-4">Tarjeta {index+1} de {items.length}</p>
         </div>
     );
-};
+}
 
-// --- PANEL PRINCIPAL (4 PESTAÑAS ACTIVAS) ---
-const AdvancedPracticePanelV7 = () => {
-    const [activeTab, setActiveTab] = useState('articles');
+// --- COMPONENTE DE ARTÍCULOS (simplificado pero funcional) ---
+function ArticlePractice() {
+    const [items, setItems] = React.useState([]);
+    const [index, setIndex] = React.useState(0);
+    const [answer, setAnswer] = React.useState(null);
+    const [feedback, setFeedback] = React.useState('');
+    
+    React.useEffect(() => {
+        let data = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
+        if (data.length === 0) {
+            data = [
+                { word: "Tisch", article: "der", translation: "mesa" },
+                { word: "Lampe", article: "die", translation: "lámpara" },
+                { word: "Buch", article: "das", translation: "libro" }
+            ];
+        }
+        setItems(data);
+    }, []);
+    
+    if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
+    const current = items[index];
+    
+    const check = (selected) => {
+        if (selected === current.article) {
+            setFeedback(`✅ Correcto! ${current.article} ${current.word}`);
+            setTimeout(() => {
+                setIndex((prev) => (prev + 1) % items.length);
+                setAnswer(null);
+                setFeedback('');
+            }, 1000);
+        } else {
+            setFeedback(`❌ Incorrecto. Es ${current.article} ${current.word}`);
+            setAnswer(selected);
+        }
+    };
+    
+    return (
+        <div className="text-center">
+            <h3 className="text-3xl font-bold text-white mb-2">{current.word}</h3>
+            <p className="text-gray-400 mb-6">{current.translation}</p>
+            {!feedback ? (
+                <div className="flex gap-4 justify-center">
+                    <button onClick={() => check('der')} className="bg-blue-600 px-6 py-3 rounded-lg font-bold text-xl">DER</button>
+                    <button onClick={() => check('die')} className="bg-red-500 px-6 py-3 rounded-lg font-bold text-xl">DIE</button>
+                    <button onClick={() => check('das')} className="bg-green-600 px-6 py-3 rounded-lg font-bold text-xl">DAS</button>
+                </div>
+            ) : (
+                <div>
+                    <p className="text-xl mb-4">{feedback}</p>
+                    <button onClick={() => { setIndex((prev) => (prev + 1) % items.length); setAnswer(null); setFeedback(''); }} className="bg-purple-600 px-6 py-2 rounded-lg font-bold">Siguiente →</button>
+                </div>
+            )}
+            <p className="text-gray-500 text-sm mt-4">Tarjeta {index+1} de {items.length}</p>
+        </div>
+    );
+}
+
+// --- PANEL PRINCIPAL CON 4 PESTAÑAS (TODAS CLICABLES) ---
+function AdvancedPracticePanel() {
+    const [activeTab, setActiveTab] = React.useState('articles');
+    
     return (
         <div className="fixed inset-0 z-50 bg-black/95 overflow-y-auto" style={{top: '60px'}}>
             <div className="max-w-4xl mx-auto p-4">
@@ -2524,20 +2305,20 @@ const AdvancedPracticePanelV7 = () => {
                     <button onClick={() => setActiveTab('prepositions')} className={`px-4 py-2 rounded-t-lg font-bold ${activeTab === 'prepositions' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}>📍 Preposiciones</button>
                 </div>
                 <div className="bg-gray-800 p-6 rounded-2xl">
-                    {activeTab === 'articles' && <ArticlePracticeV7 />}
-                    {activeTab === 'plurals' && <PluralPracticeV3 />}
-                    {activeTab === 'verbprep' && <VerbPrepPracticeV3 />}
-                    {activeTab === 'prepositions' && <PrepositionPracticeV3 />}
+                    {activeTab === 'articles' && <ArticlePractice />}
+                    {activeTab === 'plurals' && <PluralPractice />}
+                    {activeTab === 'verbprep' && <VerbPrepPractice />}
+                    {activeTab === 'prepositions' && <PrepositionPractice />}
                 </div>
             </div>
         </div>
     );
-};
+}
 
-// --- CONTROLADOR MODAL ---
-const AdvancedModalControllerV7 = () => {
-    const [show, setShow] = useState(false);
-    useEffect(() => {
+// --- CONTROLADOR DEL MODAL ---
+function ModalController() {
+    const [show, setShow] = React.useState(false);
+    React.useEffect(() => {
         const open = () => setShow(true);
         const close = () => setShow(false);
         window.addEventListener('toggleAdvancedModal', open);
@@ -2548,57 +2329,20 @@ const AdvancedModalControllerV7 = () => {
         };
     }, []);
     if (!show) return null;
-    return <AdvancedPracticePanelV7 />;
-};
+    return <AdvancedPracticePanel />;
+}
 
-// --- ANÁLISIS INICIAL (sin diccionario externo) ---
-setTimeout(() => {
-    const run = (g, t) => {
-        extractArticlesFromGuionV7(g, t);
-        extractPluralsFromGuion(g, t);
-        extractVerbPrepsFromGuion(g, t);
-        extractPrepositionsFromGuion(g, t);
-    };
-    try {
-        const scripts = JSON.parse(localStorage.getItem('mullerScripts') || '[]');
-        scripts.forEach(s => { try { run(JSON.parse(s.data), s.title); } catch(e) {} });
-        if (window.__DEFAULT_GUION__) run(window.__DEFAULT_GUION__, 'Lektion 17: Kunst');
-        window.dispatchEvent(new Event('extractedDataUpdated'));
-    } catch(e) {}
-}, 1000);
-
-// --- INTERCEPTAR localStorage ---
-const origSet = localStorage.setItem;
-localStorage.setItem = function(key, val) {
-    origSet.apply(this, arguments);
-    if (key === 'mullerScripts') {
-        try {
-            const scripts = JSON.parse(val);
-            scripts.forEach(s => {
-                try {
-                    const g = JSON.parse(s.data);
-                    extractArticlesFromGuionV7(g, s.title);
-                    extractPluralsFromGuion(g, s.title);
-                    extractVerbPrepsFromGuion(g, s.title);
-                    extractPrepositionsFromGuion(g, s.title);
-                } catch(e) {}
-            });
-            window.dispatchEvent(new Event('extractedDataUpdated'));
-        } catch(e) {}
-    }
-};
-
-// --- RENDERIZAR MODAL ---
+// --- INYECTAR EL MODAL EN EL DOM ---
 setTimeout(() => {
     if (!document.getElementById('advanced-modal-root')) {
-        const mr = document.createElement('div');
-        mr.id = 'advanced-modal-root';
-        document.getElementById('root').appendChild(mr);
-        ReactDOM.createRoot(mr).render(<AdvancedModalControllerV7 />);
+        const modalRoot = document.createElement('div');
+        modalRoot.id = 'advanced-modal-root';
+        document.getElementById('root').appendChild(modalRoot);
+        ReactDOM.createRoot(modalRoot).render(<ModalController />);
     }
 }, 500);
 
-// --- INYECCIÓN DE BOTONES EN BARRA INFERIOR ---
+// --- INYECTAR BOTONES EN LA BARRA INFERIOR ---
 setTimeout(() => {
     const injectButtons = () => {
         const bar = document.querySelector('.bg-gray-950.p-3.md\\:p-6.flex.flex-col.sm\\:flex-row');
@@ -2623,7 +2367,7 @@ setTimeout(() => {
         if (window.lucide) window.lucide.createIcons();
         return true;
     };
-    const tryInject = () => { if (!injectButtons()) setTimeout(tryInject, 1000); };
+    const tryInject = () => { if (!injectButtons()) setTimeout(tryInject, 500); };
     tryInject();
 }, 500);
 
