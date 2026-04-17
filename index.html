@@ -1781,8 +1781,9 @@
                 <FloatingButtons />
             </>
         );
-// ========== MÓDULO COMPLETO Y DEFINITIVO (4 PESTAÑAS + AUDIOLIBRO REAL) ==========
-// No modifica nada del código original, solo añade funcionalidad.
+
+// ========== MÓDULO COMPLETO Y DEFINITIVO (CORREGIDO) ==========
+// 4 pestañas funcionales + Audiolibro con selector de historia
 
 // -------------------- DATOS DE RESPALDO --------------------
 const DEFAULT_PLURALS = [
@@ -1807,9 +1808,11 @@ function extractPluralsFromGuion(guionData, scriptTitle) {
     let existing = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
     guionData.forEach(scene => {
         const text = scene.text;
+        // Busca patrones como "die Tische", "die Bücher"
         const matches = text.match(/\bdie\s+([A-ZÄÖÜ][a-zäöüß]+(?:e|er|en|n|s)?)\b/g) || [];
         matches.forEach(m => {
             const plural = m.replace('die ', '');
+            // Intentar derivar singular (simple)
             let singular = plural.replace(/[äöü]/g, c => ({'ä':'a','ö':'o','ü':'u'}[c]));
             singular = singular.replace(/(e|er|n|en|s)$/, '');
             if (singular && !existing.find(p => p.plural === plural)) {
@@ -1921,7 +1924,7 @@ function ArticlePracticeFinal() {
     );
 }
 
-// -------------------- COMPONENTE PLURALES --------------------
+// -------------------- COMPONENTE PLURALES (CORREGIDO: ahora pide el plural correcto) --------------------
 function PluralPracticeFinal() {
     const [items, setItems] = React.useState([]);
     const [index, setIndex] = React.useState(0);
@@ -1935,16 +1938,21 @@ function PluralPracticeFinal() {
     if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
     const check = () => {
-        if (answer.trim().toLowerCase() === current.plural.toLowerCase()) {
+        // Normalizar respuesta: eliminar "die " si lo pone, comparar solo la palabra
+        let userAnswer = answer.trim().toLowerCase().replace(/^die\s+/, '');
+        let correctPlural = current.plural.toLowerCase();
+        if (userAnswer === correctPlural) {
             setFeedback('✅ Correcto');
             setTimeout(() => { setIndex((prev) => (prev + 1) % items.length); setAnswer(''); setFeedback(''); }, 1000);
-        } else setFeedback(`❌ Incorrecto. Es: ${current.plural}`);
+        } else {
+            setFeedback(`❌ Incorrecto. El plural correcto es: ${current.plural}`);
+        }
     };
     return (
         <div className="text-center">
             <h3 className="text-2xl font-bold text-white mb-4">{current.singular}</h3>
             <p className="text-amber-400 text-sm mb-2">Regla: {current.regla || '?'}</p>
-            <input type="text" placeholder="die ..." value={answer} onChange={(e) => setAnswer(e.target.value)} className="bg-black text-white p-2 rounded w-full max-w-md mx-auto mb-4" />
+            <input type="text" placeholder="Escribe el plural (ej: Tische)" value={answer} onChange={(e) => setAnswer(e.target.value)} className="bg-black text-white p-2 rounded w-full max-w-md mx-auto mb-4" />
             <button onClick={check} className="bg-green-600 px-6 py-2 rounded-lg font-bold">Comprobar</button>
             {feedback && <p className="mt-4 text-xl">{feedback}</p>}
             <p className="text-gray-500 text-sm mt-4">Tarjeta {index+1} de {items.length}</p>
@@ -1952,7 +1960,7 @@ function PluralPracticeFinal() {
     );
 }
 
-// -------------------- COMPONENTE VERBOS+PREP --------------------
+// -------------------- COMPONENTE VERBOS+PREP (CORREGIDO) --------------------
 function VerbPrepPracticeFinal() {
     const [items, setItems] = React.useState([]);
     const [index, setIndex] = React.useState(0);
@@ -1966,10 +1974,14 @@ function VerbPrepPracticeFinal() {
     if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
     const check = () => {
-        if (answer.trim().toLowerCase() === current.preposicion.toLowerCase()) {
+        let userAnswer = answer.trim().toLowerCase();
+        let correct = current.preposicion.toLowerCase();
+        if (userAnswer === correct) {
             setFeedback('✅ Correcto');
             setTimeout(() => { setIndex((prev) => (prev + 1) % items.length); setAnswer(''); setFeedback(''); }, 1000);
-        } else setFeedback(`❌ Incorrecto. Es: ${current.preposicion}`);
+        } else {
+            setFeedback(`❌ Incorrecto. La preposición correcta es: ${current.preposicion}`);
+        }
     };
     return (
         <div className="text-center">
@@ -1983,7 +1995,7 @@ function VerbPrepPracticeFinal() {
     );
 }
 
-// -------------------- COMPONENTE PREPOSICIONES --------------------
+// -------------------- COMPONENTE PREPOSICIONES (CORREGIDO) --------------------
 function PrepositionPracticeFinal() {
     const [items, setItems] = React.useState([]);
     const [index, setIndex] = React.useState(0);
@@ -1997,12 +2009,14 @@ function PrepositionPracticeFinal() {
     if (items.length === 0) return <div className="text-center text-gray-400">Cargando...</div>;
     const current = items[index];
     const check = () => {
-        const user = answer.trim().toLowerCase();
-        const correct = current.caso.toLowerCase();
-        if (user === correct || (correct === 'wechsel' && user === 'wechsel')) {
+        let userAnswer = answer.trim().toLowerCase();
+        let correct = current.caso.toLowerCase();
+        if (userAnswer === correct || (correct === 'wechsel' && userAnswer === 'wechsel')) {
             setFeedback('✅ Correcto');
             setTimeout(() => { setIndex((prev) => (prev + 1) % items.length); setAnswer(''); setFeedback(''); }, 1000);
-        } else setFeedback(`❌ Incorrecto. Es: ${current.caso}`);
+        } else {
+            setFeedback(`❌ Incorrecto. El caso correcto es: ${current.caso}`);
+        }
     };
     return (
         <div className="text-center">
@@ -2114,18 +2128,18 @@ setTimeout(() => {
         container.className = 'flex items-center gap-2 mr-3';
         container.id = 'injected-advanced-btn';
         
-        // Botón morado (entrenamiento avanzado)
+        // Botón morado
         const btn1 = document.createElement('button');
         btn1.className = 'bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full shadow-md transition';
         btn1.innerHTML = '<i data-lucide="graduation-cap" class="w-5 h-5"></i>';
         btn1.title = 'Entrenamiento Avanzado';
         btn1.onclick = () => window.dispatchEvent(new Event('toggleAdvancedModal'));
         
-        // Botón naranja (audiolibro real)
+        // Botón naranja (audiolibro)
         const btn2 = document.createElement('button');
         btn2.className = 'bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-full shadow-md transition';
         btn2.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
-        btn2.title = 'Modo Audiolibro (reproduce toda la historia)';
+        btn2.title = 'Modo Audiolibro (elige historia)';
         btn2.id = 'audiobook-real-btn';
         
         container.appendChild(btn1);
@@ -2138,7 +2152,7 @@ setTimeout(() => {
     tryInject();
 }, 500);
 
-// -------------------- IMPLEMENTACIÓN DEL MODO AUDIOLIBRO (REAL) --------------------
+// -------------------- IMPLEMENTACIÓN DEL MODO AUDIOLIBRO CON SELECTOR DE HISTORIA --------------------
 (function() {
     let isPlaying = false;
     let currentIdx = 0;
@@ -2146,15 +2160,33 @@ setTimeout(() => {
     let timeoutId = null;
     let btnRef = null;
 
-    function getCurrentGuion() {
-        // Prioridad: guion activo en la interfaz (si se puede obtener)
-        // Si no, el último guardado o el por defecto
+    function getAvailableScripts() {
         const scripts = JSON.parse(localStorage.getItem('mullerScripts') || '[]');
-        if (scripts.length > 0) {
-            const last = scripts[scripts.length - 1];
-            try { return JSON.parse(last.data); } catch(e) {}
+        const defaultScript = { title: "Lektion 17: Kunst", data: JSON.stringify(window.__DEFAULT_GUION__) };
+        if (scripts.length === 0 && window.__DEFAULT_GUION__) scripts.push(defaultScript);
+        return scripts;
+    }
+
+    function showScriptSelector() {
+        const scripts = getAvailableScripts();
+        if (scripts.length === 0) {
+            alert('No hay historias guardadas.');
+            return;
         }
-        return window.__DEFAULT_GUION__ || [];
+        let message = 'Selecciona una historia para escuchar:\n';
+        scripts.forEach((s, i) => {
+            message += `${i+1}. ${s.title}\n`;
+        });
+        const choice = prompt(message, '1');
+        const idx = parseInt(choice) - 1;
+        if (idx >= 0 && idx < scripts.length) {
+            try {
+                guionCache = JSON.parse(scripts[idx].data);
+                startAudioBook();
+            } catch(e) {
+                alert('Error al cargar la historia.');
+            }
+        }
     }
 
     function stopAudioBook() {
@@ -2189,9 +2221,8 @@ setTimeout(() => {
     }
 
     function startAudioBook() {
-        guionCache = getCurrentGuion();
         if (!guionCache || guionCache.length === 0) {
-            alert('No hay ningún guion cargado.');
+            alert('No hay guion cargado.');
             return;
         }
         stopAudioBook();
@@ -2213,7 +2244,7 @@ setTimeout(() => {
             orangeBtn.onclick = (e) => {
                 e.stopPropagation();
                 if (isPlaying) stopAudioBook();
-                else startAudioBook();
+                else showScriptSelector();
             };
             clearInterval(waitForOrangeBtn);
         }
