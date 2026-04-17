@@ -1774,58 +1774,58 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-// ========== FASE 1: MÓDULO DE ARTÍCULOS FUNCIONAL ==========
+// ========== FASE 1: MÓDULO DE ARTÍCULOS (CORREGIDO) ==========
 // Pegar justo antes de root.render(...)
 
-// --- 1. ANALIZADOR DE GUIONES PARA EXTRAER SUSTANTIVOS CON ARTÍCULO ---
+// --- 1. ANALIZADOR DE GUIONES (versión segura) ---
 const extractArticlesFromGuion = (guionData, scriptTitle) => {
-    const existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
-    
-    guionData.forEach(scene => {
-        const text = scene.text;
-        // Regex mejorado para capturar artículos + sustantivos (incluye declinaciones)
-        const regex = /\b(der|die|das|den|dem|des|ein|eine|einen|einem|einer)\s+([A-ZÄÖÜ][a-zäöüß]+)\b/g;
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            const articleRaw = match[1].toLowerCase();
-            const noun = match[2];
-            // Determinar género base
-            let gender = '';
-            if (['der', 'den', 'dem', 'des'].includes(articleRaw)) gender = 'der';
-            else if (['die', 'der'].includes(articleRaw) && articleRaw !== 'der') gender = 'die';
-            else if (['das', 'dem', 'des'].includes(articleRaw)) gender = 'das';
-            else if (articleRaw === 'ein') gender = 'der'; // aproximación
-            else if (articleRaw === 'eine') gender = 'die';
-            else if (articleRaw === 'einem') gender = 'der/das';
-            else if (articleRaw === 'einer') gender = 'die';
-            else if (articleRaw === 'einen') gender = 'der';
-            
-            if (gender && noun.length > 1) {
-                const found = existing.find(item => item.word === noun);
-                if (!found) {
-                    existing.push({
-                        word: noun,
-                        article: gender,
-                        examples: [text],
-                        translation: scene.translation || '',
-                        scriptTitle: scriptTitle,
-                        dateAdded: new Date().toISOString()
-                    });
-                } else {
-                    if (!found.examples.includes(text)) {
-                        found.examples.push(text);
-                        if (found.examples.length > 3) found.examples.shift();
+    if (!guionData || !Array.isArray(guionData)) return [];
+    try {
+        const existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
+        guionData.forEach(scene => {
+            const text = scene.text || '';
+            const regex = /\b(der|die|das|den|dem|des|ein|eine|einen|einem|einer)\s+([A-ZÄÖÜ][a-zäöüß]+)\b/g;
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                const articleRaw = match[1].toLowerCase();
+                const noun = match[2];
+                let gender = '';
+                if (['der', 'den', 'dem', 'des'].includes(articleRaw)) gender = 'der';
+                else if (['die', 'der'].includes(articleRaw) && articleRaw !== 'der') gender = 'die';
+                else if (['das', 'dem', 'des'].includes(articleRaw)) gender = 'das';
+                else if (articleRaw === 'ein') gender = 'der';
+                else if (articleRaw === 'eine') gender = 'die';
+                else if (articleRaw === 'einem') gender = 'der/das';
+                else if (articleRaw === 'einer') gender = 'die';
+                else if (articleRaw === 'einen') gender = 'der';
+                if (gender && noun.length > 1) {
+                    const found = existing.find(item => item.word === noun);
+                    if (!found) {
+                        existing.push({
+                            word: noun, article: gender,
+                            examples: [text],
+                            translation: scene.translation || '',
+                            scriptTitle: scriptTitle,
+                            dateAdded: new Date().toISOString()
+                        });
+                    } else {
+                        if (!found.examples.includes(text)) {
+                            found.examples.push(text);
+                            if (found.examples.length > 3) found.examples.shift();
+                        }
                     }
                 }
             }
-        }
-    });
-    
-    localStorage.setItem('muller_extracted_articles', JSON.stringify(existing));
-    return existing;
+        });
+        localStorage.setItem('muller_extracted_articles', JSON.stringify(existing));
+        return existing;
+    } catch (e) {
+        console.warn('Error analizando guion:', e);
+        return [];
+    }
 };
 
-// --- 2. COMPONENTE DEL PANEL DE PRÁCTICA (Artículos) ---
+// --- 2. COMPONENTE DE PRÁCTICA DE ARTÍCULOS ---
 const ArticlePractice = () => {
     const [articles, setArticles] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -1836,10 +1836,8 @@ const ArticlePractice = () => {
     const [newTranslation, setNewTranslation] = useState('');
     const [newArticle, setNewArticle] = useState('der');
     
-    // Cargar artículos desde localStorage y también desde lecciones personalizadas
     const loadArticles = useCallback(() => {
         let extracted = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
-        // Añadir también los de las lecciones personalizadas
         const customLessons = JSON.parse(localStorage.getItem('mullerCustomVocab') || '[]');
         customLessons.forEach(lesson => {
             lesson.words.forEach(word => {
@@ -1849,10 +1847,8 @@ const ArticlePractice = () => {
                     const noun = match[2];
                     if (!extracted.some(item => item.word === noun)) {
                         extracted.push({
-                            word: noun,
-                            article: article,
-                            examples: [],
-                            translation: word.es,
+                            word: noun, article: article,
+                            examples: [], translation: word.es,
                             scriptTitle: lesson.title,
                             dateAdded: new Date().toISOString()
                         });
@@ -1860,7 +1856,6 @@ const ArticlePractice = () => {
                 }
             });
         });
-        // Barajar para que no salgan siempre en el mismo orden
         extracted.sort(() => Math.random() - 0.5);
         setArticles(extracted);
         setCurrentIndex(0);
@@ -1879,13 +1874,7 @@ const ArticlePractice = () => {
     const checkAnswer = (selected) => {
         if (!current) return;
         const isCorrect = current.article === selected;
-        if (isCorrect) {
-            setFeedback(`✅ ¡Correcto! ${current.article} ${current.word}`);
-            // Guardar estadísticas positivas
-        } else {
-            setFeedback(`❌ Incorrecto. Es: ${current.article} ${current.word}`);
-            // Registrar error
-        }
+        setFeedback(isCorrect ? `✅ ¡Correcto! ${current.article} ${current.word}` : `❌ Incorrecto. Es: ${current.article} ${current.word}`);
         setAnswer(selected);
     };
     
@@ -1902,10 +1891,8 @@ const ArticlePractice = () => {
     const handleAddWord = () => {
         if (!newWord.trim() || !newTranslation.trim()) return;
         const wordObj = {
-            word: newWord.trim(),
-            article: newArticle,
-            examples: [],
-            translation: newTranslation.trim(),
+            word: newWord.trim(), article: newArticle,
+            examples: [], translation: newTranslation.trim(),
             scriptTitle: 'Añadido manualmente',
             dateAdded: new Date().toISOString()
         };
@@ -1948,7 +1935,6 @@ const ArticlePractice = () => {
                     {showAddForm ? 'Cancelar' : '➕ Añadir'}
                 </button>
             </div>
-            
             {showAddForm && (
                 <div className="mb-4 bg-gray-700 p-4 rounded-lg">
                     <select value={newArticle} onChange={(e) => setNewArticle(e.target.value)} className="bg-black text-white p-2 rounded mb-2 w-full">
@@ -1961,10 +1947,8 @@ const ArticlePractice = () => {
                     <button onClick={handleAddWord} className="bg-green-600 px-4 py-2 rounded w-full">Guardar</button>
                 </div>
             )}
-            
             <h3 className="text-3xl font-bold text-white mb-2">{current.word}</h3>
             <p className="text-gray-400 mb-6">{current.translation}</p>
-            
             {!answer ? (
                 <div className="flex gap-4 justify-center mb-6">
                     <button onClick={() => checkAnswer('der')} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold text-xl">DER</button>
@@ -1983,7 +1967,6 @@ const ArticlePractice = () => {
                     <button onClick={nextCard} className="mt-4 bg-purple-600 px-6 py-2 rounded-lg font-bold">Siguiente →</button>
                 </div>
             )}
-            
             {!answer && current.examples.length > 0 && (
                 <details className="text-left mt-4 bg-black/20 p-3 rounded-lg">
                     <summary className="text-amber-400 cursor-pointer">Ver pista (ejemplo)</summary>
@@ -1994,10 +1977,9 @@ const ArticlePractice = () => {
     );
 };
 
-// --- 3. PANEL PRINCIPAL (con pestañas, de momento solo Artículos) ---
+// --- 3. PANEL PRINCIPAL (con pestañas) ---
 const AdvancedPracticePanel = () => {
     const [activeTab, setActiveTab] = useState('articles');
-    
     return (
         <div className="fixed inset-0 z-50 bg-black/95 overflow-y-auto" style={{top: '60px'}}>
             <div className="max-w-4xl mx-auto p-4">
@@ -2005,24 +1987,12 @@ const AdvancedPracticePanel = () => {
                     <h2 className="text-2xl font-bold text-purple-400">🎓 Entrenamiento Avanzado</h2>
                     <button onClick={() => window.dispatchEvent(new Event('closeAdvancedModal'))} className="bg-gray-700 px-4 py-2 rounded-lg">Cerrar</button>
                 </div>
-                
-                {/* Pestañas */}
                 <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2">
-                    <button onClick={() => setActiveTab('articles')} className={`px-4 py-2 rounded-t-lg font-bold ${activeTab === 'articles' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-                        📘 Artículos
-                    </button>
-                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">
-                        🧩 Plurales (próximo)
-                    </button>
-                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">
-                        🔗 Verbos+Prep (próximo)
-                    </button>
-                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">
-                        📍 Preposiciones (próximo)
-                    </button>
+                    <button onClick={() => setActiveTab('articles')} className={`px-4 py-2 rounded-t-lg font-bold ${activeTab === 'articles' ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400'}`}>📘 Artículos</button>
+                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">🧩 Plurales (próximo)</button>
+                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">🔗 Verbos+Prep (próximo)</button>
+                    <button disabled className="px-4 py-2 rounded-t-lg font-bold bg-gray-800 text-gray-500 cursor-not-allowed">📍 Preposiciones (próximo)</button>
                 </div>
-                
-                {/* Contenido */}
                 <div className="bg-gray-800 p-6 rounded-2xl">
                     {activeTab === 'articles' && <ArticlePractice />}
                 </div>
@@ -2031,10 +2001,9 @@ const AdvancedPracticePanel = () => {
     );
 };
 
-// --- 4. CONTROLADOR DEL MODAL (se activa con evento) ---
+// --- 4. CONTROLADOR DEL MODAL ---
 const AdvancedModalController = () => {
     const [showModal, setShowModal] = useState(false);
-    
     useEffect(() => {
         const openHandler = () => setShowModal(true);
         const closeHandler = () => setShowModal(false);
@@ -2045,39 +2014,53 @@ const AdvancedModalController = () => {
             window.removeEventListener('closeAdvancedModal', closeHandler);
         };
     }, []);
-    
     if (!showModal) return null;
     return <AdvancedPracticePanel />;
 };
 
-// --- 5. INYECCIÓN DE BOTONES EN LA BARRA INFERIOR (ya hecho, pero actualizamos para que dispare análisis) ---
+// --- 5. INYECCIÓN DE BOTONES ---
 const injectButtons = () => {
     const bar = document.querySelector('.bg-gray-950.p-3.md\\:p-6.flex.flex-col.sm\\:flex-row');
-    if (!bar || document.getElementById('injected-advanced-btn')) return;
-    
+    if (!bar) return false;
+    if (document.getElementById('injected-advanced-btn')) return true;
     const container = document.createElement('div');
     container.className = 'flex items-center gap-2 mr-3';
     container.id = 'injected-advanced-btn';
-    
     const btn1 = document.createElement('button');
     btn1.className = 'bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full shadow-md transition';
     btn1.innerHTML = '<i data-lucide="graduation-cap" class="w-5 h-5"></i>';
     btn1.title = 'Entrenamiento Avanzado';
     btn1.onclick = () => window.dispatchEvent(new Event('toggleAdvancedModal'));
-    
     const btn2 = document.createElement('button');
     btn2.className = 'bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-full shadow-md transition';
     btn2.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
     btn2.title = 'Modo Audiolibro (próximo)';
     btn2.onclick = () => alert('🎧 Modo Audiolibro próximamente');
-    
     container.appendChild(btn1);
     container.appendChild(btn2);
     bar.insertBefore(container, bar.firstChild);
     if (window.lucide) window.lucide.createIcons();
+    return true;
 };
 
-// --- 6. INTERCEPTAR CARGA DE GUIONES PARA ANALIZAR AUTOMÁTICAMENTE ---
+// --- 6. ANÁLISIS INICIAL Y CONFIGURACIÓN ---
+setTimeout(() => {
+    try {
+        const scripts = JSON.parse(localStorage.getItem('mullerScripts') || '[]');
+        scripts.forEach(script => {
+            try {
+                const guion = JSON.parse(script.data);
+                extractArticlesFromGuion(guion, script.title);
+            } catch(e) {}
+        });
+        if (window.__DEFAULT_GUION__) {
+            extractArticlesFromGuion(window.__DEFAULT_GUION__, 'Lektion 17: Kunst');
+        }
+        window.dispatchEvent(new Event('extractedDataUpdated'));
+    } catch(e) {}
+}, 1000);
+
+// Interceptar localStorage para futuras cargas
 const originalSetItem = localStorage.setItem;
 localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
@@ -2095,22 +2078,69 @@ localStorage.setItem = function(key, value) {
     }
 };
 
-// Analizar guion por defecto al iniciar
-setTimeout(() => {
-    extractArticlesFromGuion(DEFAULT_GUION, 'Lektion 17: Kunst (por defecto)');
-    window.dispatchEvent(new Event('extractedDataUpdated'));
-}, 1000);
+// --- 7. COMPONENTE FLOTANTE (MICRÓFONO, EXPORT/IMPORT) ---
+const FloatingButtons = () => {
+    const requestMicPermission = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            alert('✅ Permiso de micrófono concedido.');
+        } catch (err) {
+            alert('❌ No se pudo obtener permiso del micrófono.');
+        }
+    };
+    const exportData = () => {
+        const data = {
+            userStats: JSON.parse(localStorage.getItem('mullerStats') || '{}'),
+            savedScripts: JSON.parse(localStorage.getItem('mullerScripts') || '[]'),
+            customVocabLessons: JSON.parse(localStorage.getItem('mullerCustomVocab') || '[]')
+        };
+        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `muller_backup.json`;
+        a.click();
+    };
+    const importData = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (data.userStats) localStorage.setItem('mullerStats', JSON.stringify(data.userStats));
+                if (data.savedScripts) localStorage.setItem('mullerScripts', JSON.stringify(data.savedScripts));
+                if (data.customVocabLessons) localStorage.setItem('mullerCustomVocab', JSON.stringify(data.customVocabLessons));
+                alert('✅ Datos importados. Recarga la página.');
+                window.location.reload();
+            } catch(e) { alert('❌ Archivo inválido'); }
+        };
+        reader.readAsText(file);
+    };
+    return (
+        <>
+            <button onClick={requestMicPermission} className="fixed bottom-20 right-4 z-50 bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-xl" title="Permiso micrófono">
+                <Icon name="mic" className="w-6 h-6" />
+            </button>
+            <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2">
+                <button onClick={exportData} className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full shadow-xl" title="Exportar progreso">
+                    <Icon name="download" className="w-6 h-6" />
+                </button>
+                <label className="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-full shadow-xl cursor-pointer" title="Importar progreso">
+                    <Icon name="upload" className="w-6 h-6" />
+                    <input type="file" accept=".json" onChange={importData} className="hidden" />
+                </label>
+            </div>
+        </>
+    );
+};
 
-// --- 7. RENDERIZAR CONTROLADOR E INYECTAR BOTONES ---
+// --- 8. RENDERIZADO FINAL ---
 setTimeout(() => {
-    // Inyectar botones en la barra
     const tryInject = () => {
-        if (injectButtons()) return;
-        setTimeout(tryInject, 1000);
+        if (!injectButtons()) setTimeout(tryInject, 1000);
     };
     tryInject();
     
-    // Renderizar controlador del modal
     if (!document.getElementById('advanced-modal-root')) {
         const modalRoot = document.createElement('div');
         modalRoot.id = 'advanced-modal-root';
@@ -2119,11 +2149,14 @@ setTimeout(() => {
         modalRootRender.render(<AdvancedModalController />);
     }
 }, 500);
-            <>
-                <App />
-                <FloatingButtons />
-            </>
-        );
-    </script>
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+    <>
+        <App />
+        <FloatingButtons />
+    </>
+);
+</script>
 </body>
 </html>
