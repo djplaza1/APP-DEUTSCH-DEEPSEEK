@@ -52,7 +52,6 @@
 
         // --- BASES DE DATOS Y CONFIGURACIÓN INICIAL (sin cambios) ---
         const DEFAULT_GUION = [
-            window.__DEFAULT_GUION__ = DEFAULT_GUION;
             { speaker: 'Lukas', text: 'Hallo Elena! Heute ist ein großer Tag.', translation: '¡Hola Elena! Hoy es un gran día.', vocab: [{ de: 'der Tag', es: 'el día', diff: 0 }] },
             { speaker: 'Lukas', text: 'Ich bin nervös, weil wir Bilder ausstellen.', translation: 'Estoy nervioso porque exponemos cuadros.', vocab: [{ de: 'ausstellen', es: 'exponer', diff: 0 }] },
             { speaker: 'Elena', text: 'Keine Sorge. Du bist ein toller Künstler.', translation: 'No te preocupes. Eres un gran artista.', isRedemittel: true, vocab: [{ de: 'der Künstler', es: 'el artista', diff: 0 }] },
@@ -75,6 +74,7 @@
             { speaker: 'Lukas', text: 'Elena! Es gab einen Diebstahl in der Galerie!', translation: '¡Elena! ¡Hubo un robo en la galería!', vocab: [{ de: 'der Diebstahl', es: 'el robo', diff: 1 }] },
             { speaker: 'Lukas', text: 'Die Polizei muss den Dieb verhaften.', translation: 'La policía debe detener al ladrón.', vocab: [{ de: 'verhaften', es: 'detener', diff: 1 }] }
         ];
+        window.__DEFAULT_GUION__ = DEFAULT_GUION;
 
         const TEMPUS_DICT = {
             "ausstellen": "Prät: stellte aus | Perf: hat ausgestellt",
