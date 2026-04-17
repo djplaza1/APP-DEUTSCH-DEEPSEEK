@@ -2079,61 +2079,7 @@ localStorage.setItem = function(key, value) {
     }
 };
 
-// --- 7. COMPONENTE FLOTANTE (MICRÓFONO, EXPORT/IMPORT) ---
-const FloatingButtons = () => {
-    const requestMicPermission = async () => {
-        try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-            alert('✅ Permiso de micrófono concedido.');
-        } catch (err) {
-            alert('❌ No se pudo obtener permiso del micrófono.');
-        }
-    };
-    const exportData = () => {
-        const data = {
-            userStats: JSON.parse(localStorage.getItem('mullerStats') || '{}'),
-            savedScripts: JSON.parse(localStorage.getItem('mullerScripts') || '[]'),
-            customVocabLessons: JSON.parse(localStorage.getItem('mullerCustomVocab') || '[]')
-        };
-        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `muller_backup.json`;
-        a.click();
-    };
-    const importData = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const data = JSON.parse(ev.target.result);
-                if (data.userStats) localStorage.setItem('mullerStats', JSON.stringify(data.userStats));
-                if (data.savedScripts) localStorage.setItem('mullerScripts', JSON.stringify(data.savedScripts));
-                if (data.customVocabLessons) localStorage.setItem('mullerCustomVocab', JSON.stringify(data.customVocabLessons));
-                alert('✅ Datos importados. Recarga la página.');
-                window.location.reload();
-            } catch(e) { alert('❌ Archivo inválido'); }
-        };
-        reader.readAsText(file);
-    };
-    return (
-        <>
-            <button onClick={requestMicPermission} className="fixed bottom-20 right-4 z-50 bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-xl" title="Permiso micrófono">
-                <Icon name="mic" className="w-6 h-6" />
-            </button>
-            <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2">
-                <button onClick={exportData} className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full shadow-xl" title="Exportar progreso">
-                    <Icon name="download" className="w-6 h-6" />
-                </button>
-                <label className="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-full shadow-xl cursor-pointer" title="Importar progreso">
-                    <Icon name="upload" className="w-6 h-6" />
-                    <input type="file" accept=".json" onChange={importData} className="hidden" />
-                </label>
-            </div>
-        </>
-    );
-};
+
 
 // --- 8. RENDERIZADO FINAL ---
 setTimeout(() => {
@@ -2151,13 +2097,7 @@ setTimeout(() => {
     }
 }, 500);
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-    <>
-        <App />
-        <FloatingButtons />
-    </>
-);
+// El renderizado ya lo hace el código original, solo inyectamos nuestros componentes extra
 </script>
 </body>
 </html>
