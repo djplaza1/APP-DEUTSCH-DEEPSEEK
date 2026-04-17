@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Müller Pro - Entrenador Definitivo Alemán</title>
-    <!-- Tailwind CSS -->
+    <title>Müller Pro - Alemán B1/B2</title>
+    <!-- Tailwind CSS (no warnings, usaremos CDN para desarrollo, pero funciona) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React y ReactDOM (versiones compatibles) -->
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+    <!-- React 17 (compatible con Babel standalone) -->
+    <script src="https://cdn.jsdelivr.net/npm/react@17.0.2/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.2/umd/react-dom.development.js"></script>
     <!-- Babel standalone -->
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <!-- Lucide -->
@@ -24,7 +24,7 @@
     </style>
 </head>
 <body>
-<div id="root"><div class="text-white p-4 text-center">Cargando aplicación...</div></div>
+<div id="root">Cargando aplicación...</div>
 
 <script type="text/babel">
 // ==================== COMPONENTE ICON ====================
@@ -617,7 +617,7 @@ function App() {
                 </div>
             </div>
 
-            {/* Contenido principal - simplificado para depuración, pero con todas las pestañas funcionales */}
+            {/* Contenido principal */}
             <div className="flex-1 overflow-y-auto hide-scrollbar p-4">
                 {activeTab === 'storybuilder' && (
                     <div className="max-w-3xl mx-auto">
@@ -847,8 +847,7 @@ function App() {
 }
 
 // Renderizar la app
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+ReactDOM.render(<App />, document.getElementById('root'));
 </script>
 </body>
 </html>
