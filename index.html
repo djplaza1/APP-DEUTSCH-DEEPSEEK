@@ -1366,42 +1366,57 @@
                   )}
 
                   {/* BIBLIOTECA (con checkboxes para mezcla) */}
-                  {activeTab === 'guiones' && !practiceActive && (
-                      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-6 md:gap-8 h-full animate-in fade-in">
-                          <div className="flex-[2] bg-gray-800/50 p-4 md:p-6 rounded-2xl border border-gray-700 flex flex-col max-h-full overflow-y-auto hide-scrollbar">
-                              <div className="bg-purple-900/30 border border-purple-500/50 p-4 md:p-5 rounded-xl mb-4 md:mb-6">
-                                  <h3 className="text-purple-300 font-bold flex items-center gap-2 mb-2 text-sm md:text-base"><Icon name="sparkles" className="w-4 h-4 md:w-5 md:h-5" /> Instrucciones para la IA (ChatGPT/Gemini)</h3>
-                                  <p className="text-xs md:text-sm text-gray-300 mb-3">Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.</p>
-                                  <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
-                                      <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
-    "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
-</p>
-                                      <button className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" onClick={() => navigator.clipboard.writeText(Eres un profesor nativo de alemán. "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
-
-Formato: Nombre: Frase en alemán. (Traducción) [palabra - traducción, otra - traducción] [R]")}><Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" /></button>
-                                  </div>
-                              </div>
-                              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-purple-400"><Icon name="edit-3" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Guion Copiado</h2>
-                              <input type="text" placeholder="Ej: Lektion 17: Die Reise..." className="w-full bg-black/50 border border-gray-600 p-2 md:p-3 rounded-lg text-white mb-3 md:mb-4 outline-none focus:border-purple-500 text-sm md:text-base" value={newScriptTitle} onChange={(e) => setNewScriptTitle(e.target.value)} />
-                              <textarea className="w-full flex-1 min-h-[120px] md:min-h-[150px] bg-black/50 border border-gray-600 p-3 md:p-4 rounded-lg text-white font-mono text-xs md:text-sm mb-3 md:mb-4 outline-none focus:border-purple-500 resize-none" placeholder="Pega aquí el resultado de la IA..." value={scriptInput} onChange={(e) => setScriptInput(e.target.value)} />
-                              <button onClick={handleSaveScript} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 md:py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-sm md:text-base"><Icon name="save" className="w-4 h-4 md:w-5 md:h-5" /> Guardar y Estudiar</button>
-                          </div>
-                          <div className="w-full md:w-1/3 flex flex-col gap-4 max-h-[600px] md:max-h-full">
-                              <div className="bg-gray-900 p-4 md:p-5 rounded-2xl border border-gray-800 flex flex-col shrink-0 h-1/3 min-h-[180px] md:min-h-[200px]">
-                                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-gray-200"><Icon name="file-text" className="w-5 h-5 md:w-6 md:h-6" /> Tus Guiones</h2>
-                                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
-                                      {savedScripts.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">No hay guiones guardados.</p> : null}
-                                      {savedScripts.map(script => (
-                                          <div key={script.id} className="bg-black/40 p-3 md:p-4 rounded-lg border border-gray-700 hover:border-purple-500 cursor-pointer transition flex justify-between items-center group">
-                                              <div onClick={() => loadSavedScript(script)} className="flex-1">
-                                                  <p className="font-bold text-white group-hover:text-purple-400 truncate text-sm md:text-base">{script.title}</p>
-                                                  <p className="text-[10px] md:text-xs text-gray-500 mt-1">Click para cargar</p>
-                                              </div>
-                                              <button onClick={(e) => { e.stopPropagation(); const newScripts = savedScripts.filter(s => s.id !== script.id); setSavedScripts(newScripts); localStorage.setItem('mullerScripts', JSON.stringify(newScripts)); }} className="text-gray-500 hover:text-red-500 p-1 md:p-2"><Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" /></button>
-                                          </div>
-                                      ))}
-                                  </div>
-                              </div>
+      {activeTab === 'guiones' && !practiceActive && (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-6 md:gap-8 h-full animate-in fade-in">
+        <div className="flex-[2] bg-gray-800/50 p-4 md:p-6 rounded-2xl border border-gray-700 flex flex-col max-h-full overflow-y-auto hide-scrollbar">
+            <div className="bg-purple-900/30 border border-purple-500/50 p-4 md:p-5 rounded-xl mb-4 md:mb-6">
+                <h3 className="text-purple-300 font-bold flex items-center gap-2 mb-2 text-sm md:text-base">
+                    <Icon name="sparkles" className="w-4 h-4 md:w-5 md:h-5" /> Instrucciones para la IA (ChatGPT/Gemini)
+                </h3>
+                <p className="text-xs md:text-sm text-gray-300 mb-3">
+                    Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.
+                </p>
+                <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
+                    <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
+                        "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
+                    </p>
+                    <button 
+                        className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" 
+                        onClick={() => navigator.clipboard.writeText(`Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.\n\nFormato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]`)}
+                    >
+                        <Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" />
+                    </button>
+                </div>
+            </div>
+            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-purple-400">
+                <Icon name="edit-3" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Guion Copiado
+            </h2>
+            <input 
+                type="text" 
+                placeholder="Ej: Lektion 17: Die Reise..." 
+                className="w-full bg-black/50 border border-gray-600 p-2 md:p-3 rounded-lg text-white mb-3 md:mb-4 outline-none focus:border-purple-500 text-sm md:text-base" 
+                value={newScriptTitle} 
+                onChange={(e) => setNewScriptTitle(e.target.value)} 
+            />
+            <textarea 
+                className="w-full flex-1 min-h-[120px] md:min-h-[150px] bg-black/50 border border-gray-600 p-3 md:p-4 rounded-lg text-white font-mono text-xs md:text-sm mb-3 md:mb-4 outline-none focus:border-purple-500 resize-none" 
+                placeholder="Pega aquí el resultado de la IA..." 
+                value={scriptInput} 
+                onChange={(e) => setScriptInput(e.target.value)} 
+            />
+            <button 
+                onClick={handleSaveScript} 
+                className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 md:py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-sm md:text-base"
+            >
+                <Icon name="save" className="w-4 h-4 md:w-5 md:h-5" /> Guardar y Estudiar
+            </button>
+        </div>
+        
+        {/* Lado derecho: Lista de guiones y vocabulario */}
+        <div className="w-full md:w-1/3 flex flex-col gap-4 max-h-[600px] md:max-h-full">
+            {/* ... aquí sigue el resto de tu código de la columna derecha (Tus Guiones, etc.) ... */}
+        </div>
+    </div>
                               <div className="bg-amber-900/20 p-4 md:p-5 rounded-2xl border border-amber-800/50 flex flex-col flex-1 min-h-0">
                                   <h2 className="text-lg md:text-xl font-bold text-amber-400 flex items-center gap-2 mb-3"><Icon name="library" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Vocabulario</h2>
                                   <div className="bg-black/40 p-2 md:p-3 rounded-xl border border-amber-900/50 mb-3 md:mb-4 flex flex-col gap-2 shrink-0">
