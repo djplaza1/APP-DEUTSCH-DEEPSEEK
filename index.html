@@ -2012,7 +2012,9 @@ function ArticlePracticeFinal({ onBack }) {
 const check = (guess) => {
         if (queue.length === 0) return;
         const current = queue[0];
-        const correct = current.de.split(' ')[0].toLowerCase();
+        const parts = current.de.split(' ');
+        const correct = parts[0].toLowerCase();
+        const noun = parts.slice(1).join(' '); // Extrae el sustantivo sin el artículo
 
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(current.de);
@@ -2022,23 +2024,22 @@ const check = (guess) => {
         if (guess === correct) {
             setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
         } else {
-            // 🔴 LÓGICA DEL MURO DE LA VERGÜENZA (Corregida y dentro del else)
-            const noun = current.de.split(' ')[1] || current.de;
-            
-            // Leemos los stats de localStorage para actualizar el Muro
-            const savedData = localStorage.getItem('mullerStats');
-            const currentStats = savedData ? JSON.parse(savedData) : {};
-            
-            const updatedFailed = { ...(currentStats.failedArticles || {}) };
-            updatedFailed[noun] = (updatedFailed[noun] || 0) + 1;
-            
-            // Guardamos la actualización
-            const newStats = { ...currentStats, failedArticles: updatedFailed };
-            localStorage.setItem('mullerStats', JSON.stringify(newStats));
-            
             setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
+            
+            // --- Lógica del Muro de la Vergüenza ---
+            try {
+                const stats = JSON.parse(localStorage.getItem('mullerStats') || '{}');
+                if (!stats.failedArticles) stats.failedArticles = {};
+                
+                // Incrementa el contador de fallos para este sustantivo específico
+                stats.failedArticles[noun] = (stats.failedArticles[noun] || 0) + 1;
+                
+                localStorage.setItem('mullerStats', JSON.stringify(stats));
+            } catch (e) {
+                console.warn("Error guardando en el Muro de la Vergüenza:", e);
+            }
         }
-    }; // <--- Aquí termina la función check correctamente
+    };-- Aquí termina la función check correctamente
 
     if (!mode) return (
         <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
