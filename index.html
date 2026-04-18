@@ -1894,35 +1894,61 @@ function extractArticlesFromGuionFinal(guionData, scriptTitle) {
 // ============================================================================
 
 function ArticlePracticeFinal({ onBack }) {
+    const [mode, setMode] = React.useState(null);
     const [queue, setQueue] = React.useState([]);
     const [feedback, setFeedback] = React.useState(null);
+    const [loading, setLoading] = React.useState(false);
+
+    const loadData = (selectedMode) => {
+        setMode(selectedMode);
+        if (selectedMode === 'historia') {
+            const allVocab = window.__DEFAULT_GUION__?.flatMap(s => s.vocab || []) || [];
+            const nouns = allVocab.filter(v => /^(der|die|das)\s/i.test(v.de));
+            const uniqueNouns = [...new Map(nouns.map(item => [item.de, item])).values()];
+            setQueue(uniqueNouns.sort(() => Math.random() - 0.5));
+        } else {
+            setLoading(true);
+            // 🔗 URL PERMANENTE DE ARTÍCULOS
+            const GIST_URL = "https://gist.githubusercontent.com/djplaza1/a53fde18c901a7f2d86977174b5b9a72/raw/articulos.json?nocache=" + new Date().getTime();
+            fetch(GIST_URL)
+                .then(res => res.json())
+                .then(data => {
+                    let filtered = data;
+                    if (selectedMode !== 'MIXTO') {
+                        filtered = data.filter(item => item.level === selectedMode);
+                    }
+                    if (filtered.length === 0) {
+                        alert(`No hay palabras nivel ${selectedMode} en tu base de datos aún.`);
+                        setMode(null);
+                    } else {
+                        setQueue(filtered.sort(() => Math.random() - 0.5));
+                    }
+                    setLoading(false);
+                })
+                .catch(() => {
+                    alert("Error conectando con GitHub.");
+                    setMode(null);
+                    setLoading(false);
+                });
+        }
+    };
 
     React.useEffect(() => {
-        // 1. Extraer Nominativo estricto del vocabulario de la IA
-        const allVocab = window.__DEFAULT_GUION__?.flatMap(s => s.vocab || []) || [];
-        const nouns = allVocab.filter(v => /^(der|die|das)\s/i.test(v.de));
-        const uniqueNouns = [...new Map(nouns.map(item => [item.de, item])).values()];
-        setQueue(uniqueNouns.sort(() => Math.random() - 0.5));
-    }, []);
-
-    React.useEffect(() => {
-        // 2. Modo Speed-Run (Teclado)
         const handleKeyDown = (e) => {
-            if (feedback || queue.length === 0) return;
+            if (feedback || queue.length === 0 || !mode) return;
             if (e.key === '1' || e.key === 'ArrowLeft') check('der');
             if (e.key === '2' || e.key === 'ArrowDown') check('die');
             if (e.key === '3' || e.key === 'ArrowRight') check('das');
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [feedback, queue]);
+    }, [feedback, queue, mode]);
 
     const check = (guess) => {
         if (queue.length === 0) return;
         const current = queue[0];
         const correct = current.de.split(' ')[0].toLowerCase();
 
-        // AUDIO DESPUÉS DE LA RESPUESTA
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(current.de);
         utterance.lang = 'de-DE';
@@ -1930,23 +1956,37 @@ function ArticlePracticeFinal({ onBack }) {
 
         if (guess === correct) {
             setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
-            setTimeout(() => {
-                setQueue(prev => prev.slice(1)); // Eliminar de la cola
-                setFeedback(null);
-            }, 1200);
+            setTimeout(() => { setQueue(prev => prev.slice(1)); setFeedback(null); }, 1200);
         } else {
             setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
-            setTimeout(() => {
-                setQueue(prev => [...prev.slice(1), prev[0]]); // ACTIVE RECALL: Al final de la cola
-                setFeedback(null);
-            }, 2000);
+            setTimeout(() => { setQueue(prev => [...prev.slice(1), prev[0]]); setFeedback(null); }, 2000);
         }
     };
 
+    if (!mode) {
+        return (
+            <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
+                <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
+                <h2 className="text-3xl font-bold mb-8 text-blue-300">Selecciona tu Mazo de Artículos</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                    <button onClick={() => loadData('historia')} className="col-span-2 md:col-span-3 bg-purple-900 border-2 border-purple-500 p-6 rounded-xl font-bold text-xl hover:bg-purple-800 transition shadow-lg shadow-purple-900/50">📖 Historia Actual (Memoria a corto plazo)</button>
+                    <button onClick={() => loadData('A1')} className="bg-slate-800 border-b-4 border-green-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">🟢 Nivel A1</button>
+                    <button onClick={() => loadData('A2')} className="bg-slate-800 border-b-4 border-yellow-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">🟡 Nivel A2</button>
+                    <button onClick={() => loadData('B1')} className="bg-slate-800 border-b-4 border-orange-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">🟠 Nivel B1</button>
+                    <button onClick={() => loadData('B2')} className="bg-slate-800 border-b-4 border-red-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">🔴 Nivel B2</button>
+                    <button onClick={() => loadData('C1')} className="bg-slate-800 border-b-4 border-violet-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">🟣 Nivel C1</button>
+                    <button onClick={() => loadData('MIXTO')} className="bg-gradient-to-r from-blue-600 to-red-600 border-2 border-white/20 p-6 rounded-xl font-bold text-lg hover:scale-105 transition shadow-lg">🌪️ MIXTO (A1-C1)</button>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) return <div className="flex items-center justify-center h-full text-white text-2xl font-bold animate-pulse">📡 Cargando mazo {mode}...</div>;
+
     if (queue.length === 0) return (
         <div className="flex flex-col items-center justify-center h-full p-4">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
-            <h2 className="text-3xl font-bold text-green-400">¡Entrenamiento Completado! 🏆</h2>
+            <button onClick={() => setMode(null)} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white">⬅ Seleccionar otro mazo</button>
+            <h2 className="text-3xl font-bold text-green-400">¡Mazo {mode} Completado! 🏆</h2>
         </div>
     );
 
@@ -1954,8 +1994,8 @@ function ArticlePracticeFinal({ onBack }) {
 
     return (
         <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver</button>
-            <h2 className="text-3xl font-bold mb-8 text-blue-300">Artículos (Speed-Run)</h2>
+            <button onClick={() => setMode(null)} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Cambiar Mazo</button>
+            <h2 className="text-xl font-bold mb-6 text-gray-400">Jugando: <span className="text-white">{mode}</span></h2>
             
             <div className="bg-slate-800 p-10 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700 relative">
                 <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
