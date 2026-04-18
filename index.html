@@ -550,44 +550,72 @@
               } else { alert("No pude detectar vocabulario válido. Pega texto para guardar."); }
           };
 
-          const handleSaveScript = () => {
-            if (!newScriptTitle.trim()) { alert("Dale un título al guion primero."); return; }
-            try {
-              const lines = scriptInput.split('\n');
-              const newGuion = [];
-              lines.forEach(line => {
-                if (!line.trim()) return;
-                const speakerMatch = line.match(/^([\w\s]+):/);
-                if (!speakerMatch) return;
-                const speaker = speakerMatch[1].trim();
-                let rest = line.substring(speakerMatch[0].length).trim();
-                let vocab = [];
-                const vocabMatch = rest.match(/\[(.*?)\]$/);
-                if (vocabMatch) {
-                    rest = rest.replace(/\[(.*?)\]$/, '').trim();
-                    const vocabPairs = vocabMatch[1].split(',');
-                    vocabPairs.forEach(pair => {
-                        const parts = pair.split('-');
-                        if(parts.length >= 2) vocab.push({ de: parts[0].trim(), es: parts[1].trim(), diff: 1 });
-                    });
-                }
-                let isRedemittel = false;
-                if(rest.endsWith('[R]')) { isRedemittel = true; rest = rest.replace('[R]', '').trim(); }
-                let translation = "Traducción no proporcionada";
-                const transMatch = rest.match(/\((.*?)\)$/);
-                if (transMatch) { translation = transMatch[1].trim(); rest = rest.replace(/\((.*?)\)$/, '').trim(); }
-                newGuion.push({ speaker, text: rest, translation, isRedemittel, vocab });
-              });
-              if (newGuion.length === 0) throw new Error("Formato incorrecto.");
-              const scriptObj = { id: Date.now().toString(), title: newScriptTitle, data: JSON.stringify(newGuion), timestamp: Date.now() };
-              const newSaved = [...savedScripts, scriptObj].sort((a,b)=>a.title.localeCompare(b.title));
-              setSavedScripts(newSaved);
-              localStorage.setItem('mullerScripts', JSON.stringify(newSaved));
-              setGuionData(newGuion); setActiveScriptTitle(newScriptTitle); setIsDefaultScript(false); 
-              setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
-              setNewScriptTitle(""); setActiveTab('historia');
-            } catch (e) { alert("Formato: Nombre: Texto en Alemán. (Texto Español) [palabra - trad] [R]"); }
-          };
+  const handleSaveScript = () => {
+    if (!newScriptTitle.trim()) { alert("Dale un título al guion primero."); return; }
+    try {
+        const lines = scriptInput.split('\n');
+        const newGuion = [];
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (!cleanLine) return;
+
+            // 1. Extraer Hablante (Nombre:)
+            const speakerMatch = cleanLine.match(/^([^:]+):/);
+            if (!speakerMatch) return;
+            const speaker = speakerMatch[1].trim();
+            let content = cleanLine.substring(speakerMatch[0].length).trim();
+
+            // 2. Extraer Redemittel [R]
+            let isRedemittel = false;
+            if (content.includes('[R]')) {
+                isRedemittel = true;
+                content = content.replace('[R]', '').trim();
+            }
+
+            // 3. Extraer Vocabulario [...]
+            let vocab = [];
+            const vocabMatch = content.match(/\[(.*?)\]/);
+            if (vocabMatch) {
+                const vocabPairs = vocabMatch[1].split(',');
+                vocabPairs.forEach(pair => {
+                    const parts = pair.split('-');
+                    if (parts.length >= 2) {
+                        const cleanDe = parts[0].trim().replace(/[🔴🔵🟢•]/g, '');
+                        vocab.push({ de: cleanDe, es: parts[1].trim(), diff: 1 });
+                    }
+                });
+                content = content.replace(vocabMatch[0], '').trim();
+            }
+
+            // 4. Extraer Traducción (...)
+            let translation = "Traducción no proporcionada";
+            const transMatch = content.match(/\(([^)]+)\)/);
+            if (transMatch) {
+                translation = transMatch[1].trim();
+                content = content.replace(transMatch[0], '').trim();
+            }
+
+            // 5. Alemán (limpio de círculos para el audio)
+            const germanText = content.replace(/[🔴🔵🟢]/g, '').trim();
+
+            if (germanText) {
+                newGuion.push({ speaker, text: germanText, translation, isRedemittel, vocab });
+            }
+        });
+
+        if (newGuion.length === 0) throw new Error("Formato no reconocido");
+
+        const scriptObj = { id: Date.now().toString(), title: newScriptTitle, data: JSON.stringify(newGuion), timestamp: Date.now() };
+        const newSaved = [...savedScripts, scriptObj].sort((a,b)=>a.title.localeCompare(b.title));
+        setSavedScripts(newSaved);
+        localStorage.setItem('mullerScripts', JSON.stringify(newSaved));
+        setGuionData(newGuion); setActiveScriptTitle(newScriptTitle); setIsDefaultScript(false); 
+        setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
+        setNewScriptTitle(""); setActiveTab('historia');
+    } catch (e) { 
+        alert("Error al procesar. Asegúrate de usar el formato: Nombre: Texto Alemán. (Traducción) [vocab-trad]"); 
+    }
+};
 
           const loadSavedScript = (script) => {
               setGuionData(JSON.parse(script.data)); setActiveScriptTitle(script.title); setIsDefaultScript(false);
