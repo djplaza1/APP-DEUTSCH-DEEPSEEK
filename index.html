@@ -2025,6 +2025,18 @@ function ArticlePracticeFinal({ onBack }) {
             setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
         }
     };
+    const noun = current.de.split(' ')[1];
+        const updatedFailed = { ...userStats.failedArticles };
+        updatedFailed[noun] = (updatedFailed[noun] || 0) + 1;
+        
+        // Esta línea es vital para que se guarde en el localStorage
+        const newStats = { ...userStats, failedArticles: updatedFailed };
+        setUserStats(newStats);
+        localStorage.setItem('mullerStats', JSON.stringify(newStats));
+
+        setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
+    }
+};
 
     if (!mode) return (
         <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
