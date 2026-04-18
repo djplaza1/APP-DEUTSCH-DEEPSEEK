@@ -2106,21 +2106,25 @@ React.useEffect(() => {
 {!feedback ? (
                     <div className="flex flex-wrap justify-center gap-2">
                         {options.filter(o => {
-                            // Si estamos en preposiciones/artículos, mostramos todo
+                            // REGLA DE ORO: Si no es la pestaña de verbos, mostramos TODOS los botones
                             if (type !== 'verbos') return true;
                             
-                            // Si estamos en verbos, filtramos para no saturar
+                            // Si es la pestaña de verbos, filtramos para que no haya 40 botones
                             const relevant = [current.answer, 'für', 'auf', 'an', 'von', 'über', 'mit', 'um', 'zu', 'vor', 'nach', 'in'];
                             return relevant.includes(o) || o.length > 3;
                         }).map(p => (
                             <button 
                                 key={p} 
                                 onClick={() => check(p)} 
-                                className="bg-gray-700 hover:bg-amber-600 py-3 px-5 rounded-lg font-bold text-lg transition min-w-[70px] border-b-4 border-gray-900 active:border-b-0 active:translate-y-1"
+                                className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm transition min-w-[60px] border-b-4 border-gray-900 active:border-b-0 active:translate-y-1 text-white"
                             >
                                 {p}
                             </button>
                         ))}
+                    </div>
+                ) : (
+                    <div className={`p-6 rounded-xl font-bold text-2xl animate-in zoom-in shadow-inner ${feedback.type === 'error' ? 'bg-red-900 text-red-100 border-2 border-red-500' : 'bg-green-900 text-green-100 border-2 border-green-500'}`}>
+                        {feedback.text}
                     </div>
                 ) : (
                     <div className={`p-6 rounded-xl font-bold text-2xl animate-in zoom-in ${feedback.type === 'error' ? 'bg-red-900 text-red-100 border-2 border-red-500' : 'bg-green-900 text-green-100 border-2 border-green-500'}`}>
