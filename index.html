@@ -2009,7 +2009,7 @@ function ArticlePracticeFinal({ onBack }) {
         setFeedback(null);
     };
 
-    const check = (guess) => {
+const check = (guess) => {
         if (queue.length === 0) return;
         const current = queue[0];
         const correct = current.de.split(' ')[0].toLowerCase();
@@ -2022,21 +2022,23 @@ function ArticlePracticeFinal({ onBack }) {
         if (guess === correct) {
             setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
         } else {
+            // 🔴 LÓGICA DEL MURO DE LA VERGÜENZA (Corregida y dentro del else)
+            const noun = current.de.split(' ')[1] || current.de;
+            
+            // Leemos los stats de localStorage para actualizar el Muro
+            const savedData = localStorage.getItem('mullerStats');
+            const currentStats = savedData ? JSON.parse(savedData) : {};
+            
+            const updatedFailed = { ...(currentStats.failedArticles || {}) };
+            updatedFailed[noun] = (updatedFailed[noun] || 0) + 1;
+            
+            // Guardamos la actualización
+            const newStats = { ...currentStats, failedArticles: updatedFailed };
+            localStorage.setItem('mullerStats', JSON.stringify(newStats));
+            
             setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
         }
-    };
-    const noun = current.de.split(' ')[1];
-        const updatedFailed = { ...userStats.failedArticles };
-        updatedFailed[noun] = (updatedFailed[noun] || 0) + 1;
-        
-        // Esta línea es vital para que se guarde en el localStorage
-        const newStats = { ...userStats, failedArticles: updatedFailed };
-        setUserStats(newStats);
-        localStorage.setItem('mullerStats', JSON.stringify(newStats));
-
-        setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
-    }
-};
+    }; // <--- Aquí termina la función check correctamente
 
     if (!mode) return (
         <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
