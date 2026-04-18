@@ -2023,16 +2023,18 @@ function CloudPracticeFinal({ onBack, type }) {
     const [feedback, setFeedback] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
 
-    React.useEffect(() => {
-        // 🔗 URL PERMANENTE (Siempre apunta a la última versión)
-        const GIST_URL = type === 'verbos' 
-            ? "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/verbos_con_preposiciones.json" 
-            : "URL_RAW_DE_TU_GIST_DE_PREPOSICIONES";
+   React.useEffect(() => {
+        // 🔗 URL PERMANENTE (Apunta a tus archivos Raw de GitHub)
+        const URL_VERBOS = "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/verbos_con_preposiciones.json";
+        const URL_PREPOSICIONES = "https://gist.githubusercontent.com/djplaza1/a53fde18c901a7f2d86977174b5b9a72/raw/preposiciones.json";
+
+        // Si el tipo es 'verbos' usa la primera URL, si no (es 'preposiciones'), usa la segunda.
+        const GIST_URL = type === 'verbos' ? URL_VERBOS : URL_PREPOSICIONES;
 
         const fallback = [{ de: "Wir warten ___ den Bus.", answer: "auf", prepCase: "Akk", es: "Esperamos al autobús." }];
 
         setLoading(true);
-        fetch(GIST_URL + "?nocache=" + new Date().getTime()) // 🚀 Anti-Cache para actualizar al instante
+        fetch(GIST_URL + "?nocache=" + new Date().getTime()) 
             .then(res => {
                 if (!res.ok) throw new Error();
                 return res.json();
