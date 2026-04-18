@@ -551,73 +551,43 @@
           };
 
           const handleSaveScript = () => {
-    if (!newScriptTitle.trim()) { alert("Dale un título al guion primero."); return; }
-    try {
-        const lines = scriptInput.split('\n');
-        const newGuion = [];
-        lines.forEach(line => {
-            let cleanLine = line.trim();
-            if (!cleanLine) return;
-
-            // 1. Extraer Hablante (Nombre:)
-            const speakerMatch = cleanLine.match(/^([^:]+):/);
-            if (!speakerMatch) return;
-            const speaker = speakerMatch[1].trim();
-            let content = cleanLine.substring(speakerMatch[0].length).trim();
-
-            // 2. Extraer Redemittel [R] (si existe en cualquier parte)
-            let isRedemittel = false;
-            if (content.includes('[R]')) {
-                isRedemittel = true;
-                content = content.replace('[R]', '').trim();
-            }
-
-            // 3. Extraer Vocabulario [...] (al final o antes de [R])
-            let vocab = [];
-            const vocabMatch = content.match(/\[(.*?)\]/);
-            if (vocabMatch) {
-                const vocabPairs = vocabMatch[1].split(',');
-                vocabPairs.forEach(pair => {
-                    const parts = pair.split('-');
-                    if (parts.length >= 2) {
-                        // Limpiamos símbolos raros del vocabulario para el audio
-                        const cleanDe = parts[0].trim().replace(/[🔴🔵🟢•]/g, '');
-                        vocab.push({ de: cleanDe, es: parts[1].trim(), diff: 1 });
-                    }
-                });
-                content = content.replace(vocabMatch[0], '').trim();
-            }
-
-            // 4. Extraer Traducción (...)
-            let translation = "Traducción no proporcionada";
-            const transMatch = content.match(/\(([^)]+)\)/);
-            if (transMatch) {
-                translation = transMatch[1].trim();
-                content = content.replace(transMatch[0], '').trim();
-            }
-
-            // 5. Lo que queda es el texto en Alemán (que ya debería traer el "Nützlich" de la IA)
-            // Eliminamos círculos de colores si los hubiera para que el audio no se trabe
-            const germanText = content.replace(/[🔴🔵🟢]/g, '').trim();
-
-            if (germanText) {
-                newGuion.push({ speaker, text: germanText, translation, isRedemittel, vocab });
-            }
-        });
-
-        if (newGuion.length === 0) throw new Error("Formato no reconocido");
-
-        const scriptObj = { id: Date.now().toString(), title: newScriptTitle, data: JSON.stringify(newGuion), timestamp: Date.now() };
-        const newSaved = [...savedScripts, scriptObj].sort((a,b)=>a.title.localeCompare(b.title));
-        setSavedScripts(newSaved);
-        localStorage.setItem('mullerScripts', JSON.stringify(newSaved));
-        setGuionData(newGuion); setActiveScriptTitle(newScriptTitle); setIsDefaultScript(false); 
-        setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
-        setNewScriptTitle(""); setActiveTab('historia');
-    } catch (e) { 
-        alert("Error al procesar. Asegúrate de usar el formato: Nombre: Texto Alemán. (Traducción) [vocab-trad]"); 
-    }
-};
+            if (!newScriptTitle.trim()) { alert("Dale un título al guion primero."); return; }
+            try {
+              const lines = scriptInput.split('\n');
+              const newGuion = [];
+              lines.forEach(line => {
+                if (!line.trim()) return;
+                const speakerMatch = line.match(/^([\w\s]+):/);
+                if (!speakerMatch) return;
+                const speaker = speakerMatch[1].trim();
+                let rest = line.substring(speakerMatch[0].length).trim();
+                let vocab = [];
+                const vocabMatch = rest.match(/\[(.*?)\]$/);
+                if (vocabMatch) {
+                    rest = rest.replace(/\[(.*?)\]$/, '').trim();
+                    const vocabPairs = vocabMatch[1].split(',');
+                    vocabPairs.forEach(pair => {
+                        const parts = pair.split('-');
+                        if(parts.length >= 2) vocab.push({ de: parts[0].trim(), es: parts[1].trim(), diff: 1 });
+                    });
+                }
+                let isRedemittel = false;
+                if(rest.endsWith('[R]')) { isRedemittel = true; rest = rest.replace('[R]', '').trim(); }
+                let translation = "Traducción no proporcionada";
+                const transMatch = rest.match(/\((.*?)\)$/);
+                if (transMatch) { translation = transMatch[1].trim(); rest = rest.replace(/\((.*?)\)$/, '').trim(); }
+                newGuion.push({ speaker, text: rest, translation, isRedemittel, vocab });
+              });
+              if (newGuion.length === 0) throw new Error("Formato incorrecto.");
+              const scriptObj = { id: Date.now().toString(), title: newScriptTitle, data: JSON.stringify(newGuion), timestamp: Date.now() };
+              const newSaved = [...savedScripts, scriptObj].sort((a,b)=>a.title.localeCompare(b.title));
+              setSavedScripts(newSaved);
+              localStorage.setItem('mullerScripts', JSON.stringify(newSaved));
+              setGuionData(newGuion); setActiveScriptTitle(newScriptTitle); setIsDefaultScript(false); 
+              setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
+              setNewScriptTitle(""); setActiveTab('historia');
+            } catch (e) { alert("Formato: Nombre: Texto en Alemán. (Texto Español) [palabra - trad] [R]"); }
+          };
 
           const loadSavedScript = (script) => {
               setGuionData(JSON.parse(script.data)); setActiveScriptTitle(script.title); setIsDefaultScript(false);
@@ -1365,192 +1335,93 @@
                       </div>
                   )}
 
-{/* BIBLIOTECA (con checkboxes para mezcla) */}
-{activeTab === 'guiones' && !practiceActive && (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-6 md:gap-8 h-full animate-in fade-in">
-        
-        {/* COLUMNA IZQUIERDA: GENERADOR Y GUIONES */}
-        <div className="flex-[2] bg-gray-800/50 p-4 md:p-6 rounded-2xl border border-gray-700 flex flex-col max-h-full overflow-y-auto hide-scrollbar">
-            <div className="bg-purple-900/30 border border-purple-500/50 p-4 md:p-5 rounded-xl mb-4 md:mb-6">
-                <h3 className="text-purple-300 font-bold flex items-center gap-2 mb-2 text-sm md:text-base">
-                    <Icon name="sparkles" className="w-4 h-4 md:w-5 md:h-5" /> Instrucciones para la IA (ChatGPT/Gemini)
-                </h3>
-                <p className="text-xs md:text-sm text-gray-300 mb-3">
-                    Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.
-                </p>
-                <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
-                    <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
-                        "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
-                    </p>
-                    <button 
-                        className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" 
-                        onClick={() => navigator.clipboard.writeText(`Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.\n\nFormato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]`)}
-                    >
-                        <Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" />
-                    </button>
-                </div>
-            </div>
+                  {/* BIBLIOTECA (con checkboxes para mezcla) */}
+                  {activeTab === 'guiones' && !practiceActive && (
+                      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-6 md:gap-8 h-full animate-in fade-in">
+                          <div className="flex-[2] bg-gray-800/50 p-4 md:p-6 rounded-2xl border border-gray-700 flex flex-col max-h-full overflow-y-auto hide-scrollbar">
+                              <div className="bg-purple-900/30 border border-purple-500/50 p-4 md:p-5 rounded-xl mb-4 md:mb-6">
+                                  <h3 className="text-purple-300 font-bold flex items-center gap-2 mb-2 text-sm md:text-base"><Icon name="sparkles" className="w-4 h-4 md:w-5 md:h-5" /> Instrucciones para la IA (ChatGPT/Gemini)</h3>
+                                  <p className="text-xs md:text-sm text-gray-300 mb-3">Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.</p>
+                                  <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
+                                      <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
+                                          "Eres un profesor nativo de alemán. Escribe un diálogo divertido de 15 líneas en nivel B1 sobre [TEMA]. Utiliza conectores, verbos separables y preposiciones.<br/><br/>Formato: Nombre: Frase en alemán. (Traducción) [palabra - traducción, otra - traducción] [R]"
+                                      </p>
+                                      <button className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" onClick={() => navigator.clipboard.writeText("Eres un profesor nativo de alemán. Escribe un diálogo divertido de 15 líneas en nivel B1 sobre [TEMA]. Utiliza conectores, verbos separables y preposiciones.\n\nFormato: Nombre: Frase en alemán. (Traducción) [palabra - traducción, otra - traducción] [R]")}><Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                  </div>
+                              </div>
+                              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-purple-400"><Icon name="edit-3" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Guion Copiado</h2>
+                              <input type="text" placeholder="Ej: Lektion 17: Die Reise..." className="w-full bg-black/50 border border-gray-600 p-2 md:p-3 rounded-lg text-white mb-3 md:mb-4 outline-none focus:border-purple-500 text-sm md:text-base" value={newScriptTitle} onChange={(e) => setNewScriptTitle(e.target.value)} />
+                              <textarea className="w-full flex-1 min-h-[120px] md:min-h-[150px] bg-black/50 border border-gray-600 p-3 md:p-4 rounded-lg text-white font-mono text-xs md:text-sm mb-3 md:mb-4 outline-none focus:border-purple-500 resize-none" placeholder="Pega aquí el resultado de la IA..." value={scriptInput} onChange={(e) => setScriptInput(e.target.value)} />
+                              <button onClick={handleSaveScript} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 md:py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-sm md:text-base"><Icon name="save" className="w-4 h-4 md:w-5 md:h-5" /> Guardar y Estudiar</button>
+                          </div>
+                          <div className="w-full md:w-1/3 flex flex-col gap-4 max-h-[600px] md:max-h-full">
+                              <div className="bg-gray-900 p-4 md:p-5 rounded-2xl border border-gray-800 flex flex-col shrink-0 h-1/3 min-h-[180px] md:min-h-[200px]">
+                                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-gray-200"><Icon name="file-text" className="w-5 h-5 md:w-6 md:h-6" /> Tus Guiones</h2>
+                                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
+                                      {savedScripts.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">No hay guiones guardados.</p> : null}
+                                      {savedScripts.map(script => (
+                                          <div key={script.id} className="bg-black/40 p-3 md:p-4 rounded-lg border border-gray-700 hover:border-purple-500 cursor-pointer transition flex justify-between items-center group">
+                                              <div onClick={() => loadSavedScript(script)} className="flex-1">
+                                                  <p className="font-bold text-white group-hover:text-purple-400 truncate text-sm md:text-base">{script.title}</p>
+                                                  <p className="text-[10px] md:text-xs text-gray-500 mt-1">Click para cargar</p>
+                                              </div>
+                                              <button onClick={(e) => { e.stopPropagation(); const newScripts = savedScripts.filter(s => s.id !== script.id); setSavedScripts(newScripts); localStorage.setItem('mullerScripts', JSON.stringify(newScripts)); }} className="text-gray-500 hover:text-red-500 p-1 md:p-2"><Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </div>
+                              <div className="bg-amber-900/20 p-4 md:p-5 rounded-2xl border border-amber-800/50 flex flex-col flex-1 min-h-0">
+                                  <h2 className="text-lg md:text-xl font-bold text-amber-400 flex items-center gap-2 mb-3"><Icon name="library" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Vocabulario</h2>
+                                  <div className="bg-black/40 p-2 md:p-3 rounded-xl border border-amber-900/50 mb-3 md:mb-4 flex flex-col gap-2 shrink-0">
+                                      <div className="flex gap-2 items-center">
+                                          <input type="text" placeholder="Título (Ej: Lektion 12)" className="w-2/3 bg-black/50 border border-amber-800 p-1.5 md:p-2 rounded-lg text-white text-xs md:text-sm outline-none focus:border-amber-500" value={vocabTitleInput} onChange={(e) => setVocabTitleInput(e.target.value)} />
+                                          <button onClick={handleSaveCustomVocab} className="w-1/3 bg-amber-600 hover:bg-amber-500 text-white py-1.5 md:py-2 rounded-lg font-bold text-xs transition shadow-lg flex justify-center items-center gap-1"><Icon name="save" className="w-3 h-3 md:w-4 md:h-4" /> Guardar</button>
+                                      </div>
+                                      <textarea className="w-full h-12 md:h-14 bg-black/50 border border-amber-800 p-2 rounded-lg text-white font-mono text-[10px] md:text-xs outline-none focus:border-amber-500 resize-none" placeholder="Pega aquí tu lista...&#10;der Apfel - la manzana" value={vocabTextInput} onChange={(e) => setVocabTextInput(e.target.value)} />
+                                  </div>
+                                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
+                                      {customVocabLessons.length === 0 ? <p className="text-gray-500 text-xs italic">Tus lecciones guardadas aparecerán aquí.</p> : null}
+                                      {customVocabLessons.map(lesson => (
+                                          <div key={lesson.id} className="bg-black/40 p-2 md:p-3 rounded-lg border border-amber-900/50 hover:border-amber-500 transition flex flex-col gap-2 md:gap-3 group">
+                                              <div className="flex-1">
+                                                  <p className="font-bold text-amber-100 text-xs md:text-sm truncate">{lesson.title}</p>
+                                                  <p className="text-[10px] text-amber-600 mt-0.5">{lesson.words.length} palabras</p>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                  <button onClick={(e) => { e.stopPropagation(); let practiceList = [...lesson.words]; practiceList.sort(() => Math.random() - 0.5); let diffWords = lesson.words.filter(w => w.diff === 1); if(diffWords.length > 0) { let extraShuffled = [...diffWords].sort(() => Math.random() - 0.5); practiceList = [...practiceList, ...extraShuffled]; } setCurrentVocabList(practiceList); setActiveScriptTitle(lesson.title); setVocabReviewIndex(0); setShowVocabTranslation(false); setActiveTab('vocabulario'); }} className="bg-amber-600 hover:bg-amber-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold shadow-lg flex-1 flex justify-center items-center gap-1 md:gap-2 transition"><Icon name="play" className="w-3 h-3 md:w-4 md:h-4" /> Practicar</button>
+                                                  <button onClick={(e) => { e.stopPropagation(); const newLessons = customVocabLessons.filter(l => l.id !== lesson.id); setCustomVocabLessons(newLessons); localStorage.setItem('mullerCustomVocab', JSON.stringify(newLessons)); }} className="text-gray-500 hover:text-red-500 bg-gray-900 p-1 rounded-lg border border-gray-700 transition"><Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                                  {/* Botón de práctica avanzada (mezcla seleccionada) */}
+                                  <button onClick={() => { 
+                                      if (customVocabLessons.length === 0) alert("No hay lecciones guardadas.");
+                                      else {
+                                          // Abrir modal de selección de lecciones (componente separado)
+                                          const selected = prompt("Selecciona los números de lección separados por comas:\n" + customVocabLessons.map((l,i) => `${i+1}. ${l.title}`).join('\n'));
+                                          if (selected) {
+                                              const indices = selected.split(',').map(s => parseInt(s.trim())-1).filter(i => i>=0 && i<customVocabLessons.length);
+                                              let words = [];
+                                              indices.forEach(idx => words.push(...customVocabLessons[idx].words));
+                                              words.sort(() => Math.random() - 0.5);
+                                              const diffWords = words.filter(w => w.diff === 1);
+                                              const final = [...words, ...diffWords];
+                                              setCurrentVocabList(final);
+                                              setActiveScriptTitle("Mezcla personalizada");
+                                              setVocabReviewIndex(0);
+                                              setShowVocabTranslation(false);
+                                              setActiveTab('vocabulario');
+                                          }
+                                      }
+                                  }} className="mt-3 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                                      <Icon name="shuffle" className="w-4 h-4" /> Practicar mezcla seleccionada
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
 
-            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-purple-400">
-                <Icon name="edit-3" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Guion Copiado
-            </h2>
-            
-            <input 
-                type="text" 
-                placeholder="Ej: Lektion 17: Die Reise..." 
-                className="w-full bg-black/50 border border-gray-600 p-2 md:p-3 rounded-lg text-white mb-3 md:mb-4 outline-none focus:border-purple-500 text-sm md:text-base" 
-                value={newScriptTitle} 
-                onChange={(e) => setNewScriptTitle(e.target.value)} 
-            />
-            
-            <textarea 
-                className="w-full flex-1 min-h-[120px] md:min-h-[150px] bg-black/50 border border-gray-600 p-3 md:p-4 rounded-lg text-white font-mono text-xs md:text-sm mb-3 md:mb-4 outline-none focus:border-purple-500 resize-none" 
-                placeholder="Pega aquí el resultado de la IA..." 
-                value={scriptInput} 
-                onChange={(e) => setScriptInput(e.target.value)} 
-            />
-            
-            <button 
-                onClick={handleSaveScript} 
-                className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 md:py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-sm md:text-base"
-            >
-                <Icon name="save" className="w-4 h-4 md:w-5 md:h-5" /> Guardar y Estudiar
-            </button>
-        </div>
-        
-        {/* COLUMNA DERECHA: LISTA DE GUIONES Y VOCABULARIO */}
-        <div className="w-full md:w-1/3 flex flex-col gap-4 max-h-[600px] md:max-h-full">
-            {/* Sección Tus Guiones */}
-            <div className="bg-gray-900 p-4 md:p-5 rounded-2xl border border-gray-800 flex flex-col shrink-0 h-1/3 min-h-[180px] md:min-h-[200px]">
-                <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-gray-200">
-                    <Icon name="file-text" className="w-5 h-5 md:w-6 md:h-6" /> Tus Guiones
-                </h2>
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
-                    {savedScripts.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">No hay guiones guardados.</p> : null}
-                    {savedScripts.map(script => (
-                        <div key={script.id} className="bg-black/40 p-3 md:p-4 rounded-lg border border-gray-700 hover:border-purple-500 cursor-pointer transition flex justify-between items-center group">
-                            <div onClick={() => loadSavedScript(script)} className="flex-1">
-                                <p className="font-bold text-white group-hover:text-purple-400 truncate text-sm md:text-base">{script.title}</p>
-                                <p className="text-[10px] md:text-xs text-gray-500 mt-1">Click para cargar</p>
-                            </div>
-                            <button 
-                                onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    const newScripts = savedScripts.filter(s => s.id !== script.id); 
-                                    setSavedScripts(newScripts); 
-                                    localStorage.setItem('mullerScripts', JSON.stringify(newScripts)); 
-                                }} 
-                                className="text-gray-500 hover:text-red-500 p-1 md:p-2"
-                            >
-                                <Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Sección Añadir Vocabulario */}
-            <div className="bg-amber-900/20 p-4 md:p-5 rounded-2xl border border-amber-800/50 flex flex-col flex-1 min-h-0">
-                <h2 className="text-lg md:text-xl font-bold text-amber-400 flex items-center gap-2 mb-3">
-                    <Icon name="library" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Vocabulario
-                </h2>
-                <div className="bg-black/40 p-2 md:p-3 rounded-xl border border-amber-900/50 mb-3 md:mb-4 flex flex-col gap-2 shrink-0">
-                    <div className="flex gap-2 items-center">
-                        <input 
-                            type="text" 
-                            placeholder="Título (Ej: Lektion 12)" 
-                            className="w-2/3 bg-black/50 border border-amber-800 p-1.5 md:p-2 rounded-lg text-white text-xs md:text-sm outline-none focus:border-amber-500" 
-                            value={vocabTitleInput} 
-                            onChange={(e) => setVocabTitleInput(e.target.value)} 
-                        />
-                        <button 
-                            onClick={handleSaveCustomVocab} 
-                            className="w-1/3 bg-amber-600 hover:bg-amber-500 text-white py-1.5 md:py-2 rounded-lg font-bold text-xs transition shadow-lg flex justify-center items-center gap-1"
-                        >
-                            <Icon name="save" className="w-3 h-3 md:w-4 md:h-4" /> Guardar
-                        </button>
-                    </div>
-                    <textarea 
-                        className="w-full h-12 md:h-14 bg-black/50 border border-amber-800 p-2 rounded-lg text-white font-mono text-[10px] md:text-xs outline-none focus:border-amber-500 resize-none" 
-                        placeholder="Pega aquí tu lista...&#10;der Apfel - la manzana" 
-                        value={vocabTextInput} 
-                        onChange={(e) => setVocabTextInput(e.target.value)} 
-                    />
-                </div>
-                
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
-                    {customVocabLessons.length === 0 ? <p className="text-gray-500 text-xs italic">Tus lecciones guardadas aparecerán aquí.</p> : null}
-                    {customVocabLessons.map(lesson => (
-                        <div key={lesson.id} className="bg-black/40 p-2 md:p-3 rounded-lg border border-amber-900/50 hover:border-amber-500 transition flex flex-col gap-2 md:gap-3 group">
-                            <div className="flex-1">
-                                <p className="font-bold text-amber-100 text-xs md:text-sm truncate">{lesson.title}</p>
-                                <p className="text-[10px] text-amber-600 mt-0.5">{lesson.words.length} palabras</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button 
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        let practiceList = [...lesson.words]; 
-                                        practiceList.sort(() => Math.random() - 0.5); 
-                                        let diffWords = lesson.words.filter(w => w.diff === 1); 
-                                        if(diffWords.length > 0) { 
-                                            let extraShuffled = [...diffWords].sort(() => Math.random() - 0.5); 
-                                            practiceList = [...practiceList, ...extraShuffled]; 
-                                        } 
-                                        setCurrentVocabList(practiceList); 
-                                        setActiveScriptTitle(lesson.title); 
-                                        setVocabReviewIndex(0); 
-                                        setShowVocabTranslation(false); 
-                                        setActiveTab('vocabulario'); 
-                                    }} 
-                                    className="bg-amber-600 hover:bg-amber-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold shadow-lg flex-1 flex justify-center items-center gap-1 md:gap-2 transition"
-                                >
-                                    <Icon name="play" className="w-3 h-3 md:w-4 md:h-4" /> Practicar
-                                </button>
-                                <button 
-                                    onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        const newLessons = customVocabLessons.filter(l => l.id !== lesson.id); 
-                                        setCustomVocabLessons(newLessons); 
-                                        localStorage.setItem('mullerCustomVocab', JSON.stringify(newLessons)); 
-                                    }} 
-                                    className="text-gray-500 hover:text-red-500 bg-gray-900 p-1 rounded-lg border border-gray-700 transition"
-                                >
-                                    <Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <button 
-                    onClick={() => { 
-                        if (customVocabLessons.length === 0) alert("No hay lecciones guardadas.");
-                        else {
-                            const selected = prompt("Selecciona los números de lección separados por comas:\n" + customVocabLessons.map((l,i) => `${i+1}. ${l.title}`).join('\n'));
-                            if (selected) {
-                                const indices = selected.split(',').map(s => parseInt(s.trim())-1).filter(i => i>=0 && i<customVocabLessons.length);
-                                let words = [];
-                                indices.forEach(idx => words.push(...customVocabLessons[idx].words));
-                                words.sort(() => Math.random() - 0.5);
-                                const diffWords = words.filter(w => w.diff === 1);
-                                const final = [...words, ...diffWords];
-                                setCurrentVocabList(final);
-                                setActiveScriptTitle("Mezcla personalizada");
-                                setVocabReviewIndex(0);
-                                setShowVocabTranslation(false);
-                                setActiveTab('vocabulario');
-                            }
-                        }
-                    }} 
-                    className="mt-3 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2"
-                >
-                    <Icon name="shuffle" className="w-4 h-4" /> Practicar mezcla seleccionada
-                </button>
-            </div>
-        </div>
-    </div>
-)}
                   {/* VOCABULARIO (con botón de escritura a mano) */}
                   {activeTab === 'vocabulario' && !practiceActive && (
                       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 animate-in fade-in">
