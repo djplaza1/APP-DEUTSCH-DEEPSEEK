@@ -1894,157 +1894,166 @@ function extractArticlesFromGuionFinal(guionData, scriptTitle) {
 // ============================================================================
 
 function ArticlePracticeFinal({ onBack }) {
-    const [vocab, setVocab] = React.useState([]);
-    const [index, setIndex] = React.useState(0);
+    const [queue, setQueue] = React.useState([]);
     const [feedback, setFeedback] = React.useState(null);
 
     React.useEffect(() => {
-        // Extraer sustantivos del guion actual o base de datos
+        // 1. Extraer Nominativo estricto del vocabulario de la IA
         const allVocab = window.__DEFAULT_GUION__?.flatMap(s => s.vocab || []) || [];
-        const nouns = allVocab.filter(v => v.de.startsWith('der ') || v.de.startsWith('die ') || v.de.startsWith('das '));
-        // Mezclar aleatoriamente
-        setVocab(nouns.sort(() => Math.random() - 0.5));
+        const nouns = allVocab.filter(v => /^(der|die|das)\s/i.test(v.de));
+        const uniqueNouns = [...new Map(nouns.map(item => [item.de, item])).values()];
+        setQueue(uniqueNouns.sort(() => Math.random() - 0.5));
     }, []);
 
-    const check = (article) => {
-        const current = vocab[index];
-        const correctArticle = current.de.split(' ')[0].toLowerCase();
+    React.useEffect(() => {
+        // 2. Modo Speed-Run (Teclado)
+        const handleKeyDown = (e) => {
+            if (feedback || queue.length === 0) return;
+            if (e.key === '1' || e.key === 'ArrowLeft') check('der');
+            if (e.key === '2' || e.key === 'ArrowDown') check('die');
+            if (e.key === '3' || e.key === 'ArrowRight') check('das');
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [feedback, queue]);
+
+    const check = (guess) => {
+        if (queue.length === 0) return;
+        const current = queue[0];
+        const correct = current.de.split(' ')[0].toLowerCase();
+
+        // AUDIO DESPUÉS DE LA RESPUESTA
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(current.de);
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
+
+        if (guess === correct) {
+            setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
+            setTimeout(() => {
+                setQueue(prev => prev.slice(1)); // Eliminar de la cola
+                setFeedback(null);
+            }, 1200);
+        } else {
+            setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
+            setTimeout(() => {
+                setQueue(prev => [...prev.slice(1), prev[0]]); // ACTIVE RECALL: Al final de la cola
+                setFeedback(null);
+            }, 2000);
+        }
+    };
+
+    if (queue.length === 0) return (
+        <div className="flex flex-col items-center justify-center h-full p-4">
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
+            <h2 className="text-3xl font-bold text-green-400">¡Entrenamiento Completado! 🏆</h2>
+        </div>
+    );
+
+    const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
+
+    return (
+        <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver</button>
+            <h2 className="text-3xl font-bold mb-8 text-blue-300">Artículos (Speed-Run)</h2>
+            
+            <div className="bg-slate-800 p-10 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700 relative">
+                <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
+                <p className="text-gray-400 mb-8 text-xl italic">{queue[0].es}</p>
+                
+                {!feedback ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => check('der')} className="bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-xl transition flex flex-col items-center">🔵 DER <span className="text-[10px] text-blue-200 mt-1">Tecla 1</span></button>
+                        <button onClick={() => check('die')} className="bg-red-600 hover:bg-red-500 py-4 rounded-xl font-bold text-xl transition flex flex-col items-center">🔴 DIE <span className="text-[10px] text-red-200 mt-1">Tecla 2</span></button>
+                        <button onClick={() => check('das')} className="bg-green-600 hover:bg-green-500 py-4 rounded-xl font-bold text-xl transition flex flex-col items-center">🟢 DAS <span className="text-[10px] text-green-200 mt-1">Tecla 3</span></button>
+                    </div>
+                ) : (
+                    <div className={`p-6 rounded-xl font-black text-2xl animate-in zoom-in ${feedback.type === 'error' ? 'bg-red-900 border-2 border-red-500 text-red-100' : 'bg-green-900 border-2 border-green-500 text-green-100'}`}>
+                        {feedback.text}
+                    </div>
+                )}
+                <p className="text-gray-500 text-sm mt-8 font-bold">Faltan: {queue.length}</p>
+            </div>
+        </div>
+    );
+}
+
+function CloudPracticeFinal({ onBack, type }) {
+    const [queue, setQueue] = React.useState([]);
+    const [feedback, setFeedback] = React.useState(null);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        // CONEXIÓN GITHUB GIST - TU URL REAL ESTÁ AQUÍ
+        const GIST_URL = type === 'verbos' 
+            ? "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/c713f448a680c28c1a73219a43dc5544cd76b4fa/verbos_con_preposiciones.json" 
+            : "URL_RAW_DE_TU_GIST_DE_PREPOSICIONES"; // Preparado para el futuro
+
+        // Fallback de emergencia
+        const fallback = type === 'verbos' 
+            ? [{ de: "Wir warten ___ den Bus.", answer: "auf", prepCase: "Akk", es: "Esperamos al autobús." }]
+            : [{ de: "Das Bild hängt an ___ Wand (die).", answer: "der", prepCase: "Dat", es: "El cuadro cuelga en la pared." }];
+
+        if (GIST_URL.includes("URL_RAW")) {
+            setQueue(fallback.sort(() => Math.random() - 0.5));
+            setLoading(false);
+        } else {
+            fetch(GIST_URL)
+                .then(res => res.json())
+                .then(data => { setQueue(data.sort(() => Math.random() - 0.5)); setLoading(false); })
+                .catch(() => { setQueue(fallback); setLoading(false); });
+        }
+    }, [type]);
+
+    const check = (guess) => {
+        if (queue.length === 0) return;
+        const current = queue[0];
         
-        if (article === correctArticle) {
-            setFeedback(`¡Correcto! Es ${current.de}`);
-            setTimeout(() => {
-                setFeedback(null);
-                setIndex((prev) => (prev + 1) % vocab.length);
-            }, 1000);
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(current.de.replace('___', current.answer));
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
+
+        if (guess === current.answer) {
+            setFeedback({ type: 'success', text: `¡Richtig! Rige ${current.prepCase}` });
+            setTimeout(() => { setQueue(prev => prev.slice(1)); setFeedback(null); }, 1500);
         } else {
-            setFeedback(`⚠️ PELIGRO: Has fallado. Lo correcto es ${current.de}`);
+            setFeedback({ type: 'error', text: `⚠️ PELIGRO: Exige '${current.answer}'` });
+            setTimeout(() => { setQueue(prev => [...prev.slice(1), prev[0]]); setFeedback(null); }, 2500);
         }
     };
 
-    if (vocab.length === 0) return <div className="text-center mt-10">Cargando vocabulario...</div>;
+    if (loading) return <div className="text-center mt-10 text-white font-bold text-xl">Conectando con GitHub...</div>;
+    if (queue.length === 0) return <div className="flex flex-col items-center justify-center h-full p-4"><button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button><h2 className="text-3xl font-bold text-green-400">¡Completado! 🏆</h2></div>;
 
-    const current = vocab[index];
-    const wordWithoutArticle = current.de.split(' ').slice(1).join(' ');
-
-    return (
-        <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver a Carpetas</button>
-            <h2 className="text-3xl font-bold mb-8 text-blue-300">Entrenamiento de Artículos</h2>
-            
-            <div className="bg-slate-800 p-10 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700">
-                <h3 className="text-4xl font-bold text-white mb-2">{wordWithoutArticle}</h3>
-                <p className="text-gray-400 mb-8 text-lg">{current.es}</p>
-                
-                {!feedback ? (
-                    <div className="flex gap-4 justify-center">
-                        <button onClick={() => check('der')} className="bg-blue-600 hover:bg-blue-500 px-6 py-4 rounded-xl font-bold text-2xl transition">🔵 DER</button>
-                        <button onClick={() => check('die')} className="bg-red-600 hover:bg-red-500 px-6 py-4 rounded-xl font-bold text-2xl transition">🔴 DIE</button>
-                        <button onClick={() => check('das')} className="bg-green-600 hover:bg-green-500 px-6 py-4 rounded-xl font-bold text-2xl transition">🟢 DAS</button>
-                    </div>
-                ) : (
-                    <div className={`p-4 rounded-xl font-bold text-xl animate-in zoom-in ${feedback.includes('PELIGRO') ? 'bg-red-900/80 text-red-200' : 'bg-green-900/80 text-green-200'}`}>
-                        {feedback}
-                    </div>
-                )}
-                
-                <p className="text-gray-500 text-sm mt-8">Tarjeta {index + 1} de {vocab.length}</p>
-            </div>
-        </div>
-    );
-}
-
-function VerbsPrepPracticeFinal({ onBack }) {
-    // Ejercicios B1 estrictos
-    const exercises = [
-        { de: "Ich interessiere mich ___ Kunst.", answer: "für", prepCase: "Akkusativ", es: "Me intereso por el arte." },
-        { de: "Wir warten ___ den Bus.", answer: "auf", prepCase: "Akkusativ", es: "Esperamos al autobús." },
-        { de: "Er erinnert sich ___ die Reise.", answer: "an", prepCase: "Akkusativ", es: "Él se acuerda del viaje." },
-        { de: "Sie träumt ___ einem Haus.", answer: "von", prepCase: "Dativ", es: "Ella sueña con una casa." }
-    ];
+    const current = queue[0];
     
-    const [index, setIndex] = React.useState(0);
-    const [feedback, setFeedback] = React.useState(null);
-
-    const check = (prep) => {
-        if (prep === exercises[index].answer) {
-            setFeedback(`¡Correcto! Rige **${exercises[index].prepCase}**.`);
-            setTimeout(() => {
-                setFeedback(null);
-                setIndex((prev) => (prev + 1) % exercises.length);
-            }, 1500);
-        } else {
-            setFeedback(`⚠️ PELIGRO: Error típico. El verbo exige la preposición '${exercises[index].answer}'.`);
-        }
-    };
+    // TODAS TUS PREPOSICIONES ESTÁN AQUÍ
+    const options = type === 'verbos' 
+        ? ['für', 'auf', 'an', 'von', 'über', 'mit', 'um', 'zu', 'vor', 'nach', 'in'] 
+        : ['den', 'dem', 'die', 'der', 'das', 'des'];
 
     return (
         <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver a Carpetas</button>
-            <h2 className="text-3xl font-bold mb-8 text-green-300">Verbos + Preposiciones</h2>
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver</button>
+            <h2 className="text-3xl font-bold mb-8 text-amber-300">{type === 'verbos' ? 'Verbos + Prep' : 'Preposiciones'}</h2>
             
-            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg w-full border border-slate-700">
-                <p className="text-gray-400 mb-2">{exercises[index].es}</p>
-                <h3 className="text-2xl font-medium text-white mb-8">{exercises[index].de.replace('___', '_____')}</h3>
+            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-2xl w-full border border-slate-700">
+                <p className="text-gray-400 mb-2">{current.es}</p>
+                <h3 className="text-3xl font-bold text-white mb-8">{current.de.replace('___', '_____')}</h3>
                 
                 {!feedback ? (
-                    <div className="grid grid-cols-2 gap-4">
-                        {['für', 'auf', 'an', 'von', 'über', 'mit'].map(p => (
-                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-green-600 px-4 py-3 rounded-lg font-bold text-xl transition">{p}</button>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {options.map(p => (
+                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-amber-600 py-3 px-6 rounded-lg font-bold text-xl transition min-w-[80px]">{p}</button>
                         ))}
                     </div>
                 ) : (
-                    <div className={`p-4 rounded-xl font-bold text-lg animate-in zoom-in ${feedback.includes('PELIGRO') ? 'bg-red-900/80 text-red-200' : 'bg-green-900/80 text-green-200'}`}>
-                        {feedback}
+                    <div className={`p-4 rounded-xl font-bold text-2xl animate-in zoom-in ${feedback.type === 'error' ? 'bg-red-900 text-red-200 border border-red-500' : 'bg-green-900 text-green-200 border border-green-500'}`}>
+                        {feedback.text}
                     </div>
                 )}
-            </div>
-        </div>
-    );
-}
-
-function PrepositionPracticeFinal({ onBack }) {
-    const exercises = [
-        { de: "Das Bild hängt an ___ Wand. (die)", answer: "der", case: "Dativ", es: "El cuadro está colgado en la pared (Wo?)." },
-        { de: "Ich hänge das Bild an ___ Wand. (die)", answer: "die", case: "Akkusativ", es: "Yo cuelgo el cuadro en la pared (Wohin?)." },
-        { de: "Wir gehen in ___ Park. (der)", answer: "den", case: "Akkusativ", es: "Vamos al parque (Wohin?)." },
-        { de: "Wir sind in ___ Park. (der)", answer: "dem", case: "Dativ", es: "Estamos en el parque (Wo?)." }
-    ];
-
-    const [index, setIndex] = React.useState(0);
-    const [feedback, setFeedback] = React.useState(null);
-
-    const check = (ans) => {
-        if (ans === exercises[index].answer) {
-            setFeedback(`¡Exacto! Es **${exercises[index].case}**.`);
-            setTimeout(() => {
-                setFeedback(null);
-                setIndex((prev) => (prev + 1) % exercises.length);
-            }, 1500);
-        } else {
-            setFeedback(`⚠️ PELIGRO: Recuerda analizar si hay movimiento (Akkusativ) o estado (Dativ).`);
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver a Carpetas</button>
-            <h2 className="text-3xl font-bold mb-8 text-amber-300">Preposiciones (Wechselpräpositionen)</h2>
-            
-            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg w-full border border-slate-700">
-                <p className="text-gray-400 mb-2">{exercises[index].es}</p>
-                <h3 className="text-2xl font-medium text-white mb-8">{exercises[index].de.replace('___', '_____')}</h3>
-                
-                {!feedback ? (
-                    <div className="grid grid-cols-2 gap-4">
-                        {['den', 'dem', 'die', 'der', 'das'].map(p => (
-                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-amber-600 px-4 py-3 rounded-lg font-bold text-xl transition">{p}</button>
-                        ))}
-                    </div>
-                ) : (
-                    <div className={`p-4 rounded-xl font-bold text-lg animate-in zoom-in ${feedback.includes('PELIGRO') ? 'bg-red-900/80 text-red-200' : 'bg-green-900/80 text-green-200'}`}>
-                        {feedback}
-                    </div>
-                )}
+                <p className="text-gray-500 text-sm mt-6 font-bold">Faltan: {queue.length}</p>
             </div>
         </div>
     );
@@ -2052,17 +2061,14 @@ function PrepositionPracticeFinal({ onBack }) {
 
 function AdvancedPracticePanelFinal() {
     const [show, setShow] = React.useState(false);
-    const [activeMode, setActiveMode] = React.useState('menu'); // 'menu', 'articulos', 'verbos_prep', 'preposiciones'
+    const [activeMode, setActiveMode] = React.useState('menu');
 
     React.useEffect(() => {
         const open = () => { setShow(true); setActiveMode('menu'); };
         const close = () => setShow(false);
         window.addEventListener('toggleAdvancedModal', open);
         window.addEventListener('closeAdvancedModal', close);
-        return () => {
-            window.removeEventListener('toggleAdvancedModal', open);
-            window.removeEventListener('closeAdvancedModal', close);
-        };
+        return () => { window.removeEventListener('toggleAdvancedModal', open); window.removeEventListener('closeAdvancedModal', close); };
     }, []);
 
     if (!show) return null;
@@ -2079,32 +2085,34 @@ function AdvancedPracticePanelFinal() {
 
             {activeMode === 'menu' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
-                    <button onClick={() => setActiveMode('articulos')} className="bg-slate-900 border border-blue-800/50 p-8 rounded-2xl hover:bg-blue-900/30 hover:border-blue-500 transition shadow-lg group flex flex-col items-center text-center">
+                    <button onClick={() => setActiveMode('articulos')} className="bg-slate-900 border border-blue-800/50 p-8 rounded-2xl hover:bg-blue-900/30 transition shadow-lg group flex flex-col items-center text-center">
                         <div className="text-5xl mb-4 group-hover:scale-110 transition">📘</div>
-                        <h3 className="text-2xl font-bold text-blue-400 mb-2">Artículos</h3>
-                        <p className="text-sm text-gray-400">Practica 🔴Die, 🔵Der, 🟢Das con el vocabulario de tus guiones.</p>
+                        <h3 className="text-2xl font-bold text-blue-400 mb-2">Artículos (Der/Die/Das)</h3>
+                        <p className="text-sm text-gray-400">Extraído en Nominativo estricto. Usa teclado (1, 2, 3).</p>
                     </button>
 
-                    <button onClick={() => setActiveMode('verbos_prep')} className="bg-slate-900 border border-green-800/50 p-8 rounded-2xl hover:bg-green-900/30 hover:border-green-500 transition shadow-lg group flex flex-col items-center text-center">
+                    <button onClick={() => setActiveMode('verbos_prep')} className="bg-slate-900 border border-green-800/50 p-8 rounded-2xl hover:bg-green-900/30 transition shadow-lg group flex flex-col items-center text-center">
                         <div className="text-5xl mb-4 group-hover:scale-110 transition">📗</div>
-                        <h3 className="text-2xl font-bold text-green-400 mb-2">Verbos + Prep.</h3>
-                        <p className="text-sm text-gray-400">Domina las estructuras fijas del B1 (ej. sich erinnern an).</p>
+                        <h3 className="text-2xl font-bold text-green-400 mb-2">Verbos + Prep (Nube)</h3>
+                        <p className="text-sm text-gray-400">Conectado a tu GitHub. Sistema de repetición de fallos.</p>
                     </button>
 
-                    <button onClick={() => setActiveMode('preposiciones')} className="bg-slate-900 border border-amber-800/50 p-8 rounded-2xl hover:bg-amber-900/30 hover:border-amber-500 transition shadow-lg group flex flex-col items-center text-center">
+                    <button onClick={() => setActiveMode('preposiciones')} className="bg-slate-900 border border-amber-800/50 p-8 rounded-2xl hover:bg-amber-900/30 transition shadow-lg group flex flex-col items-center text-center">
                         <div className="text-5xl mb-4 group-hover:scale-110 transition">📙</div>
-                        <h3 className="text-2xl font-bold text-amber-400 mb-2">Preposiciones</h3>
-                        <p className="text-sm text-gray-400">Wechselpräpositionen y casos: ¿Akkusativ o Dativ?</p>
+                        <h3 className="text-2xl font-bold text-amber-400 mb-2">Casos (Wechselprep)</h3>
+                        <p className="text-sm text-gray-400">Próximamente. Dativ vs Akkusativ.</p>
                     </button>
                 </div>
             )}
 
             {activeMode === 'articulos' && <ArticlePracticeFinal onBack={() => setActiveMode('menu')} />}
-            {activeMode === 'verbos_prep' && <VerbsPrepPracticeFinal onBack={() => setActiveMode('menu')} />}
-            {activeMode === 'preposiciones' && <PrepositionPracticeFinal onBack={() => setActiveMode('menu')} />}
+            {activeMode === 'verbos_prep' && <CloudPracticeFinal onBack={() => setActiveMode('menu')} type="verbos" />}
+            {activeMode === 'preposiciones' && <CloudPracticeFinal onBack={() => setActiveMode('menu')} type="preposiciones" />}
         </div>
     );
 }
+
+// ============================================================================
 
 // ============================================================================
 // -------------------- INYECCIÓN DE BOTONES (morado y naranja) --------------------
