@@ -238,17 +238,29 @@
           const [customVocabLessons, setCustomVocabLessons] = useState([]);
           const [vocabTitleInput, setVocabTitleInput] = useState("");
           const [vocabTextInput, setVocabTextInput] = useState("");
-          const [userStats, setUserStats] = useState({
-              username: "Estudiante", isPremium: true,
-              xp: 0, streakDays: 1, lastPlayedDate: new Date().toISOString().split('T')[0],
-              coins: 150, hearts: 5, 
-              diktatAttempts: 0, diktatCorrect: 0,
-              pronunciationTotalScore: 0, pronunciationAttempts: 0,
-              difficultVocab: [], normalVocab: [], 
-              difficultGrammar: [], 
-              failedDiktatScenes: [],
-              activityLog: [40, 60, 45, 80, 55, 90, 75] 
-          });
+        // --- FUNCIÓN DE RANGO MÜLLER (Ponla justo ANTES de la función App) ---
+const getUserRank = (xp) => {
+    if (xp < 500) return "🥔 Kartoffel";
+    if (xp < 2000) return "🍺 Bier-Trinker";
+    if (xp < 5000) return "🎓 Grammatik-Meister";
+    return "👑 Echter Müller";
+};
+
+// --- DENTRO DE App() ---
+const [userStats, setUserStats] = useState({
+    username: "Estudiante", isPremium: true,
+    xp: 0, streakDays: 1, lastPlayedDate: new Date().toISOString().split('T')[0],
+    coins: 150, hearts: 5, 
+    diktatAttempts: 0, diktatCorrect: 0,
+    pronunciationTotalScore: 0, pronunciationAttempts: 0,
+    difficultVocab: [], normalVocab: [], 
+    difficultGrammar: [], 
+    failedDiktatScenes: [],
+    failedArticles: {}, // 🔴 NUEVO: Para el Muro de la Vergüenza
+    activityLog: [40, 60, 45, 80, 55, 90, 75] 
+});
+
+          const [isStressMode, setIsStressMode] = useState(false); // 🔴 NUEVO: Modo Reloj
           const [vocabReviewIndex, setVocabReviewIndex] = useState(0);
           const [showVocabTranslation, setShowVocabTranslation] = useState(false);
           const [currentVocabList, setCurrentVocabList] = useState([]); 
