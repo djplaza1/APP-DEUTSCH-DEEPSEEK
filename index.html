@@ -2024,28 +2024,43 @@ function CloudPracticeFinal({ onBack, type }) {
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // 🔗 URL PERMANENTE
         const URL_VERBOS = "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/verbos_con_preposiciones.json";
         const URL_PREPOSICIONES = "https://gist.githubusercontent.com/djplaza1/4f44a8b19a8aa2d451e183859e3f764f/raw/preposiciones.json";
 
         const GIST_URL = type === 'verbos' ? URL_VERBOS : URL_PREPOSICIONES;
-        const fallback = [{ de: "Wir warten ___ den Bus.", answer: "auf", prepCase: "Akk", es: "Esperamos al autobús." }];
-
+        
         setLoading(true);
         fetch(GIST_URL + "?nocache=" + new Date().getTime())
-            .then(res => {
-                if (!res.ok) throw new Error();
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
                 setQueue(data.sort(() => Math.random() - 0.5));
                 setLoading(false);
             })
             .catch(() => {
-                setQueue(fallback);
                 setLoading(false);
             });
     }, [type]);
+
+    // Lógica de Müller: Si el JSON no trae truco, generamos uno educativo
+    const getMullerTip = (item) => {
+        if (item.trick) return item.trick;
+        if (item.tipp) return item.tipp;
+        
+        const prep = item.answer.toLowerCase();
+        const caseName = item.prepCase === 'Akk' ? '🔴 ACUSATIVO' : '🔵 DATIVO';
+        
+        const tips = {
+            'für': "¡Cuidado! 'Für' siempre, siempre rige 🔴 Acusativo. Se usa para destino o beneficio.",
+            'mit': "Fácil: 'Mit' siempre va con 🔵 Dativo. Compañía o instrumento.",
+            'auf': "Como verbo de posición/movimiento, 'auf' suele indicar contacto sobre una superficie horizontal.",
+            'über': "¡Ojo! 'Über' con verbos de opinión (hablar de, reírse de) suele regir 🔴 Acusativo.",
+            'von': "Indica origen o pertenencia y siempre rige 🔵 Dativo.",
+            'zu': "Indica dirección hacia una persona o lugar específico y siempre rige 🔵 Dativo.",
+            'an': "En fechas o días ('am Montag') rige Dativo, pero con verbos como 'denken an' rige 🔴 Acusativo."
+        };
+        
+        return tips[prep] || `Recuerda que esta preposición aquí rige ${caseName}. Repasa la tabla de declinaciones si tienes dudas.`;
+    };
 
     const check = (guess) => {
         if (queue.length === 0) return;
@@ -2057,73 +2072,82 @@ function CloudPracticeFinal({ onBack, type }) {
         window.speechSynthesis.speak(utterance);
 
         if (guess === currentItem.answer) {
-            setFeedback({ type: 'success', text: `¡Richtig! Rige ${currentItem.prepCase}` });
-            setTimeout(() => { setQueue(prev => prev.slice(1)); setFeedback(null); }, 1200);
+            setFeedback({ type: 'success', text: `¡Richtig! Es '${currentItem.answer}'` });
         } else {
-            setFeedback({ type: 'error', text: `⚠️ FALSCH: Exige '${currentItem.answer}' (${currentItem.prepCase})` });
-            setTimeout(() => { setQueue(prev => [...prev.slice(1), prev[0]]); setFeedback(null); }, 2200);
+            setFeedback({ type: 'error', text: `⚠️ FALSCH: La respuesta era '${currentItem.answer}'` });
         }
     };
 
+    const handleContinue = () => {
+        if (feedback.type === 'success') {
+            setQueue(prev => prev.slice(1));
+        } else {
+            // Si falla, la mandamos al final para repetir después
+            setQueue(prev => [...prev.slice(1), prev[0]]);
+        }
+        setFeedback(null);
+    };
+
     if (loading) return <div className="flex items-center justify-center h-full"><div className="text-white text-2xl font-bold animate-pulse">📡 Cargando base de datos Müller...</div></div>;
-    
     if (queue.length === 0) return (
         <div className="flex flex-col items-center justify-center h-full p-4">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white">⬅ Volver</button>
-            <h2 className="text-3xl font-bold text-green-400">¡Pack Completado! 🏆</h2>
+            <button onClick={onBack} className="bg-gray-800 p-2 rounded text-white mb-4">⬅ Volver</button>
+            <h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! 🏆</h2>
         </div>
     );
-    
-    // Configuración de botones según el mazo
- const current = queue[0];
-    
-    // Lista completa de opciones para ambos mazos
+
+    const current = queue[0];
     const options = type === 'verbos' 
         ? ['für', 'auf', 'an', 'von', 'über', 'mit', 'um', 'zu', 'vor', 'nach', 'in', 'bei', 'aus', 'durch', 'ohne'] 
         : [
-            // Artículos y Preposiciones individuales
             'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einen', 'einem', 'einer',
             'an', 'am', 'ans', 'auf', 'in', 'im', 'ins', 'aus', 'bei', 'beim', 'mit', 'nach', 
             'seit', 'von', 'vom', 'zu', 'zum', 'zur', 'durch', 'für', 'um', 'vor', 'über',
-            // Combinaciones compuestas (Indispensables para B1)
-            'in einer', 'in einem', 'an einer', 'an einem', 'zu einer', 'zu einem', 
-            'von einer', 'von einem', 'vor einer', 'vor einem', 'nach einer', 'mit einem'
+            'in einer', 'in einem', 'an einer', 'an einem', 'zu einer', 'zu einem'
           ];
 
     return (
         <div className="flex flex-col items-center justify-center p-4 animate-in fade-in h-full">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300 hover:text-white">⬅ Volver</button>
-            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-4xl w-full border border-slate-700">
-                <p className="text-blue-400 font-bold mb-2 text-lg uppercase tracking-widest">{current.prepCase}</p>
-                <h3 className="text-4xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300">⬅ Volver</button>
+            
+            <div className="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-4xl w-full border border-slate-700">
+                <p className="text-blue-400 font-bold mb-2 text-lg uppercase tracking-widest">
+                    {current.prepCase === 'Akk' ? '🔴 Akkusativ' : current.prepCase === 'Dat' ? '🔵 Dativ' : '🟡 Wechsel'}
+                </p>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
                 <p className="text-gray-400 mb-8 text-xl italic">{current.es}</p>
                 
                 {!feedback ? (
-                    <div className="flex flex-wrap justify-center gap-2 max-h-[300px] overflow-y-auto p-2 hide-scrollbar">
-                        {options.filter(o => {
-                            // En preposiciones mostramos todos los botones definidos arriba
-                            if (type !== 'verbos') return true;
-                            
-                            // En verbos filtramos para no saturar la pantalla
-                            const relevant = [current.answer, 'für', 'auf', 'an', 'von', 'über', 'mit', 'um', 'zu', 'vor', 'nach', 'in'];
-                            return relevant.includes(o) || o.length > 3;
-                        }).map(p => (
-                            <button 
-                                key={p} 
-                                onClick={() => check(p)} 
-                                className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm transition min-w-[70px] border-b-4 border-gray-900 active:border-b-0 active:translate-y-1 text-white"
-                            >
+                    <div className="flex flex-wrap justify-center gap-2 max-h-[250px] overflow-y-auto p-2">
+                        {options.map(p => (
+                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm transition min-w-[70px] border-b-4 border-gray-900 active:border-b-0 text-white">
                                 {p}
                             </button>
                         ))}
                     </div>
                 ) : (
-                    <div className={`p-6 rounded-xl font-bold text-2xl animate-in zoom-in shadow-inner ${feedback.type === 'error' ? 'bg-red-900 text-red-100 border-2 border-red-500' : 'bg-green-900 text-green-100 border-2 border-green-500'}`}>
-                        {feedback.text}
+                    <div className="animate-in zoom-in">
+                        <div className={`p-4 rounded-xl font-bold text-xl mb-4 ${feedback.type === 'error' ? 'bg-red-900 text-red-100 border border-red-500' : 'bg-green-900 text-green-100 border border-green-500'}`}>
+                            {feedback.text}
+                        </div>
+                        
+                        {/* SECCIÓN DE TIPPS DE MÜLLER */}
+                        <div className="bg-black/40 p-4 rounded-xl border border-amber-500/30 text-left mb-6">
+                            <p className="text-amber-400 font-bold text-sm uppercase mb-1 flex items-center gap-2">
+                                <span className="text-xl">💡</span> Müller-Tipp:
+                            </p>
+                            <p className="text-gray-200 text-sm md:text-base leading-relaxed italic">
+                                {getMullerTip(current)}
+                            </p>
+                        </div>
+
+                        <button onClick={handleContinue} className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-xl shadow-lg flex items-center justify-center gap-2 transition">
+                            CONTINUAR <span className="text-2xl">➔</span>
+                        </button>
                     </div>
                 )}
                 
-                <p className="text-gray-500 text-sm mt-8 font-bold">Tarjetas restantes en este mazo: {queue.length}</p>
+                <p className="text-gray-500 text-sm mt-8 font-bold">Tarjetas restantes: {queue.length}</p>
             </div>
         </div>
     );
