@@ -1976,104 +1976,93 @@ function ArticlePracticeFinal({ onBack }) {
         }
     };
 
-// --- COMPONENTE 1: PRÁCTICA DE ARTÍCULOS ---
+    // 🌟 Acción: "Ya me la sé" (Descartar para siempre)
+    const handleMastered = () => {
+        const currentWord = queue[0].de;
+        const newMastered = [...masteredArticles, currentWord];
+        setMasteredArticles(newMastered);
+        localStorage.setItem('muller_mastered_articles', JSON.stringify(newMastered));
+        setQueue(prev => prev.slice(1));
+        setFeedback(null);
+    };
 
-// 🌟 Acción: "Ya me la sé" (Descartar para siempre)
-const handleMastered = () => {
-    const currentWord = queue[0].de;
-    const newMastered = [...masteredArticles, currentWord];
-    setMasteredArticles(newMastered);
-    localStorage.setItem('muller_mastered_articles', JSON.stringify(newMastered));
-    setQueue(prev => prev.slice(1));
-    setFeedback(null);
-};
+    // 🔄 Acción: Siguiente / Reintento
+    const handleNextWord = () => {
+        if (feedback.type === 'success') {
+            setQueue(prev => prev.slice(1)); // Si acertó, se va de la sesión
+        } else {
+            // PELIGRO: Si falló, al final de la cola (Spaced Retrieval)
+            setQueue(prev => [...prev.slice(1), prev[0]]);
+        }
+        setFeedback(null);
+    };
 
-// 🔄 Acción: Siguiente / Reintento
-const handleNextWord = () => {
-    if (feedback.type === 'success') {
-        setQueue(prev => prev.slice(1)); // Si acertó, se va de la sesión
-    } else {
-        // PELIGRO: Si falló, al final de la cola (Spaced Retrieval)
-        setQueue(prev => [...prev.slice(1), prev[0]]);
-    }
-    setFeedback(null);
-};
+    const check = (guess) => {
+        if (queue.length === 0) return;
+        const current = queue[0];
+        const correct = current.de.split(' ')[0].toLowerCase();
 
-const check = (guess) => {
-    if (queue.length === 0) return;
-    const current = queue[0];
-    const parts = current.de.split(' ');
-    const correct = parts[0].toLowerCase(); // Extrae "der", "die" o "das"
-    const noun = parts.slice(1).join(' '); // Extrae el sustantivo solo para el "Muro"
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(current.de);
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
 
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(current.de);
-    utterance.lang = 'de-DE';
-    window.speechSynthesis.speak(utterance);
+        if (guess === correct) {
+            setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
+        } else {
+            setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
+        }
+    };
 
-    if (guess === correct) {
-        setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
-    } else {
-        setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
-
-        // 🔴 REGISTRO EN EL MURO DE LA VERGÜENZA
-        const stats = JSON.parse(localStorage.getItem('mullerStats') || '{}');
-        if (!stats.failedArticles) stats.failedArticles = {};
-        stats.failedArticles[noun] = (stats.failedArticles[noun] || 0) + 1;
-        localStorage.setItem('mullerStats', JSON.stringify(stats));
-    }
-};
-
-if (!mode) return (
-    <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
-        <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
-        <h2 className="text-3xl font-bold mb-2 text-blue-300">Artículos Müller</h2>
-        <p className="text-gray-400 mb-8 font-bold">⭐ {masteredArticles.length} palabras en tu "Memoria de Oro"</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-            <button onClick={() => loadData('historia')} className="col-span-2 md:col-span-3 bg-purple-900 border-2 border-purple-500 p-6 rounded-xl font-bold text-xl hover:bg-purple-800 transition">📖 Historia Actual</button>
-            {['A1', 'A2', 'B1', 'B2', 'C1', 'MIXTO'].map(lvl => (
-                <button key={lvl} onClick={() => loadData(lvl)} className="bg-slate-800 border-b-4 border-blue-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">{lvl}</button>
-            ))}
+    if (!mode) return (
+        <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
+            <h2 className="text-3xl font-bold mb-2 text-blue-300">Artículos Müller</h2>
+            <p className="text-gray-400 mb-8 font-bold">⭐ {masteredArticles.length} palabras en tu "Memoria de Oro"</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                <button onClick={() => loadData('historia')} className="col-span-2 md:col-span-3 bg-purple-900 border-2 border-purple-500 p-6 rounded-xl font-bold text-xl hover:bg-purple-800 transition">📖 Historia Actual</button>
+                {['A1', 'A2', 'B1', 'B2', 'C1', 'MIXTO'].map(lvl => (
+                    <button key={lvl} onClick={() => loadData(lvl)} className="bg-slate-800 border-b-4 border-blue-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">{lvl}</button>
+                ))}
+            </div>
         </div>
-    </div>
-);
+    );
 
-if (loading) return <div className="text-white text-2xl font-bold animate-pulse p-20">📡 Buscando tarjetas...</div>;
-if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
+    if (loading) return <div className="text-white text-2xl font-bold animate-pulse p-20">📡 Buscando tarjetas...</div>;
+    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
 
-const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
+    const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
 
-return (
-    <div className="flex flex-col items-center justify-center p-4 h-full">
-        <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700">
-            <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
-            <p className="text-gray-400 mb-8 text-xl italic">{queue[0].es}</p>
-            
-            {!feedback ? (
-                <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => check('der')} className="bg-blue-600 py-6 rounded-xl font-bold text-xl transition">🔵 DER</button>
-                    <button onClick={() => check('die')} className="bg-red-600 py-6 rounded-xl font-bold text-xl transition">🔴 DIE</button>
-                    <button onClick={() => check('das')} className="bg-green-600 py-6 rounded-xl font-bold text-xl transition">🟢 DAS</button>
-                </div>
-            ) : (
-                <div className="animate-in zoom-in">
-                    <div className={`p-6 rounded-xl font-black text-2xl mb-6 ${feedback.type === 'error' ? 'bg-red-900 border-2 border-red-500 text-red-100' : 'bg-green-900 border-2 border-green-500 text-green-100'}`}>
-                        {feedback.text}
+    return (
+        <div className="flex flex-col items-center justify-center p-4 h-full">
+            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700">
+                <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
+                <p className="text-gray-400 mb-8 text-xl italic">{queue[0].es}</p>
+                
+                {!feedback ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => check('der')} className="bg-blue-600 py-6 rounded-xl font-bold text-xl transition">🔵 DER</button>
+                        <button onClick={() => check('die')} className="bg-red-600 py-6 rounded-xl font-bold text-xl transition">🔴 DIE</button>
+                        <button onClick={() => check('das')} className="bg-green-600 py-6 rounded-xl font-bold text-xl transition">🟢 DAS</button>
                     </div>
-                    <div className="flex flex-col gap-3">
-                        <button onClick={handleMastered} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 transition">🌟 ¡Ya me la sé para siempre!</button>
-                        <button onClick={handleNextWord} className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition">
-                            {feedback.type === 'error' ? 'Reintentar luego ➔' : 'Siguiente ➔'}
-                        </button>
+                ) : (
+                    <div className="animate-in zoom-in">
+                        <div className={`p-6 rounded-xl font-black text-2xl mb-6 ${feedback.type === 'error' ? 'bg-red-900 border-2 border-red-500 text-red-100' : 'bg-green-900 border-2 border-green-500 text-green-100'}`}>
+                            {feedback.text}
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <button onClick={handleMastered} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 transition">🌟 ¡Ya me la sé para siempre!</button>
+                            <button onClick={handleNextWord} className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition">
+                                {feedback.type === 'error' ? 'Reintentar luego ➔' : 'Siguiente ➔'}
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
-            <p className="text-gray-500 text-xs mt-6">Restantes en esta sesión: {queue.length}</p>
+                )}
+                <p className="text-gray-500 text-xs mt-6">Restantes en esta sesión: {queue.length}</p>
+            </div>
         </div>
-    </div>
-);
-
-// --- COMPONENTE 2: CLOUD PRACTICE (VERBOS/PREPOS) ---
+    );
+}
 
 function CloudPracticeFinal({ onBack, type }) {
     const [queue, setQueue] = React.useState([]);
@@ -2106,7 +2095,7 @@ function CloudPracticeFinal({ onBack, type }) {
         return tips[prep] || `Repasa el caso de esta preposición.`;
     };
 
-    const checkCloud = (guess) => {
+    const check = (guess) => {
         if (queue.length === 0) return;
         const currentItem = queue[0];
         window.speechSynthesis.cancel();
@@ -2125,7 +2114,7 @@ function CloudPracticeFinal({ onBack, type }) {
         if (feedback.type === 'success') {
             setQueue(prev => prev.slice(1));
         } else {
-            setQueue(prev => [...prev.slice(1), prev[0]]); 
+            setQueue(prev => [...prev.slice(1), prev[0]]); // Los errores vuelven al final
         }
         setFeedback(null);
     };
@@ -2149,7 +2138,7 @@ function CloudPracticeFinal({ onBack, type }) {
                 {!feedback ? (
                     <div className="flex flex-wrap justify-center gap-2 max-h-[250px] overflow-y-auto p-2">
                         {options.map(p => (
-                            <button key={p} onClick={() => checkCloud(p)} className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm text-white transition min-w-[70px]">
+                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm text-white transition min-w-[70px]">
                                 {p}
                             </button>
                         ))}
