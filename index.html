@@ -1973,6 +1973,8 @@ function extractArticlesFromGuionFinal(guionData, scriptTitle) {
 // ============================================================================
 
 const ADVANCED_PROGRESS_KEY = 'muller_advanced_progress';
+const DAILY_ACTIVITY_KEY = 'muller_daily_activity';
+const DAILY_GOAL_DEFAULT = 30;
 
 function getAdvancedProgress() {
     try {
@@ -1985,6 +1987,48 @@ function getAdvancedProgress() {
 function saveAdvancedProgress(progress) {
     localStorage.setItem(ADVANCED_PROGRESS_KEY, JSON.stringify(progress));
     window.dispatchEvent(new Event('advancedProgressUpdated'));
+}
+
+function getTodayISODate() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getDailyActivity() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(DAILY_ACTIVITY_KEY) || '{}');
+        return {
+            dailyGoal: parsed.dailyGoal || DAILY_GOAL_DEFAULT,
+            days: parsed.days || {}
+        };
+    } catch (e) {
+        return { dailyGoal: DAILY_GOAL_DEFAULT, days: {} };
+    }
+}
+
+function saveDailyActivity(activity) {
+    localStorage.setItem(DAILY_ACTIVITY_KEY, JSON.stringify(activity));
+    window.dispatchEvent(new Event('advancedProgressUpdated'));
+}
+
+function registerDailyAttempt() {
+    const activity = getDailyActivity();
+    const today = getTodayISODate();
+    const todayStats = activity.days[today] || { attempts: 0 };
+    activity.days[today] = { attempts: todayStats.attempts + 1 };
+    saveDailyActivity(activity);
+}
+
+function calculateStreak(daysMap) {
+    let streak = 0;
+    const cursor = new Date();
+    while (true) {
+        const dateKey = cursor.toISOString().slice(0, 10);
+        const count = daysMap[dateKey]?.attempts || 0;
+        if (count <= 0) break;
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
 }
 
 function getCardTip(type, item) {
@@ -2067,6 +2111,10 @@ function filterQueueByMode(items, progress, getId, mode) {
 
 function getAdvancedDashboard() {
     const progress = getAdvancedProgress();
+    const daily = getDailyActivity();
+    const today = getTodayISODate();
+    const todayAttempts = daily.days[today]?.attempts || 0;
+    const dailyGoal = daily.dailyGoal || DAILY_GOAL_DEFAULT;
     const art = getProgressCounts(progress, 'articulos');
     const verb = getProgressCounts(progress, 'verbos');
     const prep = getProgressCounts(progress, 'preposiciones');
@@ -2075,7 +2123,11 @@ function getAdvancedDashboard() {
     const accuracy = totalAttempts > 0 ? Math.round(((totalAttempts - totalErrors) / totalAttempts) * 100) : 0;
     return {
         art, verb, prep, totalAttempts, totalErrors, accuracy,
-        weak: art.weak + verb.weak + prep.weak
+        weak: art.weak + verb.weak + prep.weak,
+        todayAttempts,
+        dailyGoal,
+        dailyProgress: Math.min(100, Math.round((todayAttempts / Math.max(1, dailyGoal)) * 100)),
+        streakDays: calculateStreak(daily.days)
     };
 }
 
@@ -2155,6 +2207,7 @@ function ArticlePracticeFinal({ onBack }) {
 
     const registerTrainingResult = (difficulty) => {
         if (!feedback || queue.length === 0) return;
+        registerDailyAttempt();
         const current = feedback.currentCard || queue[0];
         const id = `articulos::${current.de}`;
         const prev = progressMap[id] || { attempts: 0, correct: 0, errors: 0, easy: 0, normal: 0, difficult: 0 };
@@ -2308,6 +2361,7 @@ function CloudPracticeFinal({ onBack, type }) {
 
     const registerTrainingResult = (difficulty) => {
         if (!feedback || queue.length === 0) return;
+        registerDailyAttempt();
         const current = feedback.currentCard || queue[0];
         const queueType = type === 'verbos' ? 'verbos' : 'preposiciones';
         const id = `${queueType}::${current.de}::${current.answer}`;
@@ -2432,12 +2486,14 @@ function AdvancedPracticePanelFinal() {
 
             {activeMode === 'menu' && (
                 <div className="max-w-5xl mx-auto w-full">
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-7 gap-3 mb-6">
                         <div className="bg-slate-900/80 border border-blue-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Intentos</p><p className="text-xl font-black text-white">{dashboard.totalAttempts}</p></div>
                         <div className="bg-slate-900/80 border border-red-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Fallos</p><p className="text-xl font-black text-red-300">{dashboard.totalErrors}</p></div>
                         <div className="bg-slate-900/80 border border-emerald-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Precisión</p><p className="text-xl font-black text-emerald-300">{dashboard.accuracy}%</p></div>
                         <div className="bg-slate-900/80 border border-fuchsia-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Débiles</p><p className="text-xl font-black text-fuchsia-300">{dashboard.weak}</p></div>
                         <div className="bg-slate-900/80 border border-amber-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Art/Verb/Prep</p><p className="text-sm font-black text-amber-300">{dashboard.art.total}/{dashboard.verb.total}/{dashboard.prep.total}</p></div>
+                        <div className="bg-slate-900/80 border border-cyan-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Objetivo Hoy</p><p className="text-xl font-black text-cyan-300">{dashboard.todayAttempts}/{dashboard.dailyGoal}</p><p className="text-[10px] text-cyan-200">{dashboard.dailyProgress}%</p></div>
+                        <div className="bg-slate-900/80 border border-orange-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Racha</p><p className="text-xl font-black text-orange-300">🔥 {dashboard.streakDays}</p><p className="text-[10px] text-orange-200">días</p></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button onClick={() => setActiveMode('articulos')} className="bg-slate-900 border border-blue-800/50 p-8 rounded-2xl hover:bg-blue-900/30 transition shadow-lg group flex flex-col items-center text-center">
