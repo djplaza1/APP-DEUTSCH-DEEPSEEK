@@ -1758,16 +1758,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             };
 
             const exportData = () => {
-                const mullerData = {};
+                const allLocalData = {};
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('muller')) {
-                        mullerData[key] = localStorage.getItem(key);
-                    }
+                    if (!key) continue;
+                    allLocalData[key] = localStorage.getItem(key);
                 }
                 const dataToExport = {
-                    allMullerData: mullerData,
-                    version: '3.0',
+                    allLocalStorage: allLocalData,
+                    version: '4.0',
                     exportDate: new Date().toISOString()
                 };
                 const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type: 'application/json'});
@@ -1786,7 +1785,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if (data.allMullerData && typeof data.allMullerData === 'object') {
+                        if (data.allLocalStorage && typeof data.allLocalStorage === 'object') {
+                            localStorage.clear();
+                            Object.entries(data.allLocalStorage).forEach(([key, value]) => {
+                                localStorage.setItem(key, value);
+                            });
+                        } else if (data.allMullerData && typeof data.allMullerData === 'object') {
                             Object.entries(data.allMullerData).forEach(([key, value]) => {
                                 localStorage.setItem(key, value);
                             });
@@ -1802,12 +1806,27 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 reader.readAsText(file);
             };
 
+            const showSyncHelp = () => {
+                alert(
+                    "🔄 Sincronización TOTAL gratis:\n\n" +
+                    "1) En tu dispositivo actual pulsa Exportar.\n" +
+                    "2) Sube el archivo .json a Google Drive.\n" +
+                    "3) En otro dispositivo descarga ese .json.\n" +
+                    "4) Pulsa Importar en la app.\n" +
+                    "5) Recarga la página.\n\n" +
+                    "Esto copia TODO el estado guardado de la aplicación."
+                );
+            };
+
             return (
                 <>
                     <button onClick={requestMicPermission} className="fixed bottom-20 right-4 z-50 bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-xl" title="Solicitar permiso de micrófono">
                         <Icon name="mic" className="w-6 h-6" />
                     </button>
                     <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2">
+                        <button onClick={showSyncHelp} className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-full shadow-xl" title="Guía sincronización total">
+                            <Icon name="info" className="w-6 h-6" />
+                        </button>
                         <button onClick={exportData} className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full shadow-xl" title="Exportar progreso">
                             <Icon name="download" className="w-6 h-6" />
                         </button>
@@ -1995,12 +2014,41 @@ function buildAdaptiveQueue(items, progress, getId, maxItems = 120) {
     return weighted.slice(0, Math.min(maxItems, weighted.length)).map(entry => entry.item);
 }
 
+function getProgressCounts(progress, prefix) {
+    const entries = Object.entries(progress).filter(([key]) => key.startsWith(prefix + '::'));
+    return entries.reduce((acc, [, stats]) => {
+        acc.total += 1;
+        acc.attempts += stats.attempts || 0;
+        acc.errors += stats.errors || 0;
+        acc.easy += stats.easy || 0;
+        acc.normal += stats.normal || 0;
+        acc.difficult += stats.difficult || 0;
+        if ((stats.errors || 0) > (stats.correct || 0)) acc.weak += 1;
+        return acc;
+    }, { total: 0, attempts: 0, errors: 0, easy: 0, normal: 0, difficult: 0, weak: 0 });
+}
+
+function filterQueueByMode(items, progress, getId, mode) {
+    if (mode === 'smart') return items;
+    return items.filter((item) => {
+        const stats = progress[getId(item)] || {};
+        const errors = stats.errors || 0;
+        const difficult = stats.difficult || 0;
+        const attempts = stats.attempts || 0;
+        if (mode === 'failed') return errors > 0;
+        if (mode === 'difficult') return difficult > 0 || errors > 0;
+        if (mode === 'new') return attempts === 0;
+        return true;
+    });
+}
+
 function ArticlePracticeFinal({ onBack }) {
     const [mode, setMode] = React.useState(null);
     const [queue, setQueue] = React.useState([]);
     const [feedback, setFeedback] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
     const [progressMap, setProgressMap] = React.useState(() => getAdvancedProgress());
+    const [queueFilter, setQueueFilter] = React.useState('smart');
     
     // 🧠 Persistencia de palabras dominadas (Cerebro de Oro)
     const [masteredArticles, setMasteredArticles] = React.useState(() => {
@@ -2024,7 +2072,10 @@ function ArticlePracticeFinal({ onBack }) {
                 alert(`¡Increíble! Ya dominas todo el mazo ${selectedMode}. 🏆`);
                 setMode(null);
             } else {
-                setQueue(buildAdaptiveQueue(finalQueue, progressMap, (item) => `articulos::${item.de}`));
+                const getId = (item) => `articulos::${item.de}`;
+                const adaptive = buildAdaptiveQueue(finalQueue, progressMap, getId);
+                const filtered = filterQueueByMode(adaptive, progressMap, getId, queueFilter);
+                setQueue(filtered.length > 0 ? filtered : adaptive);
             }
             setLoading(false);
         };
@@ -2108,6 +2159,18 @@ function ArticlePracticeFinal({ onBack }) {
             <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
             <h2 className="text-3xl font-bold mb-2 text-blue-300">Artículos Müller</h2>
             <p className="text-gray-400 mb-8 font-bold">⭐ {masteredArticles.length} palabras en tu "Memoria de Oro"</p>
+            <div className="bg-black/30 border border-blue-800/50 rounded-xl p-3 mb-5 w-full text-sm text-gray-200">
+                {(() => {
+                    const c = getProgressCounts(progressMap, 'articulos');
+                    return <p>📊 Intentos: <b>{c.attempts}</b> · Fallos: <b>{c.errors}</b> · Fácil: <b>{c.easy}</b> · Normal: <b>{c.normal}</b> · Difícil: <b>{c.difficult}</b> · Problemáticas: <b>{c.weak}</b></p>;
+                })()}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full mb-6">
+                <button onClick={() => setQueueFilter('smart')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'smart' ? 'bg-blue-700 text-white' : 'bg-slate-800 text-gray-300'}`}>Mezcla inteligente</button>
+                <button onClick={() => setQueueFilter('failed')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'failed' ? 'bg-red-700 text-white' : 'bg-slate-800 text-gray-300'}`}>Solo falladas</button>
+                <button onClick={() => setQueueFilter('difficult')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'difficult' ? 'bg-rose-700 text-white' : 'bg-slate-800 text-gray-300'}`}>Solo difíciles</button>
+                <button onClick={() => setQueueFilter('new')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'new' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-gray-300'}`}>Solo nuevas</button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
                 <button onClick={() => loadData('historia')} className="col-span-2 md:col-span-3 bg-purple-900 border-2 border-purple-500 p-6 rounded-xl font-bold text-xl hover:bg-purple-800 transition">📖 Historia Actual</button>
                 {['A1', 'A2', 'B1', 'B2', 'C1', 'MIXTO'].map(lvl => (
@@ -2167,6 +2230,7 @@ function CloudPracticeFinal({ onBack, type }) {
     const [feedback, setFeedback] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
     const [progressMap, setProgressMap] = React.useState(() => getAdvancedProgress());
+    const [queueFilter, setQueueFilter] = React.useState('smart');
 
     React.useEffect(() => {
         const URL_VERBOS = "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/verbos_con_preposiciones.json";
@@ -2178,11 +2242,14 @@ function CloudPracticeFinal({ onBack, type }) {
             .then(res => res.json())
             .then(data => {
                 const queueType = type === 'verbos' ? 'verbos' : 'preposiciones';
-                setQueue(buildAdaptiveQueue(data, progressMap, (item) => `${queueType}::${item.de}::${item.answer}`));
+                const getId = (item) => `${queueType}::${item.de}::${item.answer}`;
+                const adaptive = buildAdaptiveQueue(data, progressMap, getId);
+                const filtered = filterQueueByMode(adaptive, progressMap, getId, queueFilter);
+                setQueue(filtered.length > 0 ? filtered : adaptive);
                 setLoading(false);
             })
             .catch(() => setLoading(false));
-    }, [type]);
+    }, [type, queueFilter]);
 
     const check = (guess) => {
         if (queue.length === 0) return;
@@ -2242,6 +2309,19 @@ function CloudPracticeFinal({ onBack, type }) {
         <div className="flex flex-col items-center justify-center p-4 h-full w-full">
             <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300">⬅ Volver</button>
             <div className="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-4xl w-full border border-slate-700">
+                <div className="bg-black/30 border border-purple-800/40 rounded-xl p-3 mb-4 text-xs text-gray-200 text-left">
+                    {(() => {
+                        const scope = type === 'verbos' ? 'verbos' : 'preposiciones';
+                        const c = getProgressCounts(progressMap, scope);
+                        return <p>📊 Intentos: <b>{c.attempts}</b> · Fallos: <b>{c.errors}</b> · Fácil: <b>{c.easy}</b> · Normal: <b>{c.normal}</b> · Difícil: <b>{c.difficult}</b> · Problemáticas: <b>{c.weak}</b></p>;
+                    })()}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    <button onClick={() => setQueueFilter('smart')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'smart' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-gray-200'}`}>Mezcla inteligente</button>
+                    <button onClick={() => setQueueFilter('failed')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'failed' ? 'bg-red-700 text-white' : 'bg-slate-700 text-gray-200'}`}>Solo falladas</button>
+                    <button onClick={() => setQueueFilter('difficult')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'difficult' ? 'bg-rose-700 text-white' : 'bg-slate-700 text-gray-200'}`}>Solo difíciles</button>
+                    <button onClick={() => setQueueFilter('new')} className={`p-2 rounded-lg text-xs font-bold ${queueFilter === 'new' ? 'bg-emerald-700 text-white' : 'bg-slate-700 text-gray-200'}`}>Solo nuevas</button>
+                </div>
                 <p className="text-blue-400 font-bold mb-2 uppercase tracking-widest">{current.prepCase || '🟡 Wechsel'}</p>
                 <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
                 <p className="text-gray-400 mb-8 text-xl italic">{current.es}</p>
