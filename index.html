@@ -2,11 +2,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Entrenador Definitivo - Müller</title>
     <meta name="theme-color" content="#581c87" />
     <meta name="description" content="Entrenador alemán TELC Müller: historia, vocabulario, B1/B2, progreso." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Müller" />
     <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230f172a'/%3E%3Ctext x='256' y='350' font-size='260' text-anchor='middle' font-family='system-ui,sans-serif' fill='%23c084fc'%3EM%3C/text%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -28,6 +33,17 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        /* Teléfono/tablet: base un poco mayor para que UI y textos se acerquen al tamaño “cómodo” del PC sin depender del zoom */
+        @media (max-width: 1023px) {
+            html { font-size: 106.25%; }
+        }
+        @media (max-width: 480px) {
+            html { font-size: 112.5%; }
+        }
         body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Outfit', system-ui, -apple-system, sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -145,6 +161,7 @@
             right: 0;
             z-index: 120;
             padding: 0.75rem 1rem;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
             background: linear-gradient(90deg, #0f172a, #1e3a5f);
             border-top: 1px solid rgba(255,255,255,0.15);
             display: flex;
@@ -152,6 +169,10 @@
             justify-content: space-between;
             gap: 0.75rem;
             flex-wrap: wrap;
+        }
+        .muller-main-fill {
+            min-height: 100vh;
+            min-height: 100dvh;
         }
     </style>
 </head>
@@ -2554,47 +2575,44 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           void oralClock;
 
           return (
-            <div className={`flex flex-col min-h-screen md:h-screen md:max-h-[850px] w-full font-sans md:rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-500 muller-theme-bg ${themeShellClass} ${uiTheme === 'light' ? 'text-slate-900' : 'text-white'} ${getBgColor()}`}>
+            <div className={`flex flex-col muller-main-fill md:h-screen md:max-h-[850px] w-full font-sans md:rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-500 muller-theme-bg ${themeShellClass} ${uiTheme === 'light' ? 'text-slate-900' : 'text-white'} ${getBgColor()}`}>
 
               {showSplash && (
                   <div className="fixed inset-0 z-[300] flex flex-col md:flex-row overflow-hidden" role="presentation">
                       <div className="flex-1 min-h-[42vh] md:min-h-0 relative" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 32%, #DD0000 32%, #DD0000 66%, #FFCE00 66%, #FFCE00 100%)' }} aria-hidden="true" />
                       <div className="flex-1 min-h-[42vh] md:min-h-0 relative border-t md:border-t-0 md:border-l border-white/20" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 22%, #F1BF00 22%, #F1BF00 78%, #AA151B 78%, #AA151B 100%)' }} aria-hidden="true" />
-                      <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-                          <div className="rounded-[2rem] bg-black/50 backdrop-blur-xl border border-white/25 px-10 py-12 md:px-14 md:py-16 shadow-[0_25px_80px_rgba(0,0,0,0.65)] text-center max-w-lg">
-                              <p className="text-[11px] md:text-xs uppercase tracking-[0.4em] text-white/75 mb-3 font-bold">Deutsch · Español</p>
-                              <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-2 drop-shadow-lg" style={{ fontFamily: 'Outfit, system-ui, sans-serif' }}>Müller</h1>
-                              <p className="text-base md:text-lg text-white/90 font-semibold">Entrenador TELC</p>
-                              <p className="text-xs text-white/55 mt-4">Banderas simbólicas · Alemania · España</p>
+                      <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
+                          <div className="rounded-[2rem] bg-black/50 backdrop-blur-xl border border-white/25 shadow-[0_25px_80px_rgba(0,0,0,0.65)] text-center w-[min(96vw,56rem)] px-8 py-16 sm:px-14 sm:py-20 md:px-20 md:py-24">
+                              <h1 className="font-black text-white tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.55)] leading-none" style={{ fontFamily: 'Outfit, system-ui, sans-serif', fontSize: 'clamp(4.5rem, 22vw, 10rem)' }}>Müller</h1>
                           </div>
                       </div>
                   </div>
               )}
               
               {/* SUPERIOR NAV BAR */}
-              <div className="w-full bg-gradient-to-b from-zinc-900/95 via-black/90 to-black/95 backdrop-blur-xl border-b border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-2 md:p-3 flex flex-col md:flex-row gap-2 md:gap-3 justify-between items-center z-20">
-                  <div className="flex gap-1 md:gap-2 bg-zinc-950/80 p-1 rounded-xl ring-1 ring-white/[0.06] w-full md:w-auto overflow-x-auto hide-scrollbar items-center">
-                      <button onClick={()=>{setActiveTab('inicio'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'inicio' ? 'bg-indigo-600 text-white shadow-[0_0_18px_rgba(79,70,229,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="layout-dashboard" className="w-3 h-3 md:w-4 md:h-4" /> Inicio</button>
+              <div className="w-full bg-gradient-to-b from-zinc-900/95 via-black/90 to-black/95 backdrop-blur-xl border-b border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-2 md:p-3 pt-[max(0.5rem,env(safe-area-inset-top,0px))] flex flex-col md:flex-row gap-2 md:gap-3 justify-between items-center z-20">
+                  <div className="flex gap-1 md:gap-2 bg-zinc-950/80 p-1 rounded-xl ring-1 ring-white/[0.06] w-full md:w-auto overflow-x-auto hide-scrollbar items-center touch-manipulation">
+                      <button onClick={()=>{setActiveTab('inicio'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'inicio' ? 'bg-indigo-600 text-white shadow-[0_0_18px_rgba(79,70,229,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="layout-dashboard" className="w-3 h-3 md:w-4 md:h-4" /> Inicio</button>
                       <ExerciseHelpBtn helpId="nav_inicio" compact />
-                      <button onClick={()=>{setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'historia' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="play" className="w-3 h-3 md:w-4 md:h-4" /> Historia</button>
+                      <button onClick={()=>{setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'historia' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="play" className="w-3 h-3 md:w-4 md:h-4" /> Historia</button>
                       <ExerciseHelpBtn helpId="nav_historia" compact />
-                      <button onClick={()=>{setActiveTab('shadowing'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'shadowing' ? 'bg-teal-600 text-white shadow-[0_0_18px_rgba(13,148,136,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="audio-lines" className="w-3 h-3 md:w-4 md:h-4" /> Shadowing</button>
+                      <button onClick={()=>{setActiveTab('shadowing'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'shadowing' ? 'bg-teal-600 text-white shadow-[0_0_18px_rgba(13,148,136,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="audio-lines" className="w-3 h-3 md:w-4 md:h-4" /> Shadowing</button>
                       <ExerciseHelpBtn helpId="nav_shadowing" compact />
-                      <button onClick={()=>{setActiveTab('escritura'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'escritura' ? 'bg-rose-700 text-white shadow-[0_0_18px_rgba(190,18,60,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="pen-line" className="w-3 h-3 md:w-4 md:h-4" /> Escritura</button>
+                      <button onClick={()=>{setActiveTab('escritura'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'escritura' ? 'bg-rose-700 text-white shadow-[0_0_18px_rgba(190,18,60,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="pen-line" className="w-3 h-3 md:w-4 md:h-4" /> Escritura</button>
                       <ExerciseHelpBtn helpId="nav_escritura" compact />
-                      <button onClick={()=>{setActiveTab('vocabulario'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'vocabulario' ? 'bg-amber-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="book-open" className="w-3 h-3 md:w-4 md:h-4" /> Vocab{vocabSrsDueCount > 0 ? <span className="ml-0.5 min-w-[1.1rem] px-1 rounded-full bg-white/20 text-[10px] font-black leading-none py-0.5" title="Tarjetas prioritarias SRS en la lista actual">{vocabSrsDueCount > 99 ? '99+' : vocabSrsDueCount}</span> : null}</button>
+                      <button onClick={()=>{setActiveTab('vocabulario'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'vocabulario' ? 'bg-amber-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="book-open" className="w-3 h-3 md:w-4 md:h-4" /> Vocab{vocabSrsDueCount > 0 ? <span className="ml-0.5 min-w-[1.1rem] px-1 rounded-full bg-white/20 text-[10px] font-black leading-none py-0.5" title="Tarjetas prioritarias SRS en la lista actual">{vocabSrsDueCount > 99 ? '99+' : vocabSrsDueCount}</span> : null}</button>
                       <ExerciseHelpBtn helpId="nav_vocab" compact />
-                      <button onClick={()=>{setActiveTab('b1meister'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'b1meister' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="target" className="w-3 h-3 md:w-4 md:h-4" /> B1</button>
+                      <button onClick={()=>{setActiveTab('b1meister'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'b1meister' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="target" className="w-3 h-3 md:w-4 md:h-4" /> B1</button>
                       <ExerciseHelpBtn helpId="nav_b1" compact />
-                      <button onClick={()=>{setActiveTab('b2ausblick'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'b2ausblick' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.8)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="layers" className="w-3 h-3 md:w-4 md:h-4" /> B2</button>
+                      <button onClick={()=>{setActiveTab('b2ausblick'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'b2ausblick' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.8)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="layers" className="w-3 h-3 md:w-4 md:h-4" /> B2</button>
                       <ExerciseHelpBtn helpId="nav_b2" compact />
-                      <button onClick={()=>{setActiveTab('progreso'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'progreso' ? 'bg-yellow-600 text-white shadow-[0_0_18px_rgba(202,138,4,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="bar-chart" className="w-3 h-3 md:w-4 md:h-4" /> Progreso</button>
+                      <button onClick={()=>{setActiveTab('progreso'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'progreso' ? 'bg-yellow-600 text-white shadow-[0_0_18px_rgba(202,138,4,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="bar-chart" className="w-3 h-3 md:w-4 md:h-4" /> Progreso</button>
                       <ExerciseHelpBtn helpId="nav_progreso" compact />
-                      <button onClick={()=>{setActiveTab('guiones'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'guiones' ? 'bg-purple-600 text-white shadow-[0_0_18px_rgba(147,51,234,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="file-text" className="w-3 h-3 md:w-4 md:h-4" /> Biblioteca</button>
+                      <button onClick={()=>{setActiveTab('guiones'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'guiones' ? 'bg-purple-600 text-white shadow-[0_0_18px_rgba(147,51,234,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="file-text" className="w-3 h-3 md:w-4 md:h-4" /> Biblioteca</button>
                       <ExerciseHelpBtn helpId="nav_biblioteca" compact />
-                      <button onClick={()=>{setActiveTab('telc'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'telc' ? 'bg-orange-700 text-white shadow-[0_0_16px_rgba(194,65,12,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="clipboard-check" className="w-3 h-3 md:w-4 md:h-4" /> TELC</button>
+                      <button onClick={()=>{setActiveTab('telc'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'telc' ? 'bg-orange-700 text-white shadow-[0_0_16px_rgba(194,65,12,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="clipboard-check" className="w-3 h-3 md:w-4 md:h-4" /> TELC</button>
                       <ExerciseHelpBtn helpId="nav_telc" compact />
-                      <button onClick={()=>{setActiveTab('storybuilder'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'storybuilder' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="sparkles" className="w-3 h-3 md:w-4 md:h-4" /> IA</button>
+                      <button onClick={()=>{setActiveTab('storybuilder'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'storybuilder' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.4)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="sparkles" className="w-3 h-3 md:w-4 md:h-4" /> IA</button>
                       <ExerciseHelpBtn helpId="nav_ia" compact />
                   </div>
 
@@ -2979,7 +2997,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               )}
 
               {/* CONTENIDO PRINCIPAL */}
-              <div className="flex-1 overflow-y-auto relative flex flex-col hide-scrollbar">
+              <div className="flex-1 overflow-y-auto relative flex flex-col hide-scrollbar pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
                   
                   {activeTab === 'telc' && !practiceActive && (
                       <div className="p-4 md:p-8 max-w-3xl mx-auto w-full animate-in fade-in duration-500 overflow-y-auto pb-24">
@@ -3882,7 +3900,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                         ) : mode === 'roleplay_wait' ? (
                             <div className="max-w-4xl w-full flex flex-col items-center justify-center gap-4 md:gap-6 animate-in zoom-in duration-300 p-4">
                                 <div className="bg-red-600 text-white px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 text-xs md:text-sm"><Icon name="mic-off" className="w-4 h-4 md:w-5 md:h-5" /> {roleplayChar === 'Todos' ? "Modo Lectura" : "Tu turno (Roleplay)"}</div>
-                                <h1 className="text-xl md:text-5xl font-medium text-white text-center leading-tight">
+                                <h1 className="text-xl md:text-5xl font-medium text-white text-center leading-snug break-words w-full max-w-full px-1">
                                     {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
                                     {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
                                 </h1>
@@ -3940,7 +3958,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                     </div>
                                 ) : (
                                     <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
-                                        <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
+                                        <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full max-w-full break-words leading-snug">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
                                         <button onClick={handleNext} className="bg-indigo-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold mt-2 md:mt-4 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base">Siguiente ➔</button>
                                     </div>
                                 )}
@@ -3987,7 +4005,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                 {isReviewing && <div className="absolute -top-8 md:-top-12 left-1/2 -translate-x-1/2 text-red-500 font-black animate-pulse text-xs md:text-xl w-full text-center">⚠️ REPASO OBLIGATORIO (SRS)</div>}
                                 <span className="uppercase tracking-widest text-[10px] md:text-sm font-bold bg-black/30 px-2 md:px-4 py-0.5 md:py-1.5 rounded-full self-start border border-white/10">{guionData[getActualSceneIndex()].speaker}</span>
                                 
-                                <h1 className={`text-2xl md:text-5xl font-medium text-white shadow-sm transition-all duration-300 leading-tight ${blindMode ? 'blur-md hover:blur-none cursor-pointer' : ''}`}>
+                                <h1 className={`text-2xl md:text-5xl font-medium text-white shadow-sm transition-all duration-300 leading-snug break-words w-full max-w-full ${blindMode ? 'blur-md hover:blur-none cursor-pointer' : ''}`}>
                                     {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
                                     {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
                                 </h1>
@@ -4096,7 +4114,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
 
               {pwaDeferredPrompt && (
                   <div className="muller-pwa-banner">
-                      <span className="text-sm text-gray-100 pr-2">Instala Müller como aplicación (PWA) — acceso desde el escritorio y mejor uso sin red.</span>
+                      <span className="text-sm text-gray-100 pr-2 leading-snug"><strong className="text-white">Instalar Müller</strong> — se abre pantalla completa como app. En Chrome/Edge: &quot;Añadir a pantalla de inicio&quot;. En Safari (iPhone/iPad): compartir → &quot;Añadir a pantalla de inicio&quot;.</span>
                       <div className="flex items-center gap-2 ml-auto">
                           <button type="button" className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 font-bold text-sm text-white" onClick={async () => {
                               try {
