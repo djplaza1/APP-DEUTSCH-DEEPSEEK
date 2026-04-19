@@ -428,6 +428,8 @@
           const [writingCanvasKey, setWritingCanvasKey] = useState(0);
           const [writingVocabIdx, setWritingVocabIdx] = useState(0);
           const [ttsPrefsEpoch, setTtsPrefsEpoch] = useState(0);
+          const [ttsDeUri, setTtsDeUri] = useState(() => { try { return localStorage.getItem('muller_tts_de') || ''; } catch (e) { return ''; } });
+          const [ttsEsUri, setTtsEsUri] = useState(() => { try { return localStorage.getItem('muller_tts_es') || ''; } catch (e) { return ''; } });
           const [showMullerHub, setShowMullerHub] = useState(false);
           const [mullerHubTab, setMullerHubTab] = useState('voices');
           const [tourStep, setTourStep] = useState(0);
@@ -435,8 +437,8 @@
               try {
                   const k = 'muller_daily_v1_' + new Date().toISOString().slice(0, 10);
                   const j = localStorage.getItem(k);
-                  return j ? JSON.parse(j) : { vocab: false, shadow: false, hub: false, write: false };
-              } catch (e) { return { vocab: false, shadow: false, hub: false, write: false }; }
+                  return j ? JSON.parse(j) : { vocab: false, shadow: false, write: false };
+              } catch (e) { return { vocab: false, shadow: false, write: false }; }
           });
 
           const isPlayingRef = useRef(false);
@@ -448,6 +450,22 @@
           const noiseGainRef = useRef(null);
 
           useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+          useEffect(() => {
+              if (!showMullerHub) return;
+              try {
+                  setTtsDeUri(localStorage.getItem('muller_tts_de') || '');
+                  setTtsEsUri(localStorage.getItem('muller_tts_es') || '');
+              } catch (e) {}
+              window.speechSynthesis.getVoices();
+          }, [showMullerHub]);
+
+          useEffect(() => {
+              if (!showMullerHub) return;
+              const onKey = (e) => { if (e.key === 'Escape') setShowMullerHub(false); };
+              window.addEventListener('keydown', onKey);
+              return () => window.removeEventListener('keydown', onKey);
+          }, [showMullerHub]);
 
           useEffect(() => {
               const onAb = (e) => setAudiobookPlaying(!!e.detail?.playing);
@@ -1668,7 +1686,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       <button type="button" onClick={() => { if (window.__mullerAudiobook) window.__mullerAudiobook.toggle(); }} className={`p-2 rounded-full shadow-lg ring-2 ring-white/15 transition text-white ${audiobookPlaying ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-br from-amber-500 to-orange-800 hover:from-amber-400 hover:to-orange-700'}`} title={audiobookPlaying ? 'Detener audiolibro' : 'Audiolibro: reproduce todo el guión'}>
                           <Icon name={audiobookPlaying ? 'square' : 'headphones'} className="w-5 h-5" />
                       </button>
-                      <button type="button" onClick={() => { setShowMullerHub(true); setMullerHubTab('voices'); }} className="bg-gradient-to-br from-sky-600 to-indigo-900 hover:from-sky-500 hover:to-indigo-800 text-white p-2 rounded-full shadow-lg ring-2 ring-white/15 transition" title="Voces del sistema, plan del día, retos y tour">
+                      <button type="button" aria-label="Centro Müller: voces, plan del día y ayuda" onClick={() => { setShowMullerHub(true); setMullerHubTab('voices'); }} className="bg-gradient-to-br from-sky-600 to-indigo-900 hover:from-sky-500 hover:to-indigo-800 text-white p-2 rounded-full shadow-lg ring-2 ring-white/15 transition" title="Voces del sistema, plan del día, retos y tour">
                           <Icon name="layout-dashboard" className="w-5 h-5" />
                       </button>
                   </div>
@@ -1749,8 +1767,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               )}
 
               {showMullerHub && (
-                  <div className="fixed inset-0 z-[85] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 md:p-6" onClick={() => setShowMullerHub(false)}>
-                      <div className="bg-slate-900 border border-sky-500/40 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+                  <div className="fixed inset-0 z-[85] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 md:p-6" onClick={() => setShowMullerHub(false)} role="presentation">
+                      <div role="dialog" aria-modal="true" aria-labelledby="muller-hub-title" className="bg-slate-900 border border-sky-500/40 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+                          <h2 id="muller-hub-title" className="sr-only">Centro Müller</h2>
                           <div className="flex flex-wrap gap-1 p-2 border-b border-white/10 bg-black/40">
                               {[
                                   { id: 'voices', label: 'Voces' },
@@ -1765,13 +1784,24 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               {mullerHubTab === 'voices' && (
                                   <div className="space-y-4">
                                       <p className="text-xs text-gray-400">Las voces <strong className="text-white">neural / premium</strong> (si las trae tu navegador) suelen sonar más naturales. Todo es <strong className="text-white">gratis</strong>: usa el motor de voz del sistema (Chrome/Edge suelen traer más opciones).</p>
+                                      <button
+                                          type="button"
+                                          className="text-[10px] font-bold text-sky-400 hover:text-white underline underline-offset-2"
+                                          onClick={() => {
+                                              window.speechSynthesis.getVoices();
+                                              setTtsPrefsEpoch((x) => x + 1);
+                                          }}
+                                      >
+                                          Recargar lista de voces
+                                      </button>
                                       <div>
                                           <label className="text-[10px] font-bold text-sky-300 uppercase tracking-wider">Alemán (Historias, Shadowing, B1/B2…)</label>
                                           <select
                                               className="mt-1 w-full bg-black/50 border border-white/15 rounded-lg p-2 text-white text-xs"
-                                              value={localStorage.getItem('muller_tts_de') || ''}
+                                              value={ttsDeUri}
                                               onChange={(e) => {
                                                   const v = e.target.value;
+                                                  setTtsDeUri(v);
                                                   if (v) localStorage.setItem('muller_tts_de', v);
                                                   else localStorage.removeItem('muller_tts_de');
                                                   setTtsPrefsEpoch((x) => x + 1);
@@ -1779,9 +1809,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                               }}
                                           >
                                               <option value="">Predeterminada (automática Müller)</option>
-                                              {sortedDeVoices.map((v) => (
-                                                  <option key={v.voiceURI + v.name} value={v.voiceURI}>{v.name} · {v.lang}{window.__mullerRankVoiceNatural(v) >= 20 ? ' ★' : ''}</option>
-                                              ))}
+                                              {sortedDeVoices.map((v) => {
+                                                  const uri = v.voiceURI || v.name;
+                                                  return (
+                                                  <option key={uri + v.name} value={uri}>{v.name} · {v.lang}{window.__mullerRankVoiceNatural(v) >= 20 ? ' ★' : ''}</option>
+                                                  );
+                                              })}
                                           </select>
                                           <button
                                               type="button"
@@ -1802,18 +1835,22 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           <label className="text-[10px] font-bold text-amber-300 uppercase tracking-wider">Español (traducciones en podcast / vocab)</label>
                                           <select
                                               className="mt-1 w-full bg-black/50 border border-white/15 rounded-lg p-2 text-white text-xs"
-                                              value={localStorage.getItem('muller_tts_es') || ''}
+                                              value={ttsEsUri}
                                               onChange={(e) => {
                                                   const v = e.target.value;
+                                                  setTtsEsUri(v);
                                                   if (v) localStorage.setItem('muller_tts_es', v);
                                                   else localStorage.removeItem('muller_tts_es');
                                                   setTtsPrefsEpoch((x) => x + 1);
                                               }}
                                           >
                                               <option value="">Predeterminada (automática)</option>
-                                              {sortedEsVoices.map((v) => (
-                                                  <option key={v.voiceURI + v.name} value={v.voiceURI}>{v.name} · {v.lang}</option>
-                                              ))}
+                                              {sortedEsVoices.map((v) => {
+                                                  const uri = v.voiceURI || v.name;
+                                                  return (
+                                                  <option key={uri + v.name} value={uri}>{v.name} · {v.lang}</option>
+                                                  );
+                                              })}
                                           </select>
                                           <button
                                               type="button"
@@ -1860,10 +1897,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   </div>
                               )}
                               {mullerHubTab === 'tips' && (
-                                  <div className="space-y-2 text-xs text-gray-300">
+                                  <div className="space-y-3 text-xs text-gray-300">
                                       <p>Usa <strong className="text-white">Chrome o Edge</strong> para más voces y mejor reconocimiento de voz.</p>
                                       <p><strong className="text-white">GitHub Pages</strong> requiere HTTPS; el micrófono funciona al permitir permisos.</p>
-                                      <p>Si no ves voces en la lista, recarga la página tras abrir este panel.</p>
+                                      <p>Si la lista sale vacía, pulsa <strong className="text-white">Recargar lista de voces</strong> en la pestaña Voces o recarga la página.</p>
+                                      <p><kbd className="px-1 py-0.5 rounded bg-black/50 border border-white/20 text-[10px]">Esc</kbd> cierra este panel.</p>
+                                      <button type="button" onClick={() => { setTourStep(1); setShowMullerHub(false); }} className="w-full py-2 rounded-xl bg-indigo-700 hover:bg-indigo-600 font-bold text-xs">Repetir tour guiado (5 pasos)</button>
                                   </div>
                               )}
                           </div>
