@@ -1598,6 +1598,7 @@
           const [showVocabTranslation, setShowVocabTranslation] = useState(false);
           const [currentVocabList, setCurrentVocabList] = useState([]); 
           const [bxCategory, setBxCategory] = useState('mix'); 
+          const [bxBankLevel, setBxBankLevel] = useState('b1');
           const [bxIndex, setBxIndex] = useState(0);
           const [bxCurrentList, setBxCurrentList] = useState([]);
           const [bxRemoteDatabases, setBxRemoteDatabases] = useState(() => tryBxSession());
@@ -1666,9 +1667,19 @@
           const [mullerHubTab, setMullerHubTab] = useState('voices');
 
           useEffect(() => {
-              const validTabs = new Set(['inicio', 'ruta', 'historia', 'shadowing', 'escritura', 'vocabulario', 'entrenamiento', 'b1meister', 'b2ausblick', 'progreso', 'guiones', 'lexikon', 'telc', 'storybuilder', 'comunidad']);
+              const validTabs = new Set(['inicio', 'ruta', 'historia', 'shadowing', 'escritura', 'vocabulario', 'entrenamiento', 'bxbank', 'progreso', 'guiones', 'lexikon', 'telc', 'storybuilder', 'comunidad']);
               if (!validTabs.has(activeTab)) setActiveTab('inicio');
           }, [activeTab]);
+
+          useEffect(() => {
+              const openSettings = (ev) => {
+                  const tab = ev && ev.detail && ev.detail.tab ? String(ev.detail.tab) : 'ajustes';
+                  setProfileSettingsTab(tab === 'perfil' || tab === 'atajos' ? tab : 'ajustes');
+                  setShowProfileSettingsModal(true);
+              };
+              window.addEventListener('muller-open-profile-settings', openSettings);
+              return () => window.removeEventListener('muller-open-profile-settings', openSettings);
+          }, []);
           const [uiTheme, setUiTheme] = useState(() => { try { return localStorage.getItem(MULLER_THEME_KEY) || 'dark'; } catch (e) { return 'dark'; } });
           const [showOnboarding, setShowOnboarding] = useState(() => { try { return !localStorage.getItem(MULLER_ONBOARDING_KEY); } catch (e) { return true; } });
           const [onboardingStep, setOnboardingStep] = useState(1);
@@ -1678,7 +1689,9 @@
           const [showShortcutsModal, setShowShortcutsModal] = useState(false);
           const [userMenuOpen, setUserMenuOpen] = useState(false);
           const userMenuWrapRef = useRef(null);
-          const [communitySubTab, setCommunitySubTab] = useState('cuenta');
+          const [communitySubTab, setCommunitySubTab] = useState('economia');
+          const [showProfileSettingsModal, setShowProfileSettingsModal] = useState(false);
+          const [profileSettingsTab, setProfileSettingsTab] = useState('perfil');
           const [authTick, setAuthTick] = useState(0);
           const [authEmail, setAuthEmail] = useState('');
           const [authPassword, setAuthPassword] = useState('');
@@ -2442,7 +2455,7 @@
 
           useEffect(() => {
               const pack = bxEffectiveDatabases;
-              const dbToUse = activeTab === 'b1meister' ? pack.b1 : pack.b2;
+              const dbToUse = bxBankLevel === 'b1' ? pack.b1 : pack.b2;
               let newList;
               if (bxCategory === 'mix') {
                   newList = [];
@@ -2461,7 +2474,7 @@
           useEffect(() => {
               const item = bxCurrentList[bxIndex];
               if (!item || !item._mullerUser) return;
-              const level = activeTab === 'b1meister' ? 'b1' : 'b2';
+              const level = bxBankLevel === 'b1' ? 'b1' : 'b2';
               const src = bxCategory === 'mix' ? (item._mullerCategory || mullerFindUserBxCategory(bxUserOverlay, level, item._mullerUid)) : bxCategory;
               if (!src) return;
               const others = Object.keys(BX_DB_EMPTY).filter((c) => c !== src);
@@ -3018,7 +3031,7 @@
           const handleBxUserCardDelete = () => {
               const item = bxCurrentList[bxIndex];
               if (!item || !item._mullerUser || !item._mullerUid) return;
-              const level = activeTab === 'b1meister' ? 'b1' : 'b2';
+              const level = bxBankLevel === 'b1' ? 'b1' : 'b2';
               let srcCat = bxCategory === 'mix' ? (item._mullerCategory || mullerFindUserBxCategory(bxUserOverlay, level, item._mullerUid)) : bxCategory;
               if (!srcCat) {
                   alert('No se encontró la categoría de esta tarjeta.');
@@ -3036,7 +3049,7 @@
           const handleBxUserCardMove = () => {
               const item = bxCurrentList[bxIndex];
               if (!item || !item._mullerUser || !item._mullerUid) return;
-              const level = activeTab === 'b1meister' ? 'b1' : 'b2';
+              const level = bxBankLevel === 'b1' ? 'b1' : 'b2';
               let srcCat = bxCategory === 'mix' ? (item._mullerCategory || mullerFindUserBxCategory(bxUserOverlay, level, item._mullerUid)) : bxCategory;
               if (!srcCat) {
                   alert('No se encontró la categoría de origen.');
@@ -3777,7 +3790,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   if (activeTab === 'vocabulario') return 'bg-amber-50';
                   if (activeTab === 'entrenamiento') return 'bg-fuchsia-50';
                   if (activeTab === 'lexikon') return 'bg-slate-100';
-                  if (activeTab === 'b1meister' || activeTab === 'b2ausblick') return 'bg-slate-100';
+                  if (activeTab === 'bxbank') return 'bg-slate-100';
                   if (activeTab === 'storybuilder') return 'bg-indigo-100';
                   if (activeTab === 'shadowing') return 'bg-teal-50';
                   if (activeTab === 'escritura') return 'bg-stone-100';
@@ -3795,7 +3808,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               if (activeTab === 'vocabulario') return 'bg-amber-950/70'; // Suavizado
               if (activeTab === 'entrenamiento') return 'bg-fuchsia-950/85';
               if (activeTab === 'lexikon') return 'bg-slate-900';
-              if (activeTab === 'b1meister' || activeTab === 'b2ausblick') return 'bg-slate-900'; // Suavizado
+              if (activeTab === 'bxbank') return 'bg-slate-900'; // Suavizado
               if (activeTab === 'storybuilder') return 'bg-indigo-950'; // Suavizado
               if (activeTab === 'shadowing') return 'bg-teal-950/90';
               if (activeTab === 'escritura') return 'bg-stone-950';
@@ -4361,12 +4374,16 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       <ExerciseHelpBtn helpId="nav_vocab" compact />
                       <button onClick={()=>{setActiveTab('entrenamiento'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'entrenamiento' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.6)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="graduation-cap" className="w-4 h-4 md:w-5 md:h-5" /> Entrena</button>
                       <ExerciseHelpBtn helpId="advanced_menu" compact />
-                      <button onClick={()=>{setActiveTab('b1meister'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'b1meister' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="target" className="w-4 h-4 md:w-5 md:h-5" /> B1</button>
+                      <button onClick={()=>{setActiveTab('bxbank'); setBxBankLevel('b1'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'bxbank' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="target" className="w-4 h-4 md:w-5 md:h-5" /> Banco B1/B2</button>
                       <ExerciseHelpBtn helpId="nav_b1" compact />
                       </div>
                       <div className="flex flex-wrap gap-1.5 md:gap-2 bg-zinc-950/85 p-1.5 rounded-2xl ring-1 ring-white/[0.1] w-full items-center touch-manipulation justify-center md:justify-start">
-                      <button onClick={()=>{setActiveTab('b2ausblick'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'b2ausblick' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.8)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="layers" className="w-4 h-4 md:w-5 md:h-5" /> B2</button>
-                      <ExerciseHelpBtn helpId="nav_b2" compact />
+                      {activeTab === 'bxbank' ? (
+                          <div className="flex items-center gap-1 rounded-xl bg-black/30 border border-white/10 px-1.5 py-1">
+                              <button type="button" onClick={() => setBxBankLevel('b1')} className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${bxBankLevel === 'b1' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'}`}>B1</button>
+                              <button type="button" onClick={() => setBxBankLevel('b2')} className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${bxBankLevel === 'b2' ? 'bg-sky-600 text-white' : 'text-gray-300 hover:text-white'}`}>B2</button>
+                          </div>
+                      ) : null}
                       <button onClick={()=>{setActiveTab('progreso'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'progreso' ? 'bg-yellow-600 text-white shadow-[0_0_18px_rgba(202,138,4,0.35)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="bar-chart" className="w-4 h-4 md:w-5 md:h-5" /> Progreso</button>
                       <ExerciseHelpBtn helpId="nav_progreso" compact />
                       <button onClick={()=>{setActiveTab('guiones'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'guiones' ? 'bg-purple-600 text-white shadow-[0_0_18px_rgba(147,51,234,0.45)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="file-text" className="w-4 h-4 md:w-5 md:h-5" /> Biblioteca</button>
@@ -4428,8 +4445,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           role="menuitem"
                                           className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-white hover:bg-white/10"
                                           onClick={() => {
-                                              setTempUsername((userStats.username || '').trim());
-                                              setShowLoginModal(true);
+                                              setProfileSettingsTab('perfil');
+                                              setShowProfileSettingsModal(true);
                                               setUserMenuOpen(false);
                                           }}
                                       >
@@ -4440,12 +4457,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           role="menuitem"
                                           className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-white hover:bg-white/10"
                                           onClick={() => {
-                                              setShowMullerHub(true);
-                                              setMullerHubTab('voices');
+                                              setProfileSettingsTab('ajustes');
+                                              setShowProfileSettingsModal(true);
                                               setUserMenuOpen(false);
                                           }}
                                       >
-                                          <Icon name="settings" className="h-4 w-4 shrink-0 text-sky-400" /> Ajustes (Centro Müller)
+                                          <Icon name="settings" className="h-4 w-4 shrink-0 text-sky-400" /> Ajustes premium
                                       </button>
                                       <button
                                           type="button"
@@ -4533,6 +4550,157 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               </div>
 
               {/* MODAL LOGIN */}
+              {showProfileSettingsModal && (
+                  <div className="fixed inset-0 z-[140] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowProfileSettingsModal(false)} role="presentation">
+                      <div className="bg-slate-900 border border-sky-500/40 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Perfil y ajustes">
+                          <div className="flex items-center justify-between gap-2 p-4 border-b border-white/10 bg-black/35">
+                              <h2 className="text-lg md:text-2xl font-black text-white flex items-center gap-2"><Icon name="settings" className="w-5 h-5 md:w-6 md:h-6 text-sky-300" /> Perfil y ajustes premium</h2>
+                              <button type="button" onClick={() => setShowProfileSettingsModal(false)} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/20 text-gray-300 hover:bg-white/10">Cerrar</button>
+                          </div>
+                          <div className="p-3 border-b border-white/10 flex flex-wrap gap-2 bg-black/20">
+                              {[
+                                  { id: 'perfil', label: 'Perfil' },
+                                  { id: 'ajustes', label: 'Ajustes' },
+                                  { id: 'atajos', label: 'Atajos' },
+                              ].map((t) => (
+                                  <button key={t.id} type="button" onClick={() => setProfileSettingsTab(t.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${profileSettingsTab === t.id ? 'bg-sky-600 border-sky-400 text-white' : 'bg-slate-800 border-white/10 text-gray-400 hover:text-white'}`}>{t.label}</button>
+                              ))}
+                          </div>
+                          <div className="p-4 md:p-5 overflow-y-auto max-h-[calc(90vh-8.5rem)]">
+                              {profileSettingsTab === 'perfil' && (
+                                  <div className="space-y-4">
+                                      <div className="rounded-xl border border-white/10 bg-black/25 p-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                          <div><p className="text-gray-500">Usuario</p><p className="font-black text-white truncate">{userStats.username || 'Estudiante'}</p></div>
+                                          <div><p className="text-gray-500">Vidas</p><p className="font-black text-red-300">{userStats.hearts}</p></div>
+                                          <div><p className="text-gray-500">Monedas</p><p className="font-black text-amber-300">{coinsUiLabel}</p></div>
+                                          <div><p className="text-gray-500">Racha</p><p className="font-black text-orange-300">{userStats.streakDays || 0} días</p></div>
+                                      </div>
+                                      {unifiedAuth ? (
+                                          <div className="space-y-3">
+                                              <p className="text-sm text-emerald-300 font-bold">Sesión iniciada · {unifiedAuth.source === 'supabase' ? 'Supabase' : 'Local'}</p>
+                                              <p className="text-xs text-gray-400">Email: {mullerMaskEmail(unifiedAuth.email)}</p>
+                                              <div className="rounded-xl border border-white/10 bg-black/25 p-3 space-y-2">
+                                                  <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500">Cambiar nombre visible</label>
+                                                  <div className="flex flex-col sm:flex-row gap-2">
+                                                      <input type="text" value={profileNameDraft} onChange={(e) => setProfileNameDraft(e.target.value)} className="flex-1 bg-black/50 border border-white/15 rounded-xl px-3 py-2 text-white outline-none focus:border-violet-500" placeholder="Ej: SuperKlaus" />
+                                                      <button type="button" disabled={profileNameBusy} className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 font-bold text-sm"
+                                                          onClick={async () => {
+                                                              const nextName = String(profileNameDraft || '').trim();
+                                                              if (!nextName) { setProfileNameMsg('Escribe un nombre válido.'); return; }
+                                                              setProfileNameBusy(true); setProfileNameMsg('');
+                                                              try {
+                                                                  if (unifiedAuth.source === 'supabase') {
+                                                                      const client = mullerGetSupabaseClient();
+                                                                      if (!client || !supabaseUser) throw new Error('Supabase no disponible');
+                                                                      const { error: e1 } = await client.auth.updateUser({ data: { display_name: nextName } });
+                                                                      if (e1) throw new Error(e1.message);
+                                                                      const { error: e2 } = await client.from('profiles').upsert({ id: supabaseUser.id, display_name: nextName, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+                                                                      if (e2) throw new Error(e2.message);
+                                                                      setSupabaseProfile((p) => ({ ...(p || {}), id: supabaseUser.id, display_name: nextName, updated_at: new Date().toISOString() }));
+                                                                  } else {
+                                                                      const map = mullerAccountsLoad(); const em = unifiedAuth.email;
+                                                                      if (map[em]) { map[em].displayName = nextName; mullerAccountsSave(map); }
+                                                                  }
+                                                                  saveProgress({ username: nextName }); setAuthTick((x) => x + 1); setProfileNameMsg('Nombre actualizado.');
+                                                              } catch (err) {
+                                                                  setProfileNameMsg('No se pudo actualizar: ' + (err && err.message ? err.message : 'error'));
+                                                              } finally { setProfileNameBusy(false); }
+                                                          }}>{profileNameBusy ? 'Guardando…' : 'Guardar nombre'}</button>
+                                                  </div>
+                                                  {profileNameMsg ? <p className="text-xs text-gray-400">{profileNameMsg}</p> : null}
+                                              </div>
+                                              <button type="button" className="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 font-bold text-sm border border-white/10"
+                                                  onClick={async () => {
+                                                      const client = mullerGetSupabaseClient();
+                                                      if (unifiedAuth.source === 'supabase' && client) { try { await client.auth.signOut(); } catch (err) {} setSupabaseUser(null); setSupabaseProfile(null); }
+                                                      mullerAuthLogout(); setAuthTick((x) => x + 1); setAuthPassword(''); setShowProfileSettingsModal(false);
+                                                  }}>Cerrar sesión</button>
+                                          </div>
+                                      ) : (
+                                          <div className="space-y-3">
+                                              <div className="flex gap-2">
+                                                  <button type="button" onClick={() => { setAuthMode('login'); setAuthError(''); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${authMode === 'login' ? 'bg-violet-600 text-white' : 'bg-black/40 text-gray-500'}`}>Entrar</button>
+                                                  <button type="button" onClick={() => { setAuthMode('register'); setAuthError(''); }} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${authMode === 'register' ? 'bg-violet-600 text-white' : 'bg-black/40 text-gray-500'}`}>Registro gratis</button>
+                                              </div>
+                                              {authError ? <p className="text-sm text-red-400 font-semibold">{authError}</p> : null}
+                                              <input type="email" autoComplete="email" className="w-full bg-black/50 border border-white/15 rounded-xl px-3 py-2.5 text-white outline-none focus:border-violet-500" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="Email" />
+                                              <input type="password" autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} className="w-full bg-black/50 border border-white/15 rounded-xl px-3 py-2.5 text-white outline-none focus:border-violet-500" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="Contraseña (mín. 6)" />
+                                              {authMode === 'register' ? <input type="text" className="w-full bg-black/50 border border-white/15 rounded-xl px-3 py-2.5 text-white outline-none focus:border-violet-500" value={authDisplayName} onChange={(e) => setAuthDisplayName(e.target.value)} placeholder="Nombre visible" /> : null}
+                                              <button type="button" disabled={authBusy} className="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 font-black text-white"
+                                                  onClick={async () => {
+                                                      setAuthBusy(true); setAuthError('');
+                                                      const errMap = { CRYPTO_UNAVAILABLE: 'Necesitas https o localhost para registrar con cifrado seguro.', EMAIL_INVALID: 'Introduce un email válido.', PASS_SHORT: 'La contraseña debe tener al menos 6 caracteres.', EMAIL_TAKEN: 'Ese email ya está registrado en este dispositivo.', BAD_CREDENTIALS: 'Email o contraseña incorrectos.' };
+                                                      try {
+                                                          const client = mullerGetSupabaseClient();
+                                                          if (client) {
+                                                              const em = authEmail.trim();
+                                                              if (authMode === 'register') {
+                                                                  const dn = (authDisplayName || userStats.username || 'Estudiante').trim();
+                                                                  const { data, error } = await client.auth.signUp({ email: em, password: authPassword, options: { data: { display_name: dn } } });
+                                                                  if (error) throw new Error(error.message);
+                                                                  saveProgress({ username: dn });
+                                                                  if (data.session && data.session.user) setSupabaseUser(data.session.user); else if (data.user) setSupabaseUser(data.user);
+                                                              } else {
+                                                                  const { data, error } = await client.auth.signInWithPassword({ email: em, password: authPassword });
+                                                                  if (error) throw new Error(error.message);
+                                                                  if (data.user) { setSupabaseUser(data.user); const meta = data.user.user_metadata && data.user.user_metadata.display_name; if (meta) saveProgress({ username: String(meta) }); }
+                                                              }
+                                                          } else if (authMode === 'register') { const acc = await mullerAuthRegister(authEmail, authPassword, authDisplayName || userStats.username); saveProgress({ username: acc.displayName }); }
+                                                          else { const acc = await mullerAuthLogin(authEmail, authPassword); saveProgress({ username: acc.displayName }); }
+                                                          setAuthPassword(''); setAuthTick((x) => x + 1); setShowProfileSettingsModal(false);
+                                                      } catch (err) { setAuthError(errMap[err.message] || err.message || 'Error'); }
+                                                      finally { setAuthBusy(false); }
+                                                  }}>{authBusy ? '…' : authMode === 'register' ? 'Crear cuenta' : 'Entrar'}</button>
+                                          </div>
+                                      )}
+                                  </div>
+                              )}
+                              {profileSettingsTab === 'ajustes' && (
+                                  <div className="space-y-4">
+                                      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                                          <p className="text-xs font-bold uppercase tracking-widest text-sky-300 mb-2">Tema global</p>
+                                          <div className="flex flex-wrap gap-2">
+                                              {[{ id: 'dark', label: 'Oscuro' }, { id: 'light', label: 'Claro' }, { id: 'hc', label: 'Alto contraste' }].map((t) => (
+                                                  <button key={t.id} type="button" onClick={() => { setUiTheme(t.id); try { localStorage.setItem(MULLER_THEME_KEY, t.id); } catch (e) {} }} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${uiTheme === t.id ? 'bg-cyan-600 border-cyan-300 text-white' : 'bg-slate-800 border-white/10 text-gray-400'}`}>{t.label}</button>
+                                              ))}
+                                          </div>
+                                      </div>
+                                      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                                          <p className="text-xs font-bold uppercase tracking-widest text-fuchsia-300 mb-2">Audio y voz</p>
+                                          <div className="flex flex-wrap gap-2 mb-3">
+                                              <button type="button" onClick={() => { try { localStorage.setItem('muller_sfx_enabled', (typeof window.__mullerSfxEnabled === 'function' && window.__mullerSfxEnabled()) ? '0' : '1'); } catch (e) {} setSfxEpoch((x) => x + 1); }} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-white/15 bg-slate-800 text-gray-200">Sonidos: {sfxEpoch >= 0 && typeof window.__mullerSfxEnabled === 'function' && window.__mullerSfxEnabled() ? 'ON' : 'OFF'}</button>
+                                              <button type="button" onClick={() => setNoiseEnabled(!noiseEnabled)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${noiseEnabled ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-800 border-white/10 text-gray-300'}`}>Ruido examen: {noiseEnabled ? 'ON' : 'OFF'}</button>
+                                          </div>
+                                          <p className="text-[11px] text-gray-500 mb-2">Velocidad TTS global</p>
+                                          <div className="flex flex-wrap gap-2">
+                                              {[{ id: 'Lenta', rate: '0.82' }, { id: 'Normal', rate: '0.92' }, { id: 'Examen', rate: '1.00' }].map((p) => (
+                                                  <button key={p.id} type="button" className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${(typeof window !== 'undefined' && (localStorage.getItem(MULLER_TTS_RATE_KEY) || '0.92') === p.rate) ? 'bg-violet-600 border-violet-400 text-white' : 'bg-slate-800 border-white/10 text-gray-400'}`} onClick={() => { try { localStorage.setItem(MULLER_TTS_RATE_KEY, p.rate); } catch (e) {} setTtsPrefsEpoch((x) => x + 1); }}>{p.id}</button>
+                                              ))}
+                                          </div>
+                                      </div>
+                                      <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                                          <p className="text-xs font-bold uppercase tracking-widest text-emerald-300 mb-2">Preferencias de uso</p>
+                                          <div className="flex flex-wrap gap-2">
+                                              <button type="button" onClick={() => setPodcastMode((v) => !v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${podcastMode ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-800 border-white/10 text-gray-300'}`}>Podcast: {podcastMode ? 'ON' : 'OFF'}</button>
+                                              <button type="button" onClick={() => setHistoriaAudioOnly((v) => !v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${historiaAudioOnly ? 'bg-violet-600 border-violet-400 text-white' : 'bg-slate-800 border-white/10 text-gray-300'}`}>Solo audio: {historiaAudioOnly ? 'ON' : 'OFF'}</button>
+                                              <button type="button" onClick={() => { setShowMullerHub(true); setMullerHubTab('voices'); setShowProfileSettingsModal(false); }} className="px-3 py-1.5 rounded-lg text-xs font-bold border border-sky-500/30 bg-sky-900/30 text-sky-200">Más ajustes de voces…</button>
+                                          </div>
+                                      </div>
+                                  </div>
+                              )}
+                              {profileSettingsTab === 'atajos' && (
+                                  <div className="space-y-2 text-sm text-gray-300">
+                                      <p><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">?</kbd> Ayuda rápida</p>
+                                      <p><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">I</kbd> Inicio · <kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">R</kbd> Ruta · <kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">H</kbd> Historia</p>
+                                      <p><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">V</kbd> Vocab · <kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">P</kbd> Progreso · <kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">M</kbd> Centro Müller</p>
+                                      <p><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">Esc</kbd> Cerrar modales</p>
+                                  </div>
+                              )}
+                          </div>
+                      </div>
+                  </div>
+              )}
+
               {showLoginModal && (
                   <div className="absolute inset-0 z-50 bg-black/95 flex flex-col justify-center items-center p-4 md:p-8 animate-in zoom-in duration-300">
                       <div className="bg-slate-900 border border-amber-500 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-[0_0_40px_rgba(245,158,11,0.3)] text-center">
@@ -5074,15 +5242,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   )}
 
                   {/* B1 / B2 (sin cambios) */}
-                  {(activeTab === 'b1meister' || activeTab === 'b2ausblick') && !practiceActive && (
+                  {activeTab === 'bxbank' && !practiceActive && (
                       <div className="p-4 md:p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500 flex flex-col h-full">
                           <div className="flex flex-col md:flex-row md:flex-wrap justify-between items-start md:items-center mb-6 md:mb-8 border-b border-sky-900/50 pb-4 md:pb-6 gap-4">
                               <div className="min-w-0 flex-1 md:max-w-[min(100%,28rem)]">
-                                  <h1 className={`text-2xl md:text-4xl font-black flex items-center gap-2 md:gap-3 ${activeTab === 'b1meister' ? 'text-emerald-400' : 'text-sky-400'}`}>
-                                      {activeTab === 'b1meister' ? <Icon name="target" className="w-8 h-8 md:w-10 md:h-10" /> : <Icon name="layers" className="w-8 h-8 md:w-10 md:h-10" />} 
-                                      {activeTab === 'b1meister' ? 'B1 Fundamentos' : 'B2 Meisterklasse'}
+                                  <h1 className={`text-2xl md:text-4xl font-black flex items-center gap-2 md:gap-3 ${bxBankLevel === 'b1' ? 'text-emerald-400' : 'text-sky-400'}`}>
+                                      {bxBankLevel === 'b1' ? <Icon name="target" className="w-8 h-8 md:w-10 md:h-10" /> : <Icon name="layers" className="w-8 h-8 md:w-10 md:h-10" />} 
+                                      {bxBankLevel === 'b1' ? 'Banco B1 · Fundamentos' : 'Banco B2 · Meisterklasse'}
                                   </h1>
-                                  <p className="text-gray-300 text-xs md:text-sm mt-1">{activeTab === 'b1meister' ? 'Domina las bases absolutas.' : 'Estructuras avanzadas de nativos.'}</p>
+                                  <p className="text-gray-300 text-xs md:text-sm mt-1">{bxBankLevel === 'b1' ? 'Domina las bases absolutas.' : 'Estructuras avanzadas de nativos.'}</p>
                                   <p className="text-[10px] text-gray-500 mt-1">Tarjetas desde <code className="text-amber-200/90">b1-b2-database.json</code> más lo que añadas desde <strong className="text-gray-400">Biblioteca → Distribuir texto → B1/B2</strong> (local).</p>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 justify-end">
@@ -5098,13 +5266,13 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               </div>
                               <div className="w-full md:basis-full flex flex-wrap items-center gap-2 mt-1 md:mt-0 pt-3 border-t border-white/10 md:order-last">
                                   <span className="text-[10px] font-bold text-rose-300/95 uppercase tracking-wider w-full sm:w-auto">Mis aportaciones (Biblioteca)</span>
-                                  {activeTab === 'b1meister' ? (
+                                  {bxBankLevel === 'b1' ? (
                                       <button type="button" onClick={() => clearBxUserLevelAllCategories('b1')} className="text-[10px] md:text-xs font-bold px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/40">Borrar todo B1</button>
                                   ) : (
                                       <button type="button" onClick={() => clearBxUserLevelAllCategories('b2')} className="text-[10px] md:text-xs font-bold px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-600/40">Borrar todo B2</button>
                                   )}
                                   {bxCategory !== 'mix' ? (
-                                      <button type="button" onClick={() => clearBxUserOneCategory(activeTab === 'b1meister' ? 'b1' : 'b2', bxCategory)} className="text-[10px] md:text-xs font-bold px-2.5 py-1.5 rounded-lg bg-amber-950/70 hover:bg-amber-900 text-amber-100 border border-amber-600/35">
+                                      <button type="button" onClick={() => clearBxUserOneCategory(bxBankLevel === 'b1' ? 'b1' : 'b2', bxCategory)} className="text-[10px] md:text-xs font-bold px-2.5 py-1.5 rounded-lg bg-amber-950/70 hover:bg-amber-900 text-amber-100 border border-amber-600/35">
                                           Borrar solo: {bxCategory === 'vocabulario' ? 'Vocabulario' : bxCategory === 'verbos' ? 'Verbos' : bxCategory === 'preposiciones' ? 'Prep.' : bxCategory === 'conectores' ? 'Conectores' : 'Redemittel'}
                                       </button>
                                   ) : (
@@ -5115,13 +5283,13 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           <div className="flex-1 flex flex-col items-center justify-center relative w-full max-w-3xl mx-auto">
                               {bxCurrentList.length > 0 ? (
                                   <>
-                                      <div className={`absolute top-0 right-0 px-2 md:px-4 py-0.5 md:py-1 rounded-full font-bold border uppercase text-[10px] md:text-xs tracking-widest ${activeTab === 'b1meister' ? 'bg-emerald-900/50 text-emerald-300 border-emerald-500/30' : 'bg-sky-900/50 text-sky-300 border-sky-500/30'}`}>
+                                      <div className={`absolute top-0 right-0 px-2 md:px-4 py-0.5 md:py-1 rounded-full font-bold border uppercase text-[10px] md:text-xs tracking-widest ${bxBankLevel === 'b1' ? 'bg-emerald-900/50 text-emerald-300 border-emerald-500/30' : 'bg-sky-900/50 text-sky-300 border-sky-500/30'}`}>
                                           {bxCategory === 'mix' ? 'Modo Mix (Aleatorio)' : bxCategory}
                                       </div>
-                                      <div className={`w-full bg-slate-900/90 p-4 md:p-10 rounded-2xl md:rounded-3xl border-2 shadow-2xl mt-6 md:mt-8 ${activeTab === 'b1meister' ? 'border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.2)]' : 'border-sky-500/50 shadow-[0_0_40px_rgba(14,165,233,0.3)]'}`}>
-                                          <p className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-[10px] md:text-sm"><Icon name="languages" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{activeTab === 'b1meister' ? 'Básico / Común:' : 'Nivel B1:'}</p>
+                                      <div className={`w-full bg-slate-900/90 p-4 md:p-10 rounded-2xl md:rounded-3xl border-2 shadow-2xl mt-6 md:mt-8 ${bxBankLevel === 'b1' ? 'border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.2)]' : 'border-sky-500/50 shadow-[0_0_40px_rgba(14,165,233,0.3)]'}`}>
+                                          <p className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-[10px] md:text-sm"><Icon name="languages" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{bxBankLevel === 'b1' ? 'Básico / Común:' : 'Nivel B1:'}</p>
                                           <p className="text-base md:text-2xl text-white/60 mb-4 md:mb-8 decoration-red-500/50 decoration-2">"{bxCurrentList[bxIndex]?.b1}"</p>
-                                          <p className={`font-black mb-2 uppercase tracking-widest text-[10px] md:text-sm ${activeTab === 'b1meister' ? 'text-emerald-400' : 'text-sky-400'}`}><Icon name="trophy" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{activeTab === 'b1meister' ? 'Mejor / Nivel B1 Real:' : 'Nivel B2/C1:'}</p>
+                                          <p className={`font-black mb-2 uppercase tracking-widest text-[10px] md:text-sm ${bxBankLevel === 'b1' ? 'text-emerald-400' : 'text-sky-400'}`}><Icon name="trophy" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{bxBankLevel === 'b1' ? 'Mejor / Nivel B1 Real:' : 'Nivel B2/C1:'}</p>
                                           <p className="text-xl md:text-5xl font-black text-white mb-3 md:mb-4 leading-tight">"{bxCurrentList[bxIndex]?.b2}"</p>
                                           <p className="text-base md:text-xl text-gray-300 mb-6 md:mb-8 font-medium">({bxCurrentList[bxIndex]?.es})</p>
                                           <div className="bg-black/40 p-3 md:p-4 rounded-xl border border-white/10 flex gap-2 md:gap-3">
@@ -5137,7 +5305,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                                       <select value={bxMoveTargetCat} onChange={(e) => setBxMoveTargetCat(e.target.value)} className="bg-black/60 border border-gray-600 text-white text-xs md:text-sm rounded-lg px-2 py-1.5 outline-none focus:border-emerald-500">
                                                           {Object.keys(BX_DB_EMPTY).filter((c) => {
                                                               const it = bxCurrentList[bxIndex];
-                                                              const level = activeTab === 'b1meister' ? 'b1' : 'b2';
+                                                              const level = bxBankLevel === 'b1' ? 'b1' : 'b2';
                                                               const src = bxCategory === 'mix' ? (it._mullerCategory || mullerFindUserBxCategory(bxUserOverlay, level, it._mullerUid)) : bxCategory;
                                                               return c !== src;
                                                           }).map((c) => (
@@ -5151,7 +5319,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       </div>
                                       <div className="flex gap-3 md:gap-4 mt-6 md:mt-8 w-full max-w-sm justify-between">
                                           <button type="button" onClick={() => setBxIndex(i => i > 0 ? i - 1 : bxCurrentList.length - 1)} className="muller-icon-nav bg-gray-800 hover:bg-gray-700 text-white p-3 md:p-4 rounded-full transition border border-white/15"><Icon name="chevron-left" className="w-5 h-5 md:w-6 md:h-6 text-white" /></button>
-                                          <button onClick={() => { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(bxCurrentList[bxIndex].b2); u.lang = 'de-DE'; window.__mullerApplyPreferredDeVoice(u); window.speechSynthesis.speak(u); }} className={`text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold shadow-lg flex items-center gap-2 flex-1 justify-center text-sm md:text-base ${activeTab === 'b1meister' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-sky-600 hover:bg-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.5)]'}`}><Icon name="volume-2" className="w-5 h-5 md:w-6 md:h-6" /> Escuchar</button>
+                                          <button onClick={() => { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(bxCurrentList[bxIndex].b2); u.lang = 'de-DE'; window.__mullerApplyPreferredDeVoice(u); window.speechSynthesis.speak(u); }} className={`text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold shadow-lg flex items-center gap-2 flex-1 justify-center text-sm md:text-base ${bxBankLevel === 'b1' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-sky-600 hover:bg-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.5)]'}`}><Icon name="volume-2" className="w-5 h-5 md:w-6 md:h-6" /> Escuchar</button>
                                           <button type="button" onClick={() => setBxIndex(i => i < bxCurrentList.length - 1 ? i + 1 : 0)} className="muller-icon-nav bg-gray-800 hover:bg-gray-700 text-white p-3 md:p-4 rounded-full transition border border-white/15"><Icon name="chevron-right" className="w-5 h-5 md:w-6 md:h-6 text-white" /></button>
                                       </div>
                                       <p className="text-gray-500 font-bold mt-4 text-xs md:text-sm">Tarjeta {bxIndex + 1} / {bxCurrentList.length}</p>
@@ -6008,8 +6176,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   { id: 'vocab', label: 'Vocabulario', sub: 'SRS y tarjetas', icon: 'book-open', go: () => setActiveTab('vocabulario') },
                                   { id: 'shadow', label: 'Shadowing', sub: 'Pronunciación', icon: 'audio-lines', go: () => setActiveTab('shadowing') },
                                   { id: 'escritura', label: 'Escritura', sub: 'OCR y dictado', icon: 'pen-line', go: () => setActiveTab('escritura') },
-                                  { id: 'b1', label: 'B1', sub: 'Frases modelo', icon: 'target', go: () => { setActiveTab('b1meister'); setBxCategory('mix'); } },
-                                  { id: 'b2', label: 'B2', sub: 'Registro alto', icon: 'layers', go: () => { setActiveTab('b2ausblick'); setBxCategory('mix'); } },
+                                  { id: 'b1', label: 'Banco B1', sub: 'Frases modelo', icon: 'target', go: () => { setActiveTab('bxbank'); setBxBankLevel('b1'); setBxCategory('mix'); } },
+                                  { id: 'b2', label: 'Banco B2', sub: 'Registro alto', icon: 'layers', go: () => { setActiveTab('bxbank'); setBxBankLevel('b2'); setBxCategory('mix'); } },
                                   { id: 'progreso', label: 'Progreso', sub: 'Plan del día y estadísticas', icon: 'bar-chart', go: () => setActiveTab('progreso') },
                                   { id: 'bib', label: 'Biblioteca', sub: 'Guiones y listas', icon: 'file-text', go: () => setActiveTab('guiones') },
                                   { id: 'lex', label: 'Lexikon', sub: 'Diccionario y traductor', icon: 'library', go: () => setActiveTab('lexikon') },
@@ -6046,7 +6214,6 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           </div>
                           <div className="flex flex-wrap gap-2 mb-6">
                               {[
-                                  { id: 'cuenta', label: 'Cuenta' },
                                   { id: 'economia', label: 'Economía' },
                                   { id: 'directorio', label: 'Directorio' },
                                   { id: 'ligas', label: 'Liga / ranking' },
@@ -6061,6 +6228,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   </button>
                               ))}
                           </div>
+                          <p className="text-[11px] text-gray-500 mb-4">Cuenta y ajustes se gestionan ahora desde el menú de usuario (arriba derecha) o el botón flotante de ajustes.</p>
 
                           {communitySubTab === 'cuenta' && (
                               <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 md:p-6 shadow-xl">
@@ -6992,6 +7160,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 <>
                     <button onClick={requestMicPermission} className="fixed bottom-20 right-4 z-50 bg-gradient-to-br from-emerald-500 to-green-700 hover:from-emerald-400 hover:to-green-600 text-white p-3 rounded-full float-icon-glow ring-2 ring-white/10" title="Solicitar permiso de micrófono">
                         <Icon name="mic" className="w-6 h-6" />
+                    </button>
+                    <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('muller-open-profile-settings', { detail: { tab: 'ajustes' } }))} className="fixed bottom-20 left-4 z-50 bg-gradient-to-br from-fuchsia-600 to-indigo-800 hover:from-fuchsia-500 hover:to-indigo-700 text-white p-3 rounded-full float-icon-glow ring-2 ring-white/15" title="Ajustes premium (globales)">
+                        <Icon name="settings" className="w-6 h-6" />
                     </button>
                     <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2">
                         {backupAgeDays !== null && (
