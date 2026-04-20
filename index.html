@@ -936,11 +936,11 @@
             nav_b2: { title: 'B2 Meisterklasse', what: 'Misma estructura que B1 pero con estructuras más altas; útil para subir registro y conectores complejos.', tips: ['Lee en voz alta la versión “alta” para automatizar.', 'Compara con la línea básica si el JSON la trae.', 'Lleva un cuaderno de frases copiadas a mano.'] },
             nav_progreso: { title: 'Progreso', what: 'Resumen de racha, mazos difícil/normal, gramática, gráfico semanal y exportación PDF/Anki.', tips: ['Exporta PDF antes de examen para revisar en papel.', 'Los mazos se alimentan desde Vocab y gramática guardada en Historia.', 'SRS de vocabulario tiene su propio contador en la pantalla de ayuda.'] },
             nav_biblioteca: { title: 'Biblioteca', what: 'Guardas guiones pegados desde la IA y listas de vocabulario personalizadas; puedes enviar un texto pegado a B1 o B2 (vocabulario, verbos, etc.) con nivel automático por frase o forzando un nivel.', tips: ['Revisa el formato del prompt de IA antes de pegar.', '“Distribuir” estima B1/B2 por heurística local (no es IA); puedes forzar todo a B1 o B2.', 'Las tarjetas del archivo b1-b2-database.json no son “tuyas”: “Borrar aportaciones” solo quita lo añadido desde Distribuir.', 'Las lecciones de vocab se practican con el botón Practicar.'] },
-            nav_lexikon: { title: 'Lexikon', what: 'Búsqueda en Wiktionary (alemán o español) sin descargar un diccionario entero; traducción de frases con servicios públicos en red; puedes guardar pares en tus lecciones de Vocab.', tips: ['La traducción intenta adivinar si escribes en DE o ES; revisa siempre el resultado.', 'Wiktionary es comunitario: abre el enlace si quieres la ficha completa.', '“Guardar en lección” usa las mismas listas que Biblioteca → Vocab.'] },
+            nav_lexikon: { title: 'Lexikon', what: 'Traducción de palabras o frases (detección automática de idioma hacia alemán o español que elijas); opción aparte para solo Wiktionary; guardar pares en las mismas lecciones que en Biblioteca → Vocab.', tips: ['En “Palabra → traducción” elige ES→DE si buscas cómo se dice en alemán una palabra en español.', 'En el traductor usa “→ Alemán” o “→ Español” para forzar el sentido (incluye palabras malsonantes: el servicio puede devolver equivalentes o censura según el motor).', 'Si el desplegable de lecciones está vacío, crea lecciones en Biblioteca → Vocab; al abrir Lexikon se vuelve a leer el almacenamiento local.'] },
             nav_telc: { title: 'Día del examen TELC', what: 'Checklist estática: qué llevar, tiempos orientativos y consejos. No sustituye la convocatoria oficial.', tips: ['Imprime o exporta la lista la noche anterior.', 'Llega con margen para el registro.', 'Hidrátate y duerme bien: el examen es resistencia.'] },
             nav_ia: { title: 'IA Story Builder', what: 'Genera un guion nuevo con nivel y tema; útil cuando quieres vocabulario fresco sin pegar texto manual.', tips: ['Indica bien el nivel (B1/B2) y el tema.', 'Tras generar, guarda y estudia en Historia.', 'Combina con vocab propio en el campo de palabras si existe.'] },
             historia_base: { title: 'Historia — vista general', what: 'Escuchas y lees escenas; el vocabulario resaltado enlaza con las tarjetas. Abajo tienes play, escenas y velocidad.', tips: ['Primero escucha, luego muestra traducción.', 'Sube o baja la velocidad según el nivel del día.', 'PDF del guion sirve para repaso offline.'] },
-            historia_podcast: { title: 'Modo Podcast', what: 'Reproduce el guion completo como audiolibro (voz del sistema). Útil para inmersión pasiva o repaso en movimiento.', tips: ['Actívalo cuando no vayas a pulsar escena a escena.', 'Ajusta voces en el Centro Müller (icono panel).', 'Puedes combinar con ruido de fondo si quieres simular ambiente.'] },
+            historia_podcast: { title: 'Modo Podcast', what: 'Reproduce el guion actual escena a escena sin tener que pulsar “siguiente”. Con “Todos los guiones” (barra superior) pasa al siguiente guion guardado al terminar el actual — útil en coche para encadenar varios.', tips: ['Elige el guion en el menú “Guion en Historia” (arriba a la izquierda).', 'Podcast solo afecta al guion cargado; “Todos los guiones” encadena tus guiones de Biblioteca en orden.', 'Combina con Solo audio y velocidad para manos libres.'] },
             historia_interview: { title: 'Simulación oral (Teil 2)', what: 'Pregunta tipo examen; mantienes pulsado el micrófono para responder y recibes feedback por palabras.', tips: ['Responde en frases completas, no solo sí/no.', 'Mira el feedback de palabras para afinar pronunciación.', 'Relájate: es entrenamiento, no evaluación oficial.'] },
             historia_roleplay: { title: 'Roleplay / tu turno', what: 'La app silencia voces para que leas o digas tú la réplica; puedes escuchar modelo, grabar y ver puntuación.', tips: ['Haz primero play del modelo y luego imita.', 'Comprueba la traducción solo después de intentar.', 'Pasa de escena cuando estés satisfecho con tu toma.'] },
             historia_puzzle: { title: 'Satzbau (puzzle)', what: 'Reconstruye la frase arrastrando trozos en orden. Refuerza orden de palabras en alemán.', tips: ['Escucha la pista de audio antes de mirar la solución.', 'Piensa en el verbo en segunda posición en main clauses.', 'Comprueba solo cuando hayas colocado todas las piezas.'] },
@@ -1008,7 +1008,9 @@
           const [fluesternMode, setFluesternMode] = useState(false);
           const [noiseEnabled, setNoiseEnabled] = useState(false); // NUEVO: Ruido de fondo
           const [roleplayChar, setRoleplayChar] = useState('none');
-          const [podcastMode, setPodcastMode] = useState(false); 
+          const [podcastMode, setPodcastMode] = useState(false);
+          /** Tras el último guion, carga el siguiente de Biblioteca (solo tiene efecto al terminar una escena en flujo normal / podcast). */
+          const [historiaPlaylistAllScripts, setHistoriaPlaylistAllScripts] = useState(false);
           const [showCurrentTranslation, setShowCurrentTranslation] = useState(false); 
           const [tempusVerbList, setTempusVerbList] = useState([]);
           const [diktatMode, setDiktatMode] = useState(false);
@@ -1019,7 +1021,9 @@
           const [activeSavedScriptId, setActiveSavedScriptId] = useState(null);
           const [customVocabLessons, setCustomVocabLessons] = useState([]);
           const [lexikonSearch, setLexikonSearch] = useState('');
-          const [lexikonWiki, setLexikonWiki] = useState('de');
+          /** tr-es-de | tr-de-es | wiki-de | wiki-es */
+          const [lexikonDictKind, setLexikonDictKind] = useState('tr-es-de');
+          const [lexikonTransTarget, setLexikonTransTarget] = useState('de');
           const [lexikonResults, setLexikonResults] = useState(null);
           const [lexikonDictLoading, setLexikonDictLoading] = useState(false);
           const [lexikonTransText, setLexikonTransText] = useState('');
@@ -1263,6 +1267,24 @@
               if(savedCustomVocab) setCustomVocabLessons(JSON.parse(savedCustomVocab));
               setUserStats((prev) => ({ ...prev, streakDays: mullerComputeHonestStreakDays() }));
           }, []);
+
+          useEffect(() => {
+              if (activeTab !== 'lexikon') return;
+              try {
+                  const raw = localStorage.getItem('mullerCustomVocab');
+                  if (raw) {
+                      const parsed = JSON.parse(raw);
+                      if (Array.isArray(parsed)) setCustomVocabLessons(parsed);
+                  }
+              } catch (e) {}
+          }, [activeTab]);
+
+          useEffect(() => {
+              if (activeTab !== 'lexikon') return;
+              if (customVocabLessons.length > 0 && !lexikonSaveLessonId) {
+                  setLexikonSaveLessonId(customVocabLessons[0].id);
+              }
+          }, [activeTab, customVocabLessons, lexikonSaveLessonId]);
 
           useEffect(() => {
               const id = setInterval(() => {
@@ -1615,6 +1637,15 @@
           
           const getActualSceneIndex = () => isReviewing ? userStats.failedDiktatScenes[reviewIndexPointer] : sceneIndex;
 
+          const getNextPlaylistScript = () => {
+              if (!savedScripts || savedScripts.length === 0) return null;
+              if (isDefaultScript) return savedScripts[0];
+              const i = savedScripts.findIndex((s) => String(s.id) === String(activeSavedScriptId));
+              if (i < 0) return savedScripts[0];
+              if (i + 1 < savedScripts.length) return savedScripts[i + 1];
+              return null;
+          };
+
           const proceedToNextStage = () => {
               if (isReviewing) {
                   if (reviewIndexPointer < userStats.failedDiktatScenes.length - 1) { setReviewIndexPointer(p => p + 1); setMode('dialogue'); resetModes(); } 
@@ -1622,10 +1653,24 @@
               } else {
                   if (sceneIndex < guionData.length - 1) { setSceneIndex(s => s + 1); setMode('dialogue'); resetModes(); } 
                   else {
+                      if (historiaPlaylistAllScripts && !isReviewing) {
+                          const nextScr = getNextPlaylistScript();
+                          if (nextScr) {
+                              loadSavedScript(nextScr);
+                              return;
+                          }
+                      }
                       if (userStats.failedDiktatScenes.length > 0) {
                           alert("¡Historia terminada! Tienes fallos pendientes en Diktat. Iniciando Repaso.");
                           setIsReviewing(true); setReviewIndexPointer(0); setMode('dialogue'); resetModes();
-                      } else { stopAudio(); alert("¡Has completado el guion!"); }
+                      } else {
+                          stopAudio();
+                          if (historiaPlaylistAllScripts && savedScripts.length > 0) {
+                              alert('¡Has escuchado todos los guiones guardados en secuencia!');
+                          } else {
+                              alert("¡Has completado el guion!");
+                          }
+                      }
                   }
               }
           };
@@ -1856,14 +1901,20 @@
               setBxIndex(0);
           };
 
-          const mullerTranslateViaGtx = async (text, sl, tl) => {
+          const mullerTranslateGtxFull = async (text, sl, tl) => {
               const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(text)}`;
               const r = await fetch(url);
               if (!r.ok) throw new Error('gtx');
               const data = await r.json();
               let out = '';
               if (data && data[0]) data[0].forEach((p) => { if (p && p[0]) out += p[0]; });
-              return out.trim();
+              const detected = data && data[2] != null ? String(data[2]) : '';
+              return { text: out.trim(), detected };
+          };
+
+          const mullerTranslateViaGtx = async (text, sl, tl) => {
+              const { text: out } = await mullerTranslateGtxFull(text, sl, tl);
+              return out;
           };
 
           const mullerTranslateViaMyMemory = async (text, pair) => {
@@ -1874,12 +1925,29 @@
               return String((j.responseData && j.responseData.translatedText) || '').trim();
           };
 
-          const mullerLexikonGuessLangPair = (raw) => {
-              const s = String(raw || '').trim();
-              if (!s) return { sl: 'de', tl: 'es' };
-              const deScore = (s.match(/[äöüßÄÖÜ]/g) || []).length + (/\b(der|die|das|und|nicht|ich|du|ist|sind|haben)\b/i.test(s) ? 4 : 0);
-              const esScore = (s.match(/[áéíóúñ¿¡]/g) || []).length + (/\b(el|la|los|las|y|que|no|muy|para)\b/i.test(s) ? 4 : 0);
-              return esScore > deScore ? { sl: 'es', tl: 'de' } : { sl: 'de', tl: 'es' };
+          const mullerLexikonApplyPairsFromTranslate = (sourceText, translated, detectedLang, targetLang) => {
+              const d = String(detectedLang || '').toLowerCase();
+              const t = String(targetLang || '').toLowerCase();
+              const outClean = String(translated || '').replace(/^\(sin resultado\)$/, '');
+              const src = String(sourceText || '').trim();
+              if (!outClean) return;
+              if (t === 'de') {
+                  if (d === 'de' || d.startsWith('de')) {
+                      setLexikonPairDe(src);
+                      setLexikonPairEs(outClean);
+                  } else {
+                      setLexikonPairEs(src);
+                      setLexikonPairDe(outClean);
+                  }
+              } else if (t === 'es') {
+                  if (d === 'de' || d.startsWith('de')) {
+                      setLexikonPairDe(src);
+                      setLexikonPairEs(outClean);
+                  } else {
+                      setLexikonPairEs(src);
+                      setLexikonPairDe(outClean);
+                  }
+              }
           };
 
           const runLexikonDictionarySearch = async () => {
@@ -1888,14 +1956,29 @@
               setLexikonDictLoading(true);
               setLexikonResults(null);
               try {
-                  const wiki = lexikonWiki === 'es' ? 'es' : 'de';
-                  const url = `https://${wiki}.wiktionary.org/w/api.php?action=opensearch&search=${encodeURIComponent(q)}&limit=14&namespace=0&format=json&origin=*`;
-                  const r = await fetch(url);
-                  if (!r.ok) throw new Error('wiki');
-                  const data = await r.json();
-                  setLexikonResults({ titles: data[1] || [], descriptions: data[2] || [], urls: data[3] || [], wiki });
+                  if (lexikonDictKind === 'tr-es-de' || lexikonDictKind === 'tr-de-es') {
+                      const tl = lexikonDictKind === 'tr-es-de' ? 'de' : 'es';
+                      let out = '';
+                      let detected = '';
+                      const r = await mullerTranslateGtxFull(q, 'auto', tl);
+                      out = r.text;
+                      detected = r.detected;
+                      if (!out) {
+                          try {
+                              out = await mullerTranslateViaMyMemory(q, tl === 'de' ? 'es|de' : 'de|es');
+                          } catch (eM) { /* ignore */ }
+                      }
+                      setLexikonResults({ dictTranslate: true, query: q, out: out || '', detected, tl, error: false });
+                  } else {
+                      const wiki = lexikonDictKind === 'wiki-es' ? 'es' : 'de';
+                      const url = `https://${wiki}.wiktionary.org/w/api.php?action=opensearch&search=${encodeURIComponent(q)}&limit=14&namespace=0&format=json&origin=*`;
+                      const r = await fetch(url);
+                      if (!r.ok) throw new Error('wiki');
+                      const data = await r.json();
+                      setLexikonResults({ titles: data[1] || [], descriptions: data[2] || [], urls: data[3] || [], wiki });
+                  }
               } catch (e) {
-                  alert('No se pudo consultar Wiktionary (red o bloqueo). Prueba otra vez.');
+                  alert('No se pudo completar la búsqueda (red o bloqueo). Prueba otra vez.');
                   setLexikonResults({ error: true });
               } finally {
                   setLexikonDictLoading(false);
@@ -1907,31 +1990,25 @@
               if (!text) { alert('Escribe un texto o frase.'); return; }
               setLexikonTransLoading(true);
               setLexikonTransOut('');
-              const { sl, tl } = mullerLexikonGuessLangPair(text);
+              const tl = lexikonTransTarget === 'es' ? 'es' : 'de';
               try {
-                  let out = await mullerTranslateViaGtx(text, sl, tl);
-                  if (!out) out = await mullerTranslateViaMyMemory(text, `${sl}|${tl}`);
+                  const { text: outRaw, detected } = await mullerTranslateGtxFull(text, 'auto', tl);
+                  let out = outRaw;
+                  if (!out) {
+                      try {
+                          out = await mullerTranslateViaMyMemory(text, tl === 'de' ? 'es|de' : 'de|es');
+                      } catch (eM) { /* ignore */ }
+                  }
                   const finalOut = out || '(sin resultado)';
                   setLexikonTransOut(finalOut);
-                  if (sl === 'de') {
-                      setLexikonPairDe(text);
-                      setLexikonPairEs(finalOut.replace(/^\(sin resultado\)$/, ''));
-                  } else {
-                      setLexikonPairEs(text);
-                      setLexikonPairDe(finalOut.replace(/^\(sin resultado\)$/, ''));
-                  }
+                  mullerLexikonApplyPairsFromTranslate(text, finalOut, detected, tl);
               } catch (e1) {
                   try {
-                      const out = await mullerTranslateViaMyMemory(text, `${sl}|${tl}`);
+                      let out = await mullerTranslateViaMyMemory(text, tl === 'de' ? 'es|de' : 'de|es');
+                      if (!out) out = await mullerTranslateViaMyMemory(text, tl === 'de' ? 'de|es' : 'es|de');
                       const finalOut = out || '(sin resultado)';
                       setLexikonTransOut(finalOut);
-                      if (sl === 'de') {
-                          setLexikonPairDe(text);
-                          setLexikonPairEs(finalOut.replace(/^\(sin resultado\)$/, ''));
-                      } else {
-                          setLexikonPairEs(text);
-                          setLexikonPairDe(finalOut.replace(/^\(sin resultado\)$/, ''));
-                      }
+                      mullerLexikonApplyPairsFromTranslate(text, finalOut, tl === 'de' ? 'es' : 'de', tl);
                   } catch (e2) {
                       setLexikonTransOut('Error de traducción. Comprueba la conexión.');
                   }
@@ -2085,6 +2162,23 @@
               setGuionData(JSON.parse(script.data)); setActiveScriptTitle(script.title); setIsDefaultScript(false);
               setActiveSavedScriptId(script && script.id != null ? String(script.id) : null);
               setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false); setActiveTab('historia');
+          };
+
+          const loadDefaultGuion = () => {
+              try {
+                  setGuionData(JSON.parse(JSON.stringify(DEFAULT_GUION)));
+              } catch (e) {
+                  setGuionData(DEFAULT_GUION);
+              }
+              setActiveScriptTitle('Lektion 17: Kunst');
+              setIsDefaultScript(true);
+              setActiveSavedScriptId(null);
+              setSceneIndex(0);
+              setMode('dialogue');
+              stopAudio();
+              resetModes();
+              setIsReviewing(false);
+              setActiveTab('historia');
           };
 
           const deleteSavedScript = (e, script) => {
@@ -3312,11 +3406,14 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           <span className="flex items-center gap-1 font-black text-red-500 text-xs md:text-sm"><Icon name="heart" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {userStats.hearts}</span>
                           <span className="flex items-center gap-1 font-black text-yellow-400 text-xs md:text-sm"><Icon name="coins" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {userStats.coins}</span>
                       </div>
-                      <button onClick={()=>{setPodcastMode(!podcastMode); setBlindMode(false); setDiktatMode(false); setPuzzleMode(false); setHistoriaAudioOnly(false);}} className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-bold transition border border-white/20 whitespace-nowrap ${podcastMode ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.8)]' : 'bg-black/50 text-gray-300 hover:bg-white/10'}`} title="Auto-Play Podcast">
+                      <button onClick={()=>{setPodcastMode(!podcastMode); setBlindMode(false); setDiktatMode(false); setPuzzleMode(false); setHistoriaAudioOnly(false);}} className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-bold transition border border-white/20 whitespace-nowrap ${podcastMode ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.8)]' : 'bg-black/50 text-gray-300 hover:bg-white/10'}`} title="Reproduce escena a escena el guion cargado sin pulsar siguiente.">
                            <Icon name="car" className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Podcast</span>
                       </button>
                       {activeTab === 'historia' && (
                           <>
+                          <button type="button" disabled={savedScripts.length === 0} onClick={() => setHistoriaPlaylistAllScripts(!historiaPlaylistAllScripts)} className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-bold transition border border-white/20 whitespace-nowrap ${historiaPlaylistAllScripts ? 'bg-fuchsia-700 text-white shadow-[0_0_12px_rgba(162,28,175,0.55)]' : 'bg-black/50 text-gray-300 hover:bg-white/10'} ${savedScripts.length === 0 ? 'opacity-40 cursor-not-allowed' : ''}`} title={savedScripts.length === 0 ? 'Añade guiones en Biblioteca para encadenarlos' : 'Al terminar este guion, pasa al siguiente de Biblioteca (orden de la lista). Ideal con Podcast en el coche.'}>
+                              <Icon name="repeat" className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Todos los guiones</span>
+                          </button>
                           <button type="button" onClick={() => { setHistoriaAudioOnly(!historiaAudioOnly); if (!historiaAudioOnly) setPodcastMode(false); }} className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-bold transition border border-white/20 whitespace-nowrap ${historiaAudioOnly ? 'bg-violet-600 text-white' : 'bg-black/50 text-gray-300 hover:bg-white/10'}`} title="UI mínima: solo audio y controles grandes (manos libres)">
                               <Icon name="headphones" className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Solo audio</span>
                           </button>
@@ -3916,19 +4013,36 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               </h1>
                               <ExerciseHelpBtn helpId="nav_lexikon" />
                           </div>
-                          <p className="text-gray-400 text-xs md:text-sm mb-6 border-b border-white/10 pb-4">Diccionario online (Wiktionary) y traducción rápida (Google / MyMemory). Los textos salen por internet; puedes guardar pares en tus lecciones de <strong className="text-amber-200">Vocab</strong>.</p>
+                          <p className="text-gray-400 text-xs md:text-sm mb-6 border-b border-white/10 pb-4">Traducción de palabras o frases (detección automática del idioma de origen) y opción de solo Wiktionary. Los textos salen por internet; puedes guardar pares en las mismas lecciones que en <strong className="text-amber-200">Biblioteca → Vocab</strong>.</p>
 
                           <div className="rounded-2xl border border-cyan-700/40 bg-slate-900/80 p-4 md:p-6 mb-6 shadow-xl">
-                              <h2 className="text-lg font-black text-cyan-200 mb-3 flex items-center gap-2"><Icon name="search" className="w-5 h-5" /> Diccionario (sugerencias)</h2>
+                              <h2 className="text-lg font-black text-cyan-200 mb-3 flex items-center gap-2"><Icon name="search" className="w-5 h-5" /> Palabra o frase</h2>
+                              <p className="text-[11px] text-gray-500 mb-3">Elige primero si quieres <strong className="text-gray-300">traducción</strong> (recomendado para español → alemán) o solo enlaces a <strong className="text-gray-300">Wiktionary</strong> (definiciones en un idioma).</p>
                               <div className="flex flex-wrap gap-2 mb-3">
-                                  <input type="text" value={lexikonSearch} onChange={(e) => setLexikonSearch(e.target.value)} placeholder="Palabra…" className="flex-1 min-w-[160px] bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-cyan-500" onKeyDown={(e) => { if (e.key === 'Enter') runLexikonDictionarySearch(); }} />
-                                  <select value={lexikonWiki} onChange={(e) => setLexikonWiki(e.target.value)} className="bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none">
-                                      <option value="de">Wiktionary DE</option>
-                                      <option value="es">Wiktionary ES</option>
+                                  <input type="text" value={lexikonSearch} onChange={(e) => setLexikonSearch(e.target.value)} placeholder="Palabra o frase…" className="flex-1 min-w-[160px] bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-cyan-500" onKeyDown={(e) => { if (e.key === 'Enter') runLexikonDictionarySearch(); }} />
+                                  <select value={lexikonDictKind} onChange={(e) => setLexikonDictKind(e.target.value)} className="bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none max-w-[min(100%,220px)]">
+                                      <option value="tr-es-de">Traducción: ES → DE</option>
+                                      <option value="tr-de-es">Traducción: DE → ES</option>
+                                      <option value="wiki-de">Solo Wiktionary (alemán)</option>
+                                      <option value="wiki-es">Solo Wiktionary (español)</option>
                                   </select>
                                   <button type="button" disabled={lexikonDictLoading} onClick={runLexikonDictionarySearch} className="px-4 py-2 rounded-xl bg-cyan-700 hover:bg-cyan-600 font-bold text-sm disabled:opacity-50">{lexikonDictLoading ? '…' : 'Buscar'}</button>
                               </div>
-                              {lexikonResults && !lexikonResults.error && (lexikonResults.titles || []).length > 0 ? (
+                              {lexikonResults && lexikonResults.dictTranslate && !lexikonResults.error ? (
+                                  <div className="rounded-xl bg-cyan-950/40 border border-cyan-600/25 p-4 space-y-2">
+                                      <p className="text-white text-base md:text-lg"><span className="text-gray-400 font-bold text-xs uppercase mr-2">Entrada</span><strong>{lexikonResults.query}</strong></p>
+                                      <p className="text-cyan-100 text-lg md:text-2xl font-bold leading-snug">{lexikonResults.out || '—'}</p>
+                                      {lexikonResults.detected ? (
+                                          <p className="text-[10px] text-gray-500">Idioma detectado (aprox.): {lexikonResults.detected} → {lexikonResults.tl === 'de' ? 'alemán' : 'español'}</p>
+                                      ) : null}
+                                      <div className="flex flex-wrap gap-2 pt-1">
+                                          {lexikonResults.tl === 'de' && lexikonResults.out ? (
+                                              <a href={`https://de.wiktionary.org/wiki/${encodeURIComponent((lexikonResults.out.split(/[\s,.;]+/)[0] || '').replace(/^[\s"'«»]+|[\s"'»]+$/g, ''))}`} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 text-xs font-bold underline">Wiktionary DE (1.ª palabra del resultado)</a>
+                                          ) : null}
+                                          <button type="button" onClick={() => { setLexikonTransText(lexikonSearch); setLexikonTransTarget(lexikonDictKind === 'tr-es-de' ? 'de' : 'es'); setLexikonTransOut(''); }} className="text-[10px] font-bold text-amber-300 hover:text-white">Copiar a traductor abajo</button>
+                                      </div>
+                                  </div>
+                              ) : lexikonResults && !lexikonResults.error && (lexikonResults.titles || []).length > 0 ? (
                                   <ul className="space-y-2 text-sm">
                                       {(lexikonResults.titles || []).map((t, i) => (
                                           <li key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-b border-white/5 pb-2">
@@ -3942,14 +4056,19 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           </li>
                                       ))}
                                   </ul>
-                              ) : lexikonResults && !lexikonResults.error ? (
+                              ) : lexikonResults && !lexikonResults.error && !lexikonResults.dictTranslate ? (
                                   <p className="text-gray-500 text-sm">Sin resultados. Prueba otra grafía.</p>
                               ) : null}
                           </div>
 
                           <div className="rounded-2xl border border-indigo-700/40 bg-slate-900/80 p-4 md:p-6 mb-6 shadow-xl">
                               <h2 className="text-lg font-black text-indigo-200 mb-3 flex items-center gap-2"><Icon name="languages" className="w-5 h-5" /> Traductor (DE ↔ ES)</h2>
-                              <textarea value={lexikonTransText} onChange={(e) => setLexikonTransText(e.target.value)} placeholder="Escribe en alemán o en español: frase o palabra…" className="w-full min-h-[100px] bg-black/50 border border-indigo-800/60 rounded-xl p-3 text-white text-sm outline-none focus:border-indigo-500 mb-3" />
+                              <p className="text-[11px] text-gray-500 mb-2">Elige el idioma de <strong className="text-gray-300">salida</strong>; el origen se detecta solo (evita que una palabra española se traduzca mal por empate DE/ES).</p>
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                  <button type="button" onClick={() => setLexikonTransTarget('de')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'de' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>→ Alemán</button>
+                                  <button type="button" onClick={() => setLexikonTransTarget('es')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'es' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>→ Español</button>
+                              </div>
+                              <textarea value={lexikonTransText} onChange={(e) => setLexikonTransText(e.target.value)} placeholder="Frase o palabra (cualquier registro)…" className="w-full min-h-[100px] bg-black/50 border border-indigo-800/60 rounded-xl p-3 text-white text-sm outline-none focus:border-indigo-500 mb-3" />
                               <button type="button" disabled={lexikonTransLoading} onClick={runLexikonTranslate} className="mb-4 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-sm disabled:opacity-50">{lexikonTransLoading ? 'Traduciendo…' : 'Traducir'}</button>
                               {lexikonTransOut ? (
                                   <div className="rounded-xl bg-indigo-950/50 border border-indigo-600/30 p-4 mb-4">
@@ -4579,9 +4698,35 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   {/* HISTORIA (Main Engine) con botón Ruido */}
                   {activeTab === 'historia' && !practiceActive && (
                      <div className="flex-1 flex flex-col relative w-full h-full justify-center items-center p-3 md:p-8">
-                        <div className="absolute top-2 left-2 z-[12] flex flex-wrap gap-1 items-center max-w-[min(100%,420px)]">
-                            <ExerciseHelpBtn helpId={historiaExerciseHelpId} />
-                            <ExerciseHelpBtn helpId="historia_herramientas" compact className="!text-amber-200/95 !border-amber-500/25" title="Barra de herramientas (Diktat, huecos, artículos…)" />
+                        <div className="absolute top-2 left-2 z-[12] flex flex-col gap-2 items-start max-w-[min(100%,min(420px,96vw))]">
+                            <div className="flex flex-wrap gap-1 items-center">
+                                <ExerciseHelpBtn helpId={historiaExerciseHelpId} />
+                                <ExerciseHelpBtn helpId="historia_herramientas" compact className="!text-amber-200/95 !border-amber-500/25" title="Barra de herramientas (Diktat, huecos, artículos…)" />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 bg-black/50 border border-white/10 rounded-xl px-2 py-1.5">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">Guion</span>
+                                <select
+                                    className="bg-zinc-900/90 text-white text-[11px] md:text-xs font-bold rounded-lg px-2 py-1.5 border border-white/15 outline-none max-w-[220px] md:max-w-[280px]"
+                                    value={isDefaultScript ? '__default__' : (activeSavedScriptId ? String(activeSavedScriptId) : '__other__')}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === '__default__') loadDefaultGuion();
+                                        else if (v === '__other__') return;
+                                        else {
+                                            const s = savedScripts.find((x) => String(x.id) === v);
+                                            if (s) loadSavedScript(s);
+                                        }
+                                    }}
+                                >
+                                    <option value="__default__">Ejemplo integrado (Lektion 17)</option>
+                                    {savedScripts.map((s) => (
+                                        <option key={String(s.id)} value={String(s.id)}>{s.title || 'Sin título'}</option>
+                                    ))}
+                                    {!isDefaultScript && !activeSavedScriptId ? (
+                                        <option value="__other__">{activeScriptTitle} (actual, no guardado)</option>
+                                    ) : null}
+                                </select>
+                            </div>
                         </div>
                         {mode !== 'quiz' && mode !== 'interview' && !podcastMode && (
                             <div className="absolute top-2 right-2 flex flex-wrap items-center gap-1 md:gap-2 bg-black/60 p-1 rounded-xl border border-white/10 backdrop-blur-md z-10 max-w-[95%] justify-end">
@@ -4608,8 +4753,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                         )}
 
                         {podcastMode && (
-                            <div className="absolute top-2 right-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 px-2 md:px-4 py-1 md:py-2 rounded-full font-bold flex items-center gap-1 md:gap-2 animate-pulse z-10 text-xs md:text-sm">
-                                <Icon name="car" className="w-3 h-3 md:w-5 md:h-5" /> Modo Podcast Activo
+                            <div className="absolute top-2 right-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 px-2 md:px-4 py-1 md:py-2 rounded-full font-bold flex flex-col sm:flex-row items-start sm:items-center gap-0.5 sm:gap-2 animate-pulse z-10 text-[10px] md:text-sm max-w-[min(96%,280px)] sm:max-w-none text-left">
+                                <span className="flex items-center gap-1 md:gap-2"><Icon name="car" className="w-3 h-3 md:w-5 md:h-5 shrink-0" /> Modo Podcast</span>
+                                {historiaPlaylistAllScripts && savedScripts.length > 0 ? <span className="text-indigo-100/90 font-semibold normal-case">+ Todos los guiones (siguiente al terminar)</span> : null}
                             </div>
                         )}
 
