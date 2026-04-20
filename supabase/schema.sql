@@ -328,6 +328,121 @@ begin
     select score from public.league_scores where user_id = v_uid and week_key = coalesce(p_week_key, to_char(now(), 'YYYY-MM-DD'));
 end;
 $$;
+
+-- ------------------------------
+-- Estado de recompensas (UI)
+-- ------------------------------
+create or replace function public.muller_reward_status()
+returns table (
+  day_key text,
+  daily_bonus_claimed boolean,
+  ad_claims_today int,
+  ad_remaining_today int,
+  ad_cooldown_seconds int
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid;
+  v_day text := to_char(now(), 'YYYY-MM-DD');
+  v_ad_claims int := 0;
+  v_daily_claims int := 0;
+  v_last_ad timestamptz := null;
+  v_cd int := 0;
+begin
+  v_uid := auth.uid();
+  if v_uid is null then
+    raise exception 'NOT_AUTHENTICATED';
+  end if;
+
+  select claim_count, last_claim_at
+    into v_ad_claims, v_last_ad
+    from public.muller_reward_claims
+    where user_id = v_uid and reward_type = 'ad_reward' and day_key = v_day;
+  v_ad_claims := coalesce(v_ad_claims, 0);
+
+  select claim_count
+    into v_daily_claims
+    from public.muller_reward_claims
+    where user_id = v_uid and reward_type = 'daily_bonus' and day_key = v_day;
+  v_daily_claims := coalesce(v_daily_claims, 0);
+
+  if v_last_ad is not null and v_last_ad > (now() - interval '15 minutes') then
+    v_cd := greatest(0, ceil(extract(epoch from ((v_last_ad + interval '15 minutes') - now())))::int);
+  else
+    v_cd := 0;
+  end if;
+
+  return query
+    select
+      v_day,
+      (v_daily_claims >= 1),
+      v_ad_claims,
+      greatest(0, 6 - v_ad_claims),
+      v_cd;
+end;
+$$;
+
+-- ------------------------------
+-- Premium mensual (modo simple)
+-- ------------------------------
+create table if not exists public.muller_premium_subscriptions (
+  user_id uuid primary key references auth.users on delete cascade,
+  plan text not null default 'monthly',
+  status text not null default 'inactive',
+  started_at timestamptz,
+  expires_at timestamptz,
+  payment_ref text,
+  updated_at timestamptz default now()
+);
+
+alter table public.muller_premium_subscriptions enable row level security;
+
+drop policy if exists "premium_select_own" on public.muller_premium_subscriptions;
+create policy "premium_select_own"
+  on public.muller_premium_subscriptions for select
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "premium_insert_own" on public.muller_premium_subscriptions;
+create policy "premium_insert_own"
+  on public.muller_premium_subscriptions for insert
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "premium_update_own" on public.muller_premium_subscriptions;
+create policy "premium_update_own"
+  on public.muller_premium_subscriptions for update
+  using ((select auth.uid()) = user_id);
+
+create or replace function public.muller_get_premium_status()
+returns table (status text, plan text, expires_at timestamptz, is_active boolean)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid;
+begin
+  v_uid := auth.uid();
+  if v_uid is null then
+    raise exception 'NOT_AUTHENTICATED';
+  end if;
+
+  insert into public.muller_premium_subscriptions (user_id, plan, status, updated_at)
+  values (v_uid, 'monthly', 'inactive', now())
+  on conflict (user_id) do nothing;
+
+  return query
+    select
+      s.status,
+      s.plan,
+      s.expires_at,
+      (s.status = 'active' and s.expires_at is not null and s.expires_at > now()) as is_active
+    from public.muller_premium_subscriptions s
+    where s.user_id = v_uid;
+end;
+$$;
 -- Müller App · Supabase (plan gratuito)
 -- Ejecuta esto en: SQL Editor → New query → Run
 -- Auth: Authentication → Providers → Email → puedes desactivar "Confirm email" para pruebas locales.
