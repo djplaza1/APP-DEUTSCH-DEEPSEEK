@@ -87,6 +87,32 @@ create policy "league_update_own"
   using ((select auth.uid()) = user_id);
 
 -- ------------------------------
+-- Estado app sincronizable (multi-dispositivo)
+-- ------------------------------
+create table if not exists public.muller_user_state (
+  user_id uuid primary key references auth.users on delete cascade,
+  payload jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.muller_user_state enable row level security;
+
+drop policy if exists "muller_user_state_select_own" on public.muller_user_state;
+create policy "muller_user_state_select_own"
+  on public.muller_user_state for select
+  using ((select auth.uid()) = user_id);
+
+drop policy if exists "muller_user_state_insert_own" on public.muller_user_state;
+create policy "muller_user_state_insert_own"
+  on public.muller_user_state for insert
+  with check ((select auth.uid()) = user_id);
+
+drop policy if exists "muller_user_state_update_own" on public.muller_user_state;
+create policy "muller_user_state_update_own"
+  on public.muller_user_state for update
+  using ((select auth.uid()) = user_id);
+
+-- ------------------------------
 -- Economía segura (anti-trampa base)
 -- ------------------------------
 create table if not exists public.muller_wallets (
