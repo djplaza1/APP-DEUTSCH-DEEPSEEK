@@ -217,8 +217,8 @@
         const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
 
         /** Supabase (gratis): Dashboard → Project Settings → API → Project URL y anon public key */
-        window.MULLER_SUPABASE_URL = window.MULLER_SUPABASE_URL || '';
-        window.MULLER_SUPABASE_ANON_KEY = window.MULLER_SUPABASE_ANON_KEY || '';
+        window.MULLER_SUPABASE_URL = window.MULLER_SUPABASE_URL || 'https://mrimappoycvfujzegxdt.supabase.co';
+        window.MULLER_SUPABASE_ANON_KEY = window.MULLER_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaW1hcHBveWN2ZnVqemVneGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MzI1MDMsImV4cCI6MjA5MjIwODUwM30.L_5Lk3S_TgiaSe8jAAhTcQTbUsQiTjxA9pWq0ZDayBY';
 
         // --- COMPONENTE AISLANTE DE ICONOS (Lucide + contenedor “premium” opcional) ---
         const Icon = ({ name, className, nav = false }) => {
