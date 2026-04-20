@@ -116,6 +116,15 @@
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
+        .muller-skeleton {
+            background: linear-gradient(90deg, rgba(148,163,184,0.18) 25%, rgba(148,163,184,0.34) 37%, rgba(148,163,184,0.18) 63%);
+            background-size: 400% 100%;
+            animation: mullerShimmer 1.2s ease infinite;
+        }
+        @keyframes mullerShimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0 0; }
+        }
         .muller-reduce-motion *,
         .muller-reduce-motion *::before,
         .muller-reduce-motion *::after {
@@ -1309,6 +1318,11 @@
                 }
             }
         };
+        window.__mullerToast = function (message, kind) {
+            try {
+                window.dispatchEvent(new CustomEvent('muller-toast', { detail: { message: String(message || ''), kind: String(kind || 'info') } }));
+            } catch (e) {}
+        };
         window.__mullerRandomMotivation = function () {
             var m = [
                 'Cada error es una pista. ¡Sigue!',
@@ -1701,6 +1715,18 @@
               window.addEventListener('muller-open-profile-settings', openSettings);
               return () => window.removeEventListener('muller-open-profile-settings', openSettings);
           }, []);
+          useEffect(() => {
+              const onToast = (ev) => {
+                  const d = (ev && ev.detail) || {};
+                  const msg = String(d.message || '').trim();
+                  if (!msg) return;
+                  const t = { id: Date.now() + Math.random(), message: msg, kind: String(d.kind || 'info') };
+                  setToastItems((prev) => [...prev.slice(-3), t]);
+                  setTimeout(() => setToastItems((prev) => prev.filter((x) => x.id !== t.id)), 2600);
+              };
+              window.addEventListener('muller-toast', onToast);
+              return () => window.removeEventListener('muller-toast', onToast);
+          }, []);
           useEffect(() => { try { localStorage.setItem('muller_show_floating_tools', showFloatingTools ? '1' : '0'); } catch (e) {} }, [showFloatingTools]);
           useEffect(() => {
               try { localStorage.setItem('muller_reduce_motion', reduceMotionUi ? '1' : '0'); } catch (e) {}
@@ -1737,6 +1763,7 @@
           const [profileNameDraft, setProfileNameDraft] = useState('');
           const [profileNameBusy, setProfileNameBusy] = useState(false);
           const [profileNameMsg, setProfileNameMsg] = useState('');
+          const [toastItems, setToastItems] = useState([]);
           const [walletCoins, setWalletCoins] = useState(null);
           const [walletLoading, setWalletLoading] = useState(false);
           const [walletIsCreator, setWalletIsCreator] = useState(false);
@@ -3251,6 +3278,15 @@
               }, 3000);
           };
 
+          const sanitizeHistoriaSpeechText = (text) => {
+              return String(text || '')
+                  .replace(/\[R\]/gi, '')
+                  .replace(/\bN[üu]tzlich\b\.?/gi, '')
+                  .replace(/\b[ÚU]TIL\b\.?/gi, '')
+                  .replace(/\s{2,}/g, ' ')
+                  .trim();
+          };
+
           const playSceneAudio = (text, speaker) => {
               const utterance = new SpeechSynthesisUtterance(text);
               utterance.lang = 'de-DE';
@@ -3274,7 +3310,7 @@
                 setMode('roleplay_wait'); setIsPlaying(false); return; 
             }
            // Limpiamos el texto de símbolos que el motor de voz lee por error (.;)
-const audioCleanText = currentScene.text.replace(/[.;;]/g, '.'); 
+const audioCleanText = sanitizeHistoriaSpeechText(currentScene.text).replace(/[.;;]/g, '.'); 
 const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             let utterances = [sentenceUtterance];
             if (currentScene.vocab && currentScene.vocab.length > 0 && !podcastMode && !diktatMode && !puzzleMode && !declinaMode && !artikelSniperMode) {
@@ -3481,7 +3517,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   }
                   return;
               }
-              const textToCompare = targetText || guionData[getActualSceneIndex()].text;
+              const textToCompare = sanitizeHistoriaSpeechText(targetText || guionData[getActualSceneIndex()].text);
               const cleanOrig = normalizeGermanSpeechText(textToCompare);
               const cleanSpoken = normalizeGermanSpeechText(collapseStutterRepeats(transcript));
               if (!cleanOrig) return;
@@ -4403,6 +4439,25 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               if (activeTab === 'bxbank') return bxBankLevel === 'b1' ? 'Banco B1 activo' : 'Banco B2 activo';
               return null;
           }, [activeTab, mode, podcastMode, historiaAudioOnly, diktatMode, puzzleMode, vocabSrsDueCount, bxBankLevel]);
+          const activeSectionHint = useMemo(() => {
+              const h = {
+                  inicio: 'Sugerencia: abre Entrenamiento si quieres práctica tipo examen.',
+                  ruta: 'Sugerencia: completa lección + huecos + voz para cerrar ciclo.',
+                  historia: 'Sugerencia: escucha, repite y luego activa Diktat para consolidar.',
+                  shadowing: 'Sugerencia: empieza con velocidad media y sube a normal.',
+                  escritura: 'Sugerencia: usa modo dictado + OCR para detectar fallos.',
+                  vocabulario: 'Sugerencia: marca Fácil solo si recuerdas sin mirar traducción.',
+                  entrenamiento: 'Sugerencia: alterna categoría débil y simulacro corto.',
+                  bxbank: 'Sugerencia: usa MIX y luego guarda tarjetas clave en escritura.',
+                  progreso: 'Sugerencia: exporta backup antes de cambios grandes.',
+                  guiones: 'Sugerencia: distribuye texto al Banco B1/B2 para ampliar mazos.',
+                  lexikon: 'Sugerencia: guarda pares útiles y repásalos en vocabulario.',
+                  telc: 'Sugerencia: elige nivel y combina con simulacro en Entrenamiento.',
+                  storybuilder: 'Sugerencia: guarda siempre el guion generado en Biblioteca.',
+                  comunidad: 'Sugerencia: revisa economía y liga al final de cada sesión.',
+              };
+              return h[activeTab] || '';
+          }, [activeTab]);
 
           return (
             <div className={`flex flex-col muller-main-fill md:h-screen md:max-h-[850px] w-full font-sans md:rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-500 muller-theme-bg ${reduceMotionUi ? 'muller-reduce-motion' : ''} ${themeShellClass} ${uiTheme === 'light' ? 'text-slate-900' : 'text-white'} ${getBgColor()}`}>
@@ -4609,6 +4664,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       <div className="min-w-0">
                           <p className="text-[11px] font-black uppercase tracking-wider text-cyan-300 truncate">Müller · sección activa</p>
                           <p className="text-sm font-bold text-white truncate">{activeSectionMeta.title} <span className="text-gray-400 font-semibold">· {activeSectionMeta.desc}</span></p>
+                          {activeSectionHint ? <p className="text-[10px] text-gray-500 truncate">{activeSectionHint}</p> : null}
                       </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap md:justify-end">
@@ -4618,6 +4674,16 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('muller-open-profile-settings', { detail: { tab: 'ajustes' } }))} className="px-2.5 py-1 rounded-full text-[11px] font-bold border border-sky-500/35 bg-sky-900/30 text-sky-200 hover:bg-sky-800/40 transition">Ajustes</button>
                   </div>
               </div>
+
+              {toastItems.length > 0 && (
+                  <div className="fixed top-24 right-3 z-[170] flex flex-col gap-2 max-w-[min(92vw,360px)]">
+                      {toastItems.map((t) => (
+                          <div key={t.id} className={`muller-glass-card rounded-xl px-3 py-2 text-xs font-bold ${t.kind === 'error' ? 'border-red-500/45 text-red-100 bg-red-900/35' : t.kind === 'success' ? 'border-emerald-500/45 text-emerald-100 bg-emerald-900/35' : 'text-sky-100'}`}>
+                              {t.message}
+                          </div>
+                      ))}
+                  </div>
+              )}
 
               {/* MODAL LOGIN */}
               {showProfileSettingsModal && (
@@ -5620,11 +5686,11 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   <p className="text-xs md:text-sm text-gray-300 mb-3">Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.</p>
                                   <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
        <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
-    "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
+    "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: marca los Redemittel clave solo con [R] al final de la línea alemana. No uses la palabra Nützlich ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. (Traducción) [palabra - traducción] [R]"
 </p>
 <button 
     className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" 
-    onClick={() => navigator.clipboard.writeText(`Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.\n\nFormato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]`)}
+    onClick={() => navigator.clipboard.writeText(`Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: marca los Redemittel clave solo con [R] al final de la línea alemana. No uses la palabra Nützlich ni símbolos raros.\n\nFormato: Nombre: Frase en alemán. (Traducción) [palabra - traducción] [R]`)}
 >
     <Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" />
 </button>
@@ -5799,7 +5865,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       const playModel = () => {
                                           if (!scene?.text) return;
                                           window.speechSynthesis.cancel();
-                                          const u = new SpeechSynthesisUtterance(scene.text);
+                                          const u = new SpeechSynthesisUtterance(sanitizeHistoriaSpeechText(scene.text));
                                           u.lang = 'de-DE';
                                           u.rate = Math.min(1.15, Math.max(0.65, shadowRate));
                                           window.__mullerApplyPreferredDeVoice(u);
@@ -6632,7 +6698,11 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       <div className="rounded-2xl border border-emerald-500/25 bg-slate-900/80 p-5 overflow-x-auto">
                                           <h2 className="text-lg font-black text-white mb-3 flex items-center gap-2"><Icon name="globe" className="w-5 h-5 text-emerald-400" /> Directorio global (Supabase)</h2>
                                           {remoteProfiles === null ? (
-                                              <p className="text-sm text-gray-500">Cargando perfiles…</p>
+                                              <div className="space-y-2 py-2">
+                                                  <div className="muller-skeleton h-4 w-40 rounded" />
+                                                  <div className="muller-skeleton h-4 w-full rounded" />
+                                                  <div className="muller-skeleton h-4 w-5/6 rounded" />
+                                              </div>
                                           ) : remoteProfiles.length === 0 ? (
                                               <p className="text-sm text-gray-500">Aún no hay filas en <code className="text-emerald-400/90">profiles</code>. Ejecuta el SQL del proyecto y registra un usuario.</p>
                                           ) : (
@@ -6849,7 +6919,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                 )}
                                 <div className="flex flex-col items-center gap-3 md:gap-4 w-full mt-3 md:mt-4 bg-black/40 p-4 md:p-6 rounded-xl border border-white/10">
                                     <div className="flex gap-4 md:gap-8 justify-center items-center">
-                                        <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(playSceneAudio(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].speaker)); }} className="flex flex-col items-center text-gray-400 hover:text-white transition">
+                                        <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(playSceneAudio(sanitizeHistoriaSpeechText(guionData[getActualSceneIndex()].text), guionData[getActualSceneIndex()].speaker)); }} className="flex flex-col items-center text-gray-400 hover:text-white transition">
                                             <div className="bg-gray-800 p-2 md:p-4 rounded-full mb-1 md:mb-2"><Icon name="volume-2" className="w-5 h-5 md:w-8 md:h-8" /></div><span className="text-[10px] md:text-sm font-bold">1. Escuchar</span>
                                         </button>
                                         <button type="button" onMouseDown={micMouseDownGuard(() => handleVoiceStart())} onMouseUp={handleVoiceStop} onMouseLeave={handleVoiceStop} onTouchStart={micTouchStartGuard(() => handleVoiceStart())} onTouchEnd={handleVoiceStop} className={`flex flex-col items-center transition transform select-none touch-manipulation ${isListening ? 'text-red-400 scale-110' : 'text-blue-400 hover:text-blue-300'}`}>
@@ -7098,9 +7168,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             const requestMicPermission = async () => {
                 try {
                     await navigator.mediaDevices.getUserMedia({ audio: true });
-                    alert('✅ Permiso de micrófono concedido. Ya puedes usar el reconocimiento de voz.');
+                    window.__mullerToast && window.__mullerToast('Micrófono concedido. Ya puedes usar reconocimiento de voz.', 'success');
                 } catch (err) {
-                    alert('❌ No se pudo obtener permiso del micrófono. Asegúrate de que tu navegador tenga acceso.');
+                    window.__mullerToast && window.__mullerToast('No se pudo obtener permiso del micrófono.', 'error');
                 }
             };
 
@@ -7126,7 +7196,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 a.download = `muller_progreso_${new Date().toISOString().slice(0,19)}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
-                alert('✅ Backup total exportado. Guarda este archivo en Drive para sincronizar todos tus dispositivos.');
+                window.__mullerToast && window.__mullerToast('Backup total exportado. Guárdalo para sincronizar.', 'success');
             }, []);
 
             React.useEffect(() => {
@@ -7144,7 +7214,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                         const data = JSON.parse(e.target.result);
                         if (data.type === 'muller_partial_v1' && data.part === 'srs') {
                             localStorage.setItem('muller_vocab_srs_v1', JSON.stringify(data.muller_vocab_srs_v1 || {}));
-                            alert('✅ SRS importado. Recarga la página.');
+                            window.__mullerToast && window.__mullerToast('SRS importado. Recargando…', 'success');
                             window.location.reload();
                             return;
                         }
@@ -7152,7 +7222,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                             const cur = JSON.parse(localStorage.getItem('mullerStats') || '{}');
                             const merged = { ...cur, difficultVocab: data.difficultVocab || cur.difficultVocab, normalVocab: data.normalVocab || cur.normalVocab, difficultGrammar: data.difficultGrammar || cur.difficultGrammar };
                             localStorage.setItem('mullerStats', JSON.stringify(merged));
-                            alert('✅ Mazos importados. Recarga la página.');
+                            window.__mullerToast && window.__mullerToast('Mazos importados. Recargando…', 'success');
                             window.location.reload();
                             return;
                         }
@@ -7172,9 +7242,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                             if (data.savedScripts) localStorage.setItem('mullerScripts', JSON.stringify(data.savedScripts));
                             if (data.customVocabLessons) localStorage.setItem('mullerCustomVocab', JSON.stringify(data.customVocabLessons));
                         }
-                        alert('✅ Datos importados correctamente. Recarga la página para ver los cambios.');
+                        window.__mullerToast && window.__mullerToast('Datos importados correctamente. Recargando…', 'success');
                         window.location.reload();
-                    } catch(err) { alert('❌ Archivo inválido'); }
+                    } catch(err) { window.__mullerToast && window.__mullerToast('Archivo inválido.', 'error'); }
                 };
                 reader.readAsText(file);
             };
@@ -7191,8 +7261,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                     a.download = `muller_srs_only_${new Date().toISOString().slice(0, 19)}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
-                    alert('✅ Exportado solo SRS (muller_vocab_srs_v1).');
-                } catch (err) { alert('❌ No se pudo exportar SRS'); }
+                    window.__mullerToast && window.__mullerToast('Exportado solo SRS.', 'success');
+                } catch (err) { window.__mullerToast && window.__mullerToast('No se pudo exportar SRS.', 'error'); }
             };
 
             const exportDecksOnly = () => {
@@ -7213,8 +7283,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                     a.download = `muller_mazos_${new Date().toISOString().slice(0, 19)}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
-                    alert('✅ Exportados mazos (difícil / normal / gramática).');
-                } catch (err) { alert('❌ No se pudo exportar mazos'); }
+                    window.__mullerToast && window.__mullerToast('Exportados mazos (difícil/normal/gramática).', 'success');
+                } catch (err) { window.__mullerToast && window.__mullerToast('No se pudo exportar mazos.', 'error'); }
             };
 
             const showSyncHelp = () => {
@@ -7820,7 +7890,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
 
     if (!mode) {
         if (examCtx && examAutoLevel) {
-            return <div className="text-white text-2xl font-bold animate-pulse p-20 text-center">📋 Preparando examen TELC…</div>;
+            return <div className="p-10"><div className="muller-skeleton h-5 w-56 rounded mb-4 mx-auto" /><div className="muller-skeleton h-4 w-72 rounded mx-auto" /></div>;
         }
         return (
         <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
@@ -7850,7 +7920,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         );
     }
 
-    if (loading) return <div className="text-white text-2xl font-bold animate-pulse p-20">📡 Buscando tarjetas...</div>;
+    if (loading) return <div className="p-10"><div className="muller-skeleton h-6 w-64 rounded mb-4" /><div className="muller-skeleton h-36 w-full max-w-xl rounded-2xl" /></div>;
     if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
 
     const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
@@ -8000,7 +8070,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
         setFeedback(null);
     };
 
-    if (loading) return <div className="text-white text-center p-20 animate-pulse">📡 Conectando con Müller Cloud...</div>;
+    if (loading) return <div className="p-10"><div className="muller-skeleton h-5 w-64 rounded mb-4 mx-auto" /><div className="muller-skeleton h-36 w-full max-w-2xl rounded-2xl mx-auto" /></div>;
     if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
 
     const current = queue[0];
@@ -8233,7 +8303,7 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
         }
     };
 
-    if (loading) return <div className="text-white text-center p-20 animate-pulse">📡 Preparando mezcla TELC…</div>;
+    if (loading) return <div className="p-10"><div className="muller-skeleton h-5 w-64 rounded mb-4 mx-auto" /><div className="muller-skeleton h-36 w-full max-w-2xl rounded-2xl mx-auto" /></div>;
     if (queue.length === 0) return (
         <div className="text-center p-20">
             <h2 className="text-2xl font-bold text-amber-200 mb-4">No hay tarjetas para mezclar (revisa la conexión).</h2>
@@ -8531,6 +8601,14 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
     let currentIdx = 0;
     let guionCache = null;
     let timeoutId = null;
+    function sanitizeAudiobookText(text) {
+        return String(text || '')
+            .replace(/\[R\]/gi, '')
+            .replace(/\bN[üu]tzlich\b\.?/gi, '')
+            .replace(/\b[ÚU]TIL\b\.?/gi, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+    }
 
     function dispatchPlaying(playing) {
         window.dispatchEvent(new CustomEvent('mullerAudiobookState', { detail: { playing } }));
@@ -8560,11 +8638,11 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
     function playScene(index) {
         if (!guionCache || index >= guionCache.length) {
             stopAudioBook();
-            alert('📖 Audiolibro finalizado');
+            if (window.__mullerToast) window.__mullerToast('Audiolibro finalizado.', 'info');
             return;
         }
         const scene = guionCache[index];
-        const utterance = new SpeechSynthesisUtterance(scene.text);
+        const utterance = new SpeechSynthesisUtterance(sanitizeAudiobookText(scene.text));
         utterance.lang = 'de-DE';
         utterance.rate = 0.9;
         window.__mullerApplyPreferredDeVoice(utterance);
@@ -8581,7 +8659,7 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
     function startAudioBook() {
         guionCache = getCurrentGuion();
         if (!guionCache || guionCache.length === 0) {
-            alert('No hay ningún guion cargado.');
+            if (window.__mullerToast) window.__mullerToast('No hay ningún guion cargado.', 'error');
             return;
         }
         stopAudioBook();
