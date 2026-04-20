@@ -1204,6 +1204,8 @@
             practice_mazos: { title: 'Entrenamiento rápido (mazos)', what: 'Repasas tarjetas guardadas como difícil, normal o gramática: audio, revelar traducción, siguiente.', tips: ['No mires revelar hasta haber intentado recordar.', 'Haz lotes cortos varias veces al día.', 'Cuando vacíe un mazo, vuelve a Historia para añadir nuevas frases.'] },
             advanced_menu: { title: 'Entrenamiento avanzado (panel morado)', what: 'Práctica guiada de artículos, verbos con preposición, preposiciones puras, conectores y simulacro tipo examen con cronómetro.', tips: ['Empieza por la categoría con peor porcentaje en el dashboard.', 'El modo examen entrena gestión de tiempo, no solo aciertos.', 'Cierra sesiones cortas para fijar mejor.'] },
             advanced_exam: { title: 'Simulacro TELC (avanzado)', what: 'Cronómetro orientativo, pistas limitadas y mezcla de ítems según lo que elijas.', tips: ['Elige duración realista (20–30 min al principio).', 'Usa pistas solo cuando lleves bloqueado más de un minuto.', 'Al terminar, repasa solo los fallos en modo categoría.'] },
+            nav_ruta: { title: 'Ruta A1 → A2', what: 'Camino guiado desde cero: lecciones con frases, huecos, lectura en voz alta y recompensas. Pestaña Gramática resume reglas por nivel. Test de nivel sugiere por dónde empezar.', tips: ['Tecla R para abrir Ruta.', 'Elige mentor (voz) arriba: Frau Lena, Herr Tom o Lina.', 'Cada 3 lecciones completadas hay bonus extra de monedas.', 'El contenido se ampliará con el tiempo: la estructura ya está lista.'] },
+            ruta_gramatica: { title: 'Ruta — Gramática', what: 'Resumen por niveles (A1, A2, B1) con explicaciones claras. No sustituye un libro de texto: combínalo con Historia y ejercicios.', tips: ['Abre el bloque del nivel que estudies en el camino.', 'Copia un ejemplo a Escritura para fijarlo.', 'Si algo no cuadra, pregunta a tu tutor o al foro.'] },
             nav_inicio: { title: 'Inicio', what: 'Pantalla principal con accesos rápidos y pendientes de repaso (SRS). Desde aquí saltas a Historia, vocab, shadowing, etc.', tips: ['Tecla I para volver al Inicio.', 'El número en Vocab indica tarjetas prioritarias del SRS.', 'Tras la bienvenida (banderas), eliges qué practicar.'] },
             hub_centro: { title: 'Centro Müller', what: 'Voces del sistema, ayuda, IA Chrome local; el plan del día y el resumen rápido están en Progreso.', tips: ['Configura voces antes de sesiones largas.', 'Pestaña “IA Chrome”: resumen local con Gemini Nano si tu Chrome lo permite.', 'Esc para cerrar el panel.', 'Repite el tour si te pierdes.'] },
             hub_chrome_ai: { title: 'IA local (Chrome / Gemini Nano)', what: 'Usa la API Summarizer del navegador: el modelo se descarga en tu PC y el resumen se genera en local sin API key. Requiere Chrome de escritorio reciente y requisitos de hardware.', tips: ['Si no aparece la API, activa las funciones de IA en chrome://flags y reinicia.', 'Edge puede llevar APIs similares detrás de flags; Firefox/Safari no suelen soportarlo aún.', 'No sustituye un profesor: revisa los resúmenes.'] },
@@ -1213,12 +1215,248 @@
             try { window.dispatchEvent(new CustomEvent('mullerOpenExerciseHelp', { detail: { id: String(id) } })); } catch (e) {}
         };
 
+        /** Sonidos UI (Web Audio, sin archivos). localStorage muller_sfx_enabled = '0' desactiva. */
+        window.__mullerSfxEnabled = function () {
+            try { return localStorage.getItem('muller_sfx_enabled') !== '0'; } catch (e) { return true; }
+        };
+        window.__mullerPlaySfx = function (kind) {
+            if (!window.__mullerSfxEnabled()) return;
+            try {
+                var Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return;
+                if (!window.__mullerAudioCtx) window.__mullerAudioCtx = new Ctx();
+                var ctx = window.__mullerAudioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+                var t0 = ctx.currentTime;
+                function tone(freq, start, len, vol, typ) {
+                    var o = ctx.createOscillator();
+                    var g = ctx.createGain();
+                    o.type = typ || 'sine';
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(vol, t0 + start);
+                    g.gain.exponentialRampToValueAtTime(0.001, t0 + start + len);
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.start(t0 + start);
+                    o.stop(t0 + start + len + 0.02);
+                }
+                if (kind === 'ok') {
+                    tone(523, 0, 0.1, 0.11);
+                    tone(784, 0.09, 0.14, 0.1);
+                } else if (kind === 'bad') {
+                    tone(160, 0, 0.12, 0.1, 'triangle');
+                    tone(110, 0.08, 0.14, 0.08, 'triangle');
+                } else if (kind === 'tick') {
+                    tone(660, 0, 0.06, 0.07);
+                } else if (kind === 'levelup') {
+                    tone(392, 0, 0.08, 0.09);
+                    tone(523, 0.07, 0.08, 0.09);
+                    tone(659, 0.14, 0.11, 0.1);
+                } else if (kind === 'complete') {
+                    [523, 659, 784, 1046].forEach(function (f, i) {
+                        tone(f, i * 0.08, 0.22, 0.095);
+                    });
+                }
+            } catch (e) {}
+        };
+        window.__mullerRandomMotivation = function () {
+            var m = [
+                'Cada error es una pista. ¡Sigue!',
+                'Los expertos también fallaron al principio.',
+                'Respira, escucha de nuevo y prueba otra vez.',
+                'Tu cerebro está creando conexiones nuevas ahora mismo.',
+                'Persistencia > perfección. Tú puedes.',
+                'Un paso más cerca: corrige y sigue.',
+            ];
+            return m[Math.floor(Math.random() * m.length)];
+        };
+
+        window.mullerRutaDefaultProgress = function () {
+            return { completed: {}, placementDone: false, suggestedLevelIdx: 0, playTimeMs: 0, lessonsCompleted: 0 };
+        };
+        window.mullerRutaLoad = function () {
+            try {
+                var raw = localStorage.getItem('muller_ruta_progress_v1');
+                return raw ? Object.assign(window.mullerRutaDefaultProgress(), JSON.parse(raw)) : window.mullerRutaDefaultProgress();
+            } catch (e) { return window.mullerRutaDefaultProgress(); }
+        };
+        window.mullerRutaSave = function (p) {
+            try { localStorage.setItem('muller_ruta_progress_v1', JSON.stringify(p)); } catch (e) {}
+        };
+        window.mullerRutaIsLessonUnlocked = function (levels, levelIdx, lessonIdx, completed) {
+            if (!levels[levelIdx] || !levels[levelIdx].lessons[lessonIdx]) return false;
+            if (levelIdx === 0 && lessonIdx === 0) return true;
+            if (lessonIdx === 0) {
+                var prev = levels[levelIdx - 1];
+                return prev.lessons.every(function (l) { return completed[l.id]; });
+            }
+            var prevId = levels[levelIdx].lessons[lessonIdx - 1].id;
+            return !!completed[prevId];
+        };
+
+        window.MULLER_RUTA_LEVELS = [
+            {
+                id: 'a1-1',
+                title: 'Nivel 1 · Primeros pasos',
+                badge: 'A1.1',
+                lessons: [
+                    {
+                        id: 'a1-1-l1',
+                        title: 'Saludos y presentación',
+                        rewardCoins: 15,
+                        rewardXp: 20,
+                        grammarTip: 'En frases declarativas el verbo conjugado va en 2.ª posición: sujeto – verbo – resto.',
+                        phrases: [
+                            { de: 'Guten Tag! Ich heiße Maria.', es: '¡Buenos días! Me llamo María.' },
+                            { de: 'Wie geht es dir?', es: '¿Cómo estás?' },
+                            { de: 'Ich komme aus Spanien.', es: 'Vengo de España.' },
+                        ],
+                        fill: { prompt: 'Completa: Ich ___ aus Spanien.', answer: 'komme', hint: 'Verbo «kommen» en 1.ª persona singular.' },
+                        speak: { target: 'Ich komme aus Spanien.' },
+                    },
+                    {
+                        id: 'a1-1-l2',
+                        title: 'Artículos básicos',
+                        rewardCoins: 15,
+                        rewardXp: 22,
+                        grammarTip: 'der (m), die (f), das (n). Muchos plurales llevan «die».',
+                        phrases: [
+                            { de: 'Das Buch ist neu.', es: 'El libro es nuevo.' },
+                            { de: 'Die Frau liest.', es: 'La mujer lee.' },
+                            { de: 'Der Mann wartet.', es: 'El hombre espera.' },
+                        ],
+                        fill: { prompt: '___ Buch liegt hier. (neutro)', answer: 'Das', hint: 'Artículo neutro.' },
+                        speak: { target: 'Das Buch ist neu.' },
+                    },
+                ],
+            },
+            {
+                id: 'a1-2',
+                title: 'Nivel 2 · Rutina',
+                badge: 'A1.2',
+                lessons: [
+                    {
+                        id: 'a1-2-l1',
+                        title: 'Hora y días',
+                        rewardCoins: 18,
+                        rewardXp: 24,
+                        grammarTip: '«Um acht Uhr» = a las ocho. Los días llevan mayúscula: Montag, Dienstag…',
+                        phrases: [
+                            { de: 'Ich stehe um sieben Uhr auf.', es: 'Me levanto a las siete.' },
+                            { de: 'Am Montag gehe ich zur Arbeit.', es: 'El lunes voy al trabajo.' },
+                            { de: 'Das Wochenende ist kurz.', es: 'El fin de semana es corto.' },
+                        ],
+                        fill: { prompt: 'Ich stehe ___ sieben Uhr auf.', answer: 'um', hint: 'Preposición para «a las» con hora.' },
+                        speak: { target: 'Am Montag gehe ich zur Arbeit.' },
+                    },
+                    {
+                        id: 'a1-2-l2',
+                        title: 'Comida simple',
+                        rewardCoins: 18,
+                        rewardXp: 25,
+                        grammarTip: '«Ich möchte» + Akkusativ del objeto: Ich möchte einen Kaffee.',
+                        phrases: [
+                            { de: 'Ich esse gern Brot.', es: 'Me gusta comer pan.' },
+                            { de: 'Ich trinke Wasser.', es: 'Bebo agua.' },
+                            { de: 'Was isst du gern?', es: '¿Qué te gusta comer?' },
+                        ],
+                        fill: { prompt: 'Ich möchte ___ Kaffee. (masculino acusativo)', answer: 'einen', hint: 'Artículo acusativo masculino.' },
+                        speak: { target: 'Ich esse gern Brot.' },
+                    },
+                ],
+            },
+            {
+                id: 'a2-1',
+                title: 'Nivel 3 · Conectar frases',
+                badge: 'A2.1',
+                lessons: [
+                    {
+                        id: 'a2-1-l1',
+                        title: '«Weil» y verbo al final',
+                        rewardCoins: 22,
+                        rewardXp: 30,
+                        grammarTip: 'Tras «weil/dass/obwohl» el verbo conjugado va al final de la suboración.',
+                        phrases: [
+                            { de: 'Ich lerne Deutsch, weil ich reisen möchte.', es: 'Estudio alemán porque quiero viajar.' },
+                            { de: 'Weil es regnet, bleibe ich zu Hause.', es: 'Como llueve, me quedo en casa.' },
+                        ],
+                        fill: { prompt: 'Ich bleibe zu Hause, weil ich krank ___.', answer: 'bin', hint: 'Verbo «sein» al final (1.ª persona).' },
+                        speak: { target: 'Ich lerne Deutsch, weil ich reisen möchte.' },
+                    },
+                    {
+                        id: 'a2-1-l2',
+                        title: 'Perfekt básico',
+                        rewardCoins: 22,
+                        rewardXp: 32,
+                        grammarTip: 'Perfekt: habe/hat + participio al final (regulares: ge- + stem + -t).',
+                        phrases: [
+                            { de: 'Ich habe gestern gearbeitet.', es: 'Ayer he trabajado.' },
+                            { de: 'Sie hat das schon gemacht.', es: 'Ella ya lo ha hecho.' },
+                        ],
+                        fill: { prompt: 'Ich habe gestern viel ___. (arbeiten)', answer: 'gearbeitet', hint: 'Participio de «arbeiten».' },
+                        speak: { target: 'Ich habe gestern gearbeitet.' },
+                    },
+                ],
+            },
+        ];
+
+        window.MULLER_GRAMMAR_REF = [
+            {
+                level: 'A1',
+                title: 'Fundamentos',
+                blocks: [
+                    { t: 'Orden de la frase (V2)', b: 'En la frase principal afirmativa, el verbo flexionado ocupa la segunda posición: «Heute gehe ich ins Kino.»' },
+                    { t: 'Artículos y género', b: 'Memoriza sustantivo + artículo (der/die/das). El plural suele ser «die». Compara: der Tisch, die Lampe, das Fenster.' },
+                    { t: 'Presente regular', b: 'Sufijos típicos: -e, -st, -t, -en. Irregulares comunes: sein, haben, werden.' },
+                ],
+            },
+            {
+                level: 'A2',
+                title: 'Oraciones compuestas',
+                blocks: [
+                    { t: 'Subordinadas con «dass/weil/obwohl»', b: 'El verbo conjugado va al final: «Ich weiß, dass du kommst.»' },
+                    { t: 'Perfekt', b: 'Auxiliar haben/sein + participio II. Muchos verbos de movimiento usan «sein» (sein, bleiben, passieren… contexto).' },
+                    { t: 'Preposiciones y Kasus', b: 'Aprende bloques: «mit» + Dat., «für» + Akk., preposiciones de lugar «Wo?/Wohin?» con Dat./Akk.' },
+                ],
+            },
+            {
+                level: 'B1',
+                title: 'Matices',
+                blocks: [
+                    { t: 'Konjunktiv II (politez)', b: '«Ich hätte gern…», «Könnten Sie…?» para peticiones suaves.' },
+                    { t: 'Pasiva y alternativas', b: '«Es wird gemacht» / «Man macht» — reconocer sujeto impersonal.' },
+                    { t: 'Conectores', b: '«trotzdem», «deshalb», «außerdem» — practica posición del verbo en cada tipo.' },
+                ],
+            },
+        ];
+
+        window.MULLER_PLACEMENT_Q = [
+            { q: 'Ich ___ aus Spanien.', opts: ['bin', 'habe', 'werde'], ok: 0 },
+            { q: '___ Buch liegt auf dem Tisch.', opts: ['Der', 'Die', 'Das'], ok: 2 },
+            { q: '¿Qué expresa mejor «Guten Tag»?', opts: ['Solo por la mañana', 'Saludo de día (formal/informal según contexto)', 'Buenas noches'], ok: 1 },
+            { q: 'Weil ich müde ___.', opts: ['bin', 'war', 'bin ich'], ok: 0 },
+        ];
+
         // --- COMPONENTE PRINCIPAL ---
         function App() {
           const [activeTab, setActiveTab] = useState('inicio');
           const [showSplash, setShowSplash] = useState(() => {
               try { return !sessionStorage.getItem('muller_splash_session_v1'); } catch (e) { return true; }
           }); 
+          const [rutaSubTab, setRutaSubTab] = useState('camino');
+          const [rutaProgress, setRutaProgress] = useState(() => (typeof window.mullerRutaLoad === 'function' ? window.mullerRutaLoad() : { completed: {}, placementDone: false, suggestedLevelIdx: 0, playTimeMs: 0, lessonsCompleted: 0 }));
+          const [rutaRun, setRutaRun] = useState(null);
+          const [rutaMentor, setRutaMentor] = useState('lena');
+          const [rutaFillInput, setRutaFillInput] = useState('');
+          const [rutaSpeakErr, setRutaSpeakErr] = useState('');
+          const [placementSel, setPlacementSel] = useState([null, null, null, null]);
+          const [celebrationModal, setCelebrationModal] = useState(null);
+          const [diktatMotivationMsg, setDiktatMotivationMsg] = useState('');
+          const rutaTabTimerRef = useRef(null);
+          const [rutaTranscript, setRutaTranscript] = useState('');
+          const [rutaListening, setRutaListening] = useState(false);
+          const [sfxEpoch, setSfxEpoch] = useState(0);
+          const rutaRecRef = useRef(null);
           const [guionData, setGuionData] = useState(DEFAULT_GUION);
           const [activeScriptTitle, setActiveScriptTitle] = useState("Lektion 17: Kunst");
           const [isDefaultScript, setIsDefaultScript] = useState(true);
@@ -1660,6 +1898,9 @@
                   if (e.key === 'i' || e.key === 'I') {
                       if (!e.ctrlKey && !e.metaKey) { setActiveTab('inicio'); stopAudio(); setPracticeActive(null); }
                   }
+                  if (e.key === 'r' || e.key === 'R') {
+                      if (!e.ctrlKey && !e.metaKey) { setActiveTab('ruta'); stopAudio(); setPracticeActive(null); }
+                  }
                   if (e.key === 'h' || e.key === 'H') {
                       if (!e.ctrlKey && !e.metaKey) { setActiveTab('historia'); setMode('dialogue'); }
                   }
@@ -1680,6 +1921,21 @@
               window.addEventListener('keydown', onKey);
               return () => window.removeEventListener('keydown', onKey);
           }, []);
+
+          useEffect(() => {
+              if (activeTab !== 'ruta') return undefined;
+              rutaTabTimerRef.current = Date.now();
+              return () => {
+                  const start = rutaTabTimerRef.current;
+                  if (!start) return;
+                  const ms = Date.now() - start;
+                  setRutaProgress((prev) => {
+                      const next = { ...prev, playTimeMs: (prev.playTimeMs || 0) + ms };
+                      if (typeof window.mullerRutaSave === 'function') window.mullerRutaSave(next);
+                      return next;
+                  });
+              };
+          }, [activeTab]);
 
           useEffect(() => {
               if (!userMenuOpen) return undefined;
@@ -1941,6 +2197,107 @@
               return dayMap;
           };
 
+          const completeRutaLesson = (levelIdx, lessonIdx) => {
+              const levels = window.MULLER_RUTA_LEVELS || [];
+              const lesson = levels[levelIdx] && levels[levelIdx].lessons[lessonIdx];
+              if (!lesson) return;
+              if (rutaProgress.completed && rutaProgress.completed[lesson.id]) {
+                  saveProgress({ xp: userStats.xp + 5, activityByDay: mergeActivityPoints(12) });
+                  window.__mullerPlaySfx && window.__mullerPlaySfx('ok');
+                  setCelebrationModal({ title: 'Repaso listo', subtitle: lesson.title, xp: 5, coins: 0, recap: true });
+                  setRutaRun(null);
+                  setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr('');
+                  return;
+              }
+              const nextCount = (rutaProgress.lessonsCompleted || 0) + 1;
+              let bonus = 0;
+              if (nextCount % 3 === 0) bonus = 35;
+              const nextProg = {
+                  ...rutaProgress,
+                  completed: { ...(rutaProgress.completed || {}), [lesson.id]: true },
+                  lessonsCompleted: nextCount,
+              };
+              if (typeof window.mullerRutaSave === 'function') window.mullerRutaSave(nextProg);
+              setRutaProgress(nextProg);
+              saveProgress({
+                  xp: userStats.xp + lesson.rewardXp,
+                  coins: userStats.coins + lesson.rewardCoins + bonus,
+                  activityByDay: mergeActivityPoints(45),
+              });
+              window.__mullerPlaySfx && window.__mullerPlaySfx('complete');
+              setCelebrationModal({
+                  title: '¡Lo lograste!',
+                  subtitle: lesson.title,
+                  xp: lesson.rewardXp,
+                  coins: lesson.rewardCoins + bonus,
+                  milestone: bonus > 0,
+              });
+              setRutaRun(null);
+              setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr('');
+          };
+
+          const finishPlacementTest = () => {
+              const qs = window.MULLER_PLACEMENT_Q || [];
+              if (placementSel.some((x) => x === null || x === undefined)) {
+                  alert('Responde las cuatro preguntas antes de ver el resultado.');
+                  return;
+              }
+              let score = 0;
+              qs.forEach((q, i) => { if (placementSel[i] === q.ok) score++; });
+              const suggested = score <= 1 ? 0 : score <= 3 ? 1 : 2;
+              const next = { ...rutaProgress, placementDone: true, suggestedLevelIdx: suggested };
+              if (typeof window.mullerRutaSave === 'function') window.mullerRutaSave(next);
+              setRutaProgress(next);
+              setRutaSubTab('camino');
+              window.__mullerPlaySfx && window.__mullerPlaySfx('levelup');
+              setCelebrationModal({ title: 'Test de nivel', subtitle: 'Te sugerimos empezar por el nivel ' + (suggested + 1), xp: 0, coins: 15, milestone: false, placement: true });
+              saveProgress({ coins: userStats.coins + 15, activityByDay: mergeActivityPoints(20) });
+          };
+
+          const checkRutaFillAnswer = (lesson) => {
+              if (!lesson || !lesson.fill) return false;
+              const got = (rutaFillInput || '').trim().toLowerCase().replace(/\s+/g, ' ');
+              const exp = String(lesson.fill.answer || '').trim().toLowerCase();
+              if (got === exp) { window.__mullerPlaySfx && window.__mullerPlaySfx('ok'); setRutaSpeakErr(''); return true; }
+              window.__mullerPlaySfx && window.__mullerPlaySfx('bad');
+              setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Sigue practicando.');
+              return false;
+          };
+
+          const checkRutaSpeakAnswer = (target) => {
+              const a = normalizeGermanSpeechText(rutaTranscript || '');
+              const b = normalizeGermanSpeechText(target || '');
+              if (!a || !b) { setRutaSpeakErr('Graba de nuevo con el micrófono.'); return false; }
+              const dist = levenshteinDistance(a, b);
+              const tol = Math.max(2, Math.floor(b.length / 5));
+              if (a === b || dist <= tol) { window.__mullerPlaySfx && window.__mullerPlaySfx('ok'); setRutaSpeakErr(''); return true; }
+              window.__mullerPlaySfx && window.__mullerPlaySfx('bad');
+              setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Casi — prueba otra vez.');
+              return false;
+          };
+
+          const startRutaListen = () => {
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              if (!SpeechRecognition) { alert('Para leer en voz alta usa Chrome o Edge en escritorio.'); return; }
+              try { if (rutaRecRef.current) rutaRecRef.current.stop(); } catch (e) {}
+              const rec = new SpeechRecognition();
+              rec.lang = 'de-DE';
+              rec.interimResults = false;
+              rec.maxAlternatives = 1;
+              rec.onresult = (e) => {
+                  const t = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) ? e.results[0][0].transcript : '';
+                  setRutaTranscript(collapseStutterRepeats(t));
+                  setRutaListening(false);
+              };
+              rec.onerror = () => { setRutaListening(false); };
+              rec.onend = () => { setRutaListening(false); };
+              rutaRecRef.current = rec;
+              setRutaListening(true);
+              setRutaTranscript('');
+              setRutaSpeakErr('');
+              rec.start();
+          };
+
           const getWeeklyChartBars = () => {
               const raw = [];
               for (let i = 6; i >= 0; i--) {
@@ -2081,6 +2438,21 @@
                 return langVoices[langVoices.length - 1]; 
             }
             return langVoices[0];
+          };
+
+          const speakRutaDe = (text) => {
+              if (!text) return;
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance(text);
+              u.lang = 'de-DE';
+              if (typeof window.__mullerApplyPreferredDeVoice === 'function') window.__mullerApplyPreferredDeVoice(u);
+              else {
+                  u.voice = rutaMentor === 'tom' ? getVoice('de', 'male') : getVoice('de', 'female');
+              }
+              if (rutaMentor === 'lena') { u.pitch = 1.12; u.rate = parseFloat(localStorage.getItem(MULLER_TTS_RATE_KEY) || '0.92') || 0.92; }
+              else if (rutaMentor === 'tom') { u.pitch = 0.88; u.rate = 0.9; }
+              else { u.pitch = 1.32; u.rate = 0.96; }
+              window.speechSynthesis.speak(u);
           };
 
           const stopAudio = () => { 
@@ -2852,11 +3224,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               const originalText = cleanText(guionData[getActualSceneIndex()].text);
               const typedText = cleanText(diktatInput);
               if (originalText !== typedText) {
+                  window.__mullerPlaySfx && window.__mullerPlaySfx('bad');
+                  setDiktatMotivationMsg(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Sigue intentándolo.');
                   if (!isReviewing && !userStats.failedDiktatScenes.includes(sceneIndex)) {
                       saveProgress({ failedDiktatScenes: [...userStats.failedDiktatScenes, sceneIndex], diktatAttempts: userStats.diktatAttempts + 1, activityByDay: mergeActivityPoints(6) });
                   }
                   deductHeart();
               } else {
+                  setDiktatMotivationMsg('');
+                  window.__mullerPlaySfx && window.__mullerPlaySfx('ok');
                   saveProgress({ coins: userStats.coins + 5, diktatCorrect: userStats.diktatCorrect + 1, diktatAttempts: userStats.diktatAttempts + 1, activityByDay: mergeActivityPoints(25) });
               }
           };
@@ -3006,7 +3382,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   });
                   return;
               }
-              if (penalty || finalScore < 50) deductHeart();
+              if (penalty || finalScore < 50) { window.__mullerPlaySfx && window.__mullerPlaySfx('bad'); deductHeart(); }
               else if (finalScore >= 90) saveProgress({ coins: userStats.coins + 5, activityByDay: mergeActivityPoints(12) });
           };
 
@@ -3042,7 +3418,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 setVocabSrsEpoch((e) => e + 1);
             } catch (e) {}
             if (vocabReviewIndex < vocabDisplayList.length - 1) { setVocabReviewIndex(prev => prev + 1); setShowVocabTranslation(false); } 
-            else { alert("¡Has completado todas las tarjetas de esta lista!"); setActiveTab('guiones'); }
+            else {
+                window.__mullerPlaySfx && window.__mullerPlaySfx('complete');
+                setCelebrationModal({ title: '¡Lista completada!', subtitle: 'Has repasado todas las tarjetas de esta sesión.', xp: 15, coins: 10 });
+                saveProgress({ xp: userStats.xp + 15, coins: userStats.coins + 10, activityByDay: mergeActivityPoints(35) });
+                setActiveTab('guiones');
+            }
           };
 
           const startPractice = (type) => {
@@ -3062,7 +3443,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           const nextPracticeWord = () => {
               const list = practiceActive === 'diff' ? userStats.difficultVocab : (practiceActive === 'norm' ? userStats.normalVocab : userStats.difficultGrammar);
               if (practiceIndex < list.length - 1) { setPracticeIndex(practiceIndex + 1); setPracticeShowTrans(false); saveProgress({ activityByDay: mergeActivityPoints(6) }); } 
-              else { alert("¡Sesión terminada! +20 XP y 5 Coins"); saveProgress({ xp: userStats.xp + 20, coins: userStats.coins + 5, activityByDay: mergeActivityPoints(30) }); setPracticeActive(null); }
+              else {
+                  window.__mullerPlaySfx && window.__mullerPlaySfx('complete');
+                  setCelebrationModal({ title: '¡Sesión de mazos!', subtitle: '+20 XP · +5 monedas', xp: 20, coins: 5 });
+                  saveProgress({ xp: userStats.xp + 20, coins: userStats.coins + 5, activityByDay: mergeActivityPoints(30) });
+                  setPracticeActive(null);
+              }
           };
 
           const getArticleVisual = (word) => {
@@ -3286,6 +3672,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           const getBgColor = () => {
               if (uiTheme === 'light') {
                   if (activeTab === 'inicio') return 'bg-slate-100';
+                  if (activeTab === 'ruta') return 'bg-fuchsia-50';
                   if (activeTab === 'progreso') return 'bg-indigo-100';
                   if (activeTab === 'guiones') return 'bg-slate-100';
                   if (activeTab === 'vocabulario') return 'bg-amber-50';
@@ -3299,6 +3686,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   return 'bg-slate-50';
               }
               if (uiTheme === 'hc') return 'bg-black';
+              if (activeTab === 'ruta') return 'bg-fuchsia-950/90';
               if (activeTab === 'comunidad') return 'bg-violet-950';
               if (activeTab === 'telc') return 'bg-slate-950';
               if (activeTab === 'inicio') return 'bg-slate-950';
@@ -3859,6 +4247,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   <div className="flex gap-1 md:gap-2 bg-zinc-950/80 p-1 rounded-xl ring-1 ring-white/[0.06] w-full md:w-auto overflow-x-auto hide-scrollbar items-center touch-manipulation">
                       <button onClick={()=>{setActiveTab('inicio'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'inicio' ? 'bg-indigo-600 text-white shadow-[0_0_18px_rgba(79,70,229,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="layout-dashboard" className="w-3 h-3 md:w-4 md:h-4" /> Inicio</button>
                       <ExerciseHelpBtn helpId="nav_inicio" compact />
+                      <button onClick={()=>{setActiveTab('ruta'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'ruta' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="map" className="w-3 h-3 md:w-4 md:h-4" /> Ruta</button>
+                      <ExerciseHelpBtn helpId="nav_ruta" compact />
                       <button onClick={()=>{setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'historia' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.35)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="play" className="w-3 h-3 md:w-4 md:h-4" /> Historia</button>
                       <ExerciseHelpBtn helpId="nav_historia" compact />
                       <button onClick={()=>{setActiveTab('shadowing'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-2 md:py-2 rounded-lg font-bold text-sm md:text-xs min-h-[2.75rem] md:min-h-0 transition ${activeTab === 'shadowing' ? 'bg-teal-600 text-white shadow-[0_0_18px_rgba(13,148,136,0.45)] ring-1 ring-white/20' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon nav name="audio-lines" className="w-3 h-3 md:w-4 md:h-4" /> Shadowing</button>
@@ -4102,6 +4492,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           <ul className="text-sm text-gray-400 space-y-2">
                               <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">?</kbd> — esta ayuda</li>
                               <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">I</kbd> — Inicio</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">R</kbd> — Ruta (A1→A2)</li>
                               <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">H</kbd> — Historia</li>
                               <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">V</kbd> — Vocabulario</li>
                               <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">P</kbd> — Progreso</li>
@@ -5274,6 +5665,182 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       </div>
                   )}
 
+                  {celebrationModal && (
+                      <div className="fixed inset-0 z-[280] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" role="dialog" aria-modal="true">
+                          <div className="relative max-w-md w-full rounded-[2rem] border border-white/20 bg-gradient-to-br from-fuchsia-900/95 via-violet-950/95 to-indigo-950/95 p-8 shadow-[0_0_80px_rgba(236,72,153,0.35)] text-center overflow-hidden animate-in zoom-in-95 duration-300">
+                              <div className="pointer-events-none absolute inset-0 opacity-40" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(251,113,133,0.5), transparent 50%), radial-gradient(circle at 70% 80%, rgba(99,102,241,0.45), transparent 45%)' }} aria-hidden="true" />
+                              <div className="relative z-10">
+                                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-600 shadow-lg ring-4 ring-amber-300/40">
+                                      <Icon name="trophy" className="w-10 h-10 text-white" />
+                                  </div>
+                                  <h2 className="text-2xl md:text-3xl font-black text-white mb-2">{celebrationModal.title}</h2>
+                                  <p className="text-fuchsia-100/90 text-sm md:text-base mb-6">{celebrationModal.subtitle}</p>
+                                  <div className="flex flex-wrap justify-center gap-3 text-sm font-bold">
+                                      {celebrationModal.xp > 0 ? <span className="rounded-full bg-white/15 px-4 py-2">+{celebrationModal.xp} XP</span> : null}
+                                      {celebrationModal.coins > 0 ? <span className="rounded-full bg-amber-500/30 px-4 py-2 text-amber-100">+{celebrationModal.coins} monedas</span> : null}
+                                      {celebrationModal.milestone ? <span className="rounded-full bg-emerald-500/30 px-4 py-2 text-emerald-100">Bonus · 3 lecciones</span> : null}
+                                      {celebrationModal.placement ? <span className="rounded-full bg-sky-500/30 px-4 py-2 text-sky-100">Test completado</span> : null}
+                                      {celebrationModal.recap ? <span className="rounded-full bg-violet-500/25 px-4 py-2 text-violet-100">Repaso</span> : null}
+                                  </div>
+                                  <button type="button" className="mt-8 w-full rounded-xl bg-white text-violet-950 font-black py-3 hover:bg-fuchsia-100 transition" onClick={() => setCelebrationModal(null)}>¡Genial!</button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {activeTab === 'ruta' && !practiceActive && (
+                      <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar p-4 md:p-8 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
+                          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                              <div>
+                                  <h1 className="text-3xl md:text-4xl font-black text-white flex items-center gap-3 mb-2"><Icon name="map" className="w-9 h-9 md:w-12 md:h-12 text-fuchsia-400" /> Ruta A1 → A2</h1>
+                                  <p className="text-gray-400 text-sm md:text-base max-w-2xl">Camino desde cero: frases, huecos, voz y recompensas. Tecla <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/15 font-mono text-xs">R</kbd>.</p>
+                              </div>
+                              <ExerciseHelpBtn helpId="nav_ruta" />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 mb-4 rounded-2xl border border-white/10 bg-black/35 p-4">
+                              <span className="text-xs font-bold uppercase text-gray-500">Mentor (voz)</span>
+                              {[
+                                  { id: 'lena', label: 'Frau Lena', sub: 'voz clara' },
+                                  { id: 'tom', label: 'Herr Tom', sub: 'grave' },
+                                  { id: 'lina', label: 'Lina', sub: 'aguda' },
+                              ].map((m) => (
+                                  <button key={m.id} type="button" onClick={() => { setRutaMentor(m.id); window.__mullerPlaySfx && window.__mullerPlaySfx('tick'); }} className={`rounded-xl px-3 py-2 text-left text-xs font-bold border transition ${rutaMentor === m.id ? 'bg-fuchsia-600 border-fuchsia-400 text-white' : 'bg-slate-900/80 border-white/10 text-gray-400 hover:text-white'}`}>
+                                      <span className="block">{m.label}</span>
+                                      <span className="text-[10px] font-normal opacity-80">{m.sub}</span>
+                                  </button>
+                              ))}
+                              <button type="button" onClick={() => { try { localStorage.setItem('muller_sfx_enabled', (typeof window.__mullerSfxEnabled === 'function' && window.__mullerSfxEnabled()) ? '0' : '1'); } catch (e) {} setSfxEpoch((x) => x + 1); }} className="ml-auto text-xs font-bold rounded-xl border border-white/15 px-3 py-2 text-gray-300 hover:bg-white/10">
+                                  Sonidos: {sfxEpoch >= 0 && typeof window.__mullerSfxEnabled === 'function' && window.__mullerSfxEnabled() ? 'ON' : 'OFF'}
+                              </button>
+                          </div>
+                          <p className="text-[11px] text-gray-500 mb-4">Tiempo en Ruta (aprox.): {Math.round((rutaProgress.playTimeMs || 0) / 60000)} min · Lecciones completadas: {rutaProgress.lessonsCompleted || 0}</p>
+                          {!rutaRun ? (
+                              <>
+                                  <div className="flex flex-wrap gap-2 mb-6">
+                                      {[
+                                          { id: 'camino', label: 'Camino' },
+                                          { id: 'gramatica', label: 'Gramática' },
+                                          { id: 'test', label: 'Test nivel' },
+                                      ].map((t) => (
+                                          <button key={t.id} type="button" onClick={() => setRutaSubTab(t.id)} className={`px-4 py-2 rounded-xl text-sm font-bold border transition ${rutaSubTab === t.id ? 'bg-fuchsia-600 border-fuchsia-400 text-white' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white'}`}>{t.label}</button>
+                                      ))}
+                                  </div>
+                                  {rutaSubTab === 'camino' && (
+                                      <div className="space-y-6">
+                                          {(window.MULLER_RUTA_LEVELS || []).map((lv, levelIdx) => (
+                                              <div key={lv.id} className="rounded-2xl border border-fuchsia-500/25 bg-slate-900/50 p-4 md:p-5">
+                                                  <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                                                      <h3 className="text-lg font-black text-white">{lv.title}</h3>
+                                                      <span className="text-xs font-bold uppercase tracking-wider text-fuchsia-400">{lv.badge}</span>
+                                                  </div>
+                                                  <div className="flex flex-col gap-2">
+                                                      {lv.lessons.map((lesson, lessonIdx) => {
+                                                          const unlocked = typeof window.mullerRutaIsLessonUnlocked === 'function' && window.mullerRutaIsLessonUnlocked(window.MULLER_RUTA_LEVELS, levelIdx, lessonIdx, rutaProgress.completed || {});
+                                                          const done = !!(rutaProgress.completed && rutaProgress.completed[lesson.id]);
+                                                          return (
+                                                              <button key={lesson.id} type="button" disabled={!unlocked} onClick={() => { if (!unlocked) return; setRutaRun({ levelIdx, lessonIdx, step: 0 }); setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr(''); }} className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition ${!unlocked ? 'opacity-40 cursor-not-allowed border-white/5' : done ? 'border-emerald-500/40 bg-emerald-950/30 hover:bg-emerald-900/40' : 'border-white/15 bg-black/30 hover:bg-fuchsia-950/40'}`}>
+                                                                  <span className="font-bold text-white">{lesson.title}</span>
+                                                                  <span className="text-xs font-bold text-amber-300">+{lesson.rewardCoins} · {lesson.rewardXp} XP</span>
+                                                                  {done ? <span className="text-xs text-emerald-400">Hecho</span> : unlocked ? <span className="text-xs text-fuchsia-300">Empezar</span> : <span className="text-xs text-gray-500">Bloqueado</span>}
+                                                              </button>
+                                                          );
+                                                      })}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                      </div>
+                                  )}
+                                  {rutaSubTab === 'gramatica' && (
+                                      <div className="space-y-4">
+                                          <div className="flex justify-end"><ExerciseHelpBtn helpId="ruta_gramatica" /></div>
+                                          {(window.MULLER_GRAMMAR_REF || []).map((sec) => (
+                                              <div key={sec.level} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:p-5">
+                                                  <h3 className="text-fuchsia-300 font-black text-lg mb-1">{sec.level} — {sec.title}</h3>
+                                                  <div className="space-y-3 mt-3">
+                                                      {sec.blocks.map((b, bi) => (
+                                                          <div key={bi} className="rounded-xl border border-white/5 bg-black/25 p-3">
+                                                              <p className="text-white font-bold text-sm">{b.t}</p>
+                                                              <p className="text-gray-400 text-sm mt-1 leading-relaxed">{b.b}</p>
+                                                          </div>
+                                                      ))}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                          <p className="text-xs text-gray-500">Ampliaremos con más temas y ejemplos conforme añadas contenido al camino.</p>
+                                      </div>
+                                  )}
+                                  {rutaSubTab === 'test' && (
+                                      <div className="rounded-2xl border border-sky-500/30 bg-sky-950/30 p-5 md:p-6 space-y-4">
+                                          <p className="text-white font-bold">Responde las 4 preguntas. Al final te sugerimos un nivel de inicio.</p>
+                                          {(window.MULLER_PLACEMENT_Q || []).map((q, qi) => (
+                                              <div key={qi} className="rounded-xl border border-white/10 bg-black/30 p-4">
+                                                  <p className="text-white font-semibold mb-2">{qi + 1}. {q.q}</p>
+                                                  <div className="flex flex-col gap-2">
+                                                      {q.opts.map((o, oi) => (
+                                                          <label key={oi} className={`flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 text-sm ${placementSel[qi] === oi ? 'bg-fuchsia-800/50 border border-fuchsia-500/50' : 'bg-black/20 border border-transparent hover:border-white/10'}`}>
+                                                              <input type="radio" name={`place-q-${qi}`} checked={placementSel[qi] === oi} onChange={() => { const n = [...placementSel]; n[qi] = oi; setPlacementSel(n); }} className="accent-fuchsia-500" />
+                                                              <span className="text-gray-200">{o}</span>
+                                                          </label>
+                                                      ))}
+                                                  </div>
+                                              </div>
+                                          ))}
+                                          <button type="button" onClick={finishPlacementTest} className="w-full rounded-xl bg-sky-600 hover:bg-sky-500 font-black py-3 text-white shadow-lg">Ver resultado y recomendación</button>
+                                      </div>
+                                  )}
+                              </>
+                          ) : (() => {
+                              const L = window.MULLER_RUTA_LEVELS || [];
+                              const lv = L[rutaRun.levelIdx];
+                              const lesson = lv && lv.lessons[rutaRun.lessonIdx];
+                              if (!lesson) return null;
+                              const st = rutaRun.step || 0;
+                              return (
+                                  <div className="rounded-2xl border border-fuchsia-500/30 bg-black/40 p-5 md:p-8">
+                                      <button type="button" onClick={() => { setRutaRun(null); setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr(''); }} className="text-sm font-bold text-fuchsia-300 mb-4 hover:text-white">← Volver al camino</button>
+                                      <h2 className="text-2xl font-black text-white mb-1">{lesson.title}</h2>
+                                      <p className="text-xs text-fuchsia-400/90 mb-6">{lv.badge} · {lv.title}</p>
+                                      {st === 0 && (
+                                          <>
+                                              <p className="text-sm text-violet-200/90 mb-4 rounded-xl bg-violet-950/50 border border-violet-500/25 p-4 leading-relaxed">{lesson.grammarTip}</p>
+                                              {lesson.phrases.map((p, i) => (
+                                                  <div key={i} className="mb-4 rounded-xl border border-white/10 bg-slate-900/60 p-4">
+                                                      <p className="text-lg font-bold text-white">{p.de}</p>
+                                                      <p className="text-sm text-gray-400">{p.es}</p>
+                                                      <button type="button" onClick={() => speakRutaDe(p.de)} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-fuchsia-300 hover:text-white"><Icon name="volume-2" className="w-4 h-4" /> Escuchar</button>
+                                                  </div>
+                                              ))}
+                                              <button type="button" onClick={() => { setRutaRun({ ...rutaRun, step: 1 }); setRutaFillInput(''); setRutaSpeakErr(''); window.__mullerPlaySfx && window.__mullerPlaySfx('tick'); }} className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg">Siguiente: huecos</button>
+                                          </>
+                                      )}
+                                      {st === 1 && lesson.fill && (
+                                          <>
+                                              <p className="text-white font-bold mb-3">{lesson.fill.prompt}</p>
+                                              {lesson.fill.hint ? <p className="text-xs text-gray-500 mb-2">Pista: {lesson.fill.hint}</p> : null}
+                                              <input value={rutaFillInput} onChange={(e) => setRutaFillInput(e.target.value)} className="w-full rounded-xl bg-black/50 border border-fuchsia-500/40 px-4 py-3 text-white text-lg mb-3 outline-none focus:border-fuchsia-400" placeholder="Tu respuesta" autoComplete="off" />
+                                              {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
+                                              <button type="button" onClick={() => { if (checkRutaFillAnswer(lesson)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } }} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black py-3 text-white">Comprobar y continuar</button>
+                                          </>
+                                      )}
+                                      {st === 2 && lesson.speak && (
+                                          <>
+                                              <p className="text-gray-300 mb-2">Lee en voz alta en alemán:</p>
+                                              <p className="text-xl font-bold text-white mb-4 leading-snug">{lesson.speak.target}</p>
+                                              <div className="flex flex-wrap gap-2 mb-4">
+                                                  <button type="button" onClick={() => speakRutaDe(lesson.speak.target)} className="rounded-xl bg-slate-800 border border-white/15 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700">Escuchar modelo</button>
+                                                  <button type="button" disabled={rutaListening} onClick={startRutaListen} className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white hover:bg-rose-500 disabled:opacity-50">{rutaListening ? 'Escuchando…' : 'Grabar'}</button>
+                                              </div>
+                                              {rutaTranscript ? <p className="text-sm text-emerald-200/90 mb-2">Detectado: {rutaTranscript}</p> : null}
+                                              {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
+                                              <button type="button" onClick={() => { if (checkRutaSpeakAnswer(lesson.speak.target)) completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx); }} className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg">Validar y completar lección</button>
+                                          </>
+                                      )}
+                                  </div>
+                              );
+                          })()}
+                      </div>
+                  )}
+
                   {activeTab === 'inicio' && !practiceActive && (
                       <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar p-4 md:p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500">
                           <div className="mb-6 md:mb-8">
@@ -5289,6 +5856,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           ) : null}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                               {[
+                                  { id: 'ruta', label: 'Ruta A1→A2', sub: 'Desde cero, gramática, test', icon: 'map', go: () => { setActiveTab('ruta'); } },
                                   { id: 'historia', label: 'Historia', sub: 'Guion, audio, modos', icon: 'play', go: () => { setActiveTab('historia'); setMode('dialogue'); } },
                                   { id: 'vocab', label: 'Vocabulario', sub: 'SRS y tarjetas', icon: 'book-open', go: () => setActiveTab('vocabulario') },
                                   { id: 'shadow', label: 'Shadowing', sub: 'Pronunciación', icon: 'audio-lines', go: () => setActiveTab('shadowing') },
@@ -5961,6 +6529,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                 ) : (
                                     <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
                                         {renderDiktatDiff(guionData[getActualSceneIndex()].text, diktatInput)}
+                                        {diktatMotivationMsg ? (
+                                            <p className="text-amber-100/95 text-sm md:text-base font-semibold max-w-lg rounded-2xl border border-amber-500/35 bg-amber-950/50 px-4 py-3 shadow-lg">{diktatMotivationMsg}</p>
+                                        ) : null}
                                         <button onClick={handleNext} className="bg-blue-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold mt-2 md:mt-4 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base">Siguiente ➔</button>
                                     </div>
                                 )}
