@@ -1202,7 +1202,7 @@
             guiones_mix: { title: 'Mezclar lecciones de vocabulario', what: 'Seleccionas varias lecciones guardadas y generas una sesión única en la pestaña Vocab.', tips: ['Marca al menos dos lecciones si quieres variedad.', 'Las tarjetas difíciles se suelen repetir al final.', 'Úsalo antes de un examen para repaso amplio.'] },
             storybuilder: { title: 'IA Story Builder', what: 'Pides a la app/IA integrada un guion según nivel y tema; luego lo estudias como cualquier Historia.', tips: ['Sé concreto en el tema (trabajo, medio ambiente…).', 'Revisa que el vocabulario coincida con tus metas.', 'Guarda siempre en Biblioteca para no perderlo.'] },
             practice_mazos: { title: 'Entrenamiento rápido (mazos)', what: 'Repasas tarjetas guardadas como difícil, normal o gramática: audio, revelar traducción, siguiente.', tips: ['No mires revelar hasta haber intentado recordar.', 'Haz lotes cortos varias veces al día.', 'Cuando vacíe un mazo, vuelve a Historia para añadir nuevas frases.'] },
-            advanced_menu: { title: 'Entrenamiento avanzado (panel morado)', what: 'Práctica guiada de artículos, verbos con preposición, preposiciones puras, conectores y simulacro tipo examen con cronómetro.', tips: ['Empieza por la categoría con peor porcentaje en el dashboard.', 'El modo examen entrena gestión de tiempo, no solo aciertos.', 'Cierra sesiones cortas para fijar mejor.'] },
+            advanced_menu: { title: 'Entrenamiento avanzado (panel morado)', what: 'Práctica guiada de artículos, verbos con preposición, preposiciones puras, conectores y simulacro tipo examen con cronómetro.', tips: ['Empieza por la categoría con peor porcentaje en el dashboard.', 'El modo examen entrena gestión de tiempo, no solo aciertos.', 'Cierra sesiones cortas para fijar mejor.', 'Artículos (JSON): usa "levels": ["A1","A2","B1"] para que la misma palabra salga en varios mazos; si repites la misma "de" con otro "level", la app une los niveles automáticamente.'] },
             advanced_exam: { title: 'Simulacro TELC (avanzado)', what: 'Cronómetro orientativo, pistas limitadas y mezcla de ítems según lo que elijas.', tips: ['Elige duración realista (20–30 min al principio).', 'Usa pistas solo cuando lleves bloqueado más de un minuto.', 'Al terminar, repasa solo los fallos en modo categoría.'] },
             nav_ruta: { title: 'Ruta A1 → A2', what: 'Camino guiado desde cero: lecciones con frases, huecos, lectura en voz alta y recompensas. Pestaña Gramática resume reglas por nivel. Test de nivel sugiere por dónde empezar.', tips: ['Tecla R para abrir Ruta.', 'Elige mentor (voz) arriba: Frau Lena, Herr Tom o Lina.', 'Cada 3 lecciones completadas hay bonus extra de monedas.', 'El contenido se ampliará con el tiempo: la estructura ya está lista.'] },
             ruta_gramatica: { title: 'Ruta — Gramática', what: 'Resumen por niveles (A1, A2, B1) con explicaciones claras. No sustituye un libro de texto: combínalo con Historia y ejercicios.', tips: ['Abre el bloque del nivel que estudies en el camino.', 'Copia un ejemplo a Escritura para fijarlo.', 'Si algo no cuadra, pregunta a tu tutor o al foro.'] },
@@ -7158,6 +7158,39 @@ function filterQueueByMode(items, progress, getId, mode) {
     });
 }
 
+/** Une entradas con el mismo `de` y combina niveles. Acepta `level` (legacy) o `levels` (array). */
+function normalizeArticulosDataset(raw) {
+    if (!Array.isArray(raw)) return [];
+    const byDe = new Map();
+    for (const item of raw) {
+        const de = (item.de || '').trim();
+        if (!de) continue;
+        const fromArr = Array.isArray(item.levels) ? item.levels.map((x) => String(x).trim()).filter(Boolean) : [];
+        const fromSingle = item.level != null && String(item.level).trim() !== '' ? [String(item.level).trim()] : [];
+        const combined = [...new Set([...fromArr, ...fromSingle])];
+        const prev = byDe.get(de);
+        if (!prev) {
+            byDe.set(de, { ...item, de, levels: combined });
+        } else {
+            const mergedLv = [...new Set([...(prev.levels || []), ...combined])];
+            byDe.set(de, { ...prev, ...item, de, levels: mergedLv });
+        }
+    }
+    return Array.from(byDe.values()).map((it) => {
+        if (!it.levels || it.levels.length === 0) {
+            return { ...it, levels: ['A1'] };
+        }
+        return it;
+    });
+}
+
+/** ¿La tarjeta cuenta para el mazo A1/A2/B1… o MIXTO? */
+function articleItemMatchesLevel(item, selectedMode) {
+    if (selectedMode === 'MIXTO') return true;
+    const lv = Array.isArray(item.levels) && item.levels.length ? item.levels : (item.level ? [item.level] : []);
+    return lv.includes(selectedMode);
+}
+
 function getAdvancedDashboard() {
     const progress = getAdvancedProgress();
     const daily = getDailyActivity();
@@ -7245,10 +7278,11 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         setMode(selectedMode);
         setLoading(true);
         
-        const processData = (data) => {
+        const processData = (rawData) => {
+            const data = Array.isArray(rawData) ? normalizeArticulosDataset(rawData) : rawData;
             let filtered = data;
             if (selectedMode !== 'MIXTO' && selectedMode !== 'historia') {
-                filtered = data.filter(item => item.level === selectedMode);
+                filtered = data.filter((item) => articleItemMatchesLevel(item, selectedMode));
             }
             // Müller-Filter: Eliminamos lo que ya te sabes para siempre
             const finalQueue = filtered.filter(item => !masteredArticles.includes(item.de));
@@ -7649,7 +7683,8 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
             fetch(URL_VERBOS + nocache).then((r) => r.json()),
             fetch(URL_PREP + nocache).then((r) => r.json())
         ]).then(([artData, verbData, prepData]) => {
-            const artFiltered = artData.filter((item) => item.level === 'B1' || item.level === 'B2');
+            const artNorm = normalizeArticulosDataset(artData);
+            const artFiltered = artNorm.filter((item) => articleItemMatchesLevel(item, 'B1') || articleItemMatchesLevel(item, 'B2'));
             const getIdArt = (item) => `articulos::${item.de}`;
             const getIdV = (item) => `verbos::${item.de}::${item.answer}`;
             const getIdP = (item) => `preposiciones::${item.de}::${item.answer}`;
