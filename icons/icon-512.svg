@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Muller icon">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="104" fill="url(#bg)" />
+  <circle cx="256" cy="256" r="176" fill="#581c87" opacity="0.4" />
+  <text x="256" y="348" text-anchor="middle" font-size="260" font-weight="700" fill="#c084fc" font-family="Outfit,system-ui,sans-serif">M</text>
+</svg>
