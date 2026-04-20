@@ -473,9 +473,10 @@
             return out;
         }
 
-        function mullerBibliotecaTextToBxBuckets(text) {
-            const buckets = { vocabulario: [], verbos: [], preposiciones: [], conectores: [], redemittel: [] };
+        /** Lista plana de ítems para distribuir (sin duplicados). */
+        function mullerBibliotecaFlatItems(text) {
             const segs = mullerExtractBibliotecaSegments(text);
+            const out = [];
             const seen = new Set();
             for (const seg of segs) {
                 const cat = mullerClassifyBibliotecaLine(seg.german, seg);
@@ -489,6 +490,38 @@
                 const k = mullerBxItemKey(item) + '|' + cat;
                 if (seen.has(k)) continue;
                 seen.add(k);
+                out.push({ cat, item, seg });
+            }
+            return out;
+        }
+
+        /** Heurística local B1 vs B2 por frase (no es IA; revisa en B1/B2 si falla). */
+        function mullerGuessBibliotecaItemLevel(item, seg) {
+            const g = (item.b1 || '').trim();
+            if (!g) return 'b1';
+            const lower = g.toLowerCase();
+            const words = g.split(/\s+/).filter(Boolean);
+            const w = words.length;
+
+            if (seg && seg.isPair && w <= 5) return 'b1';
+
+            if (/\b(Herausforderung|Bedeutung|Maßnahmen|entsprechend|voraussichtlich|gleichwohl|insofern|hinsichtlich|bezüglich|unabhängig davon|im Hinblick auf|von großer)\b/i.test(g)) return 'b2';
+            if (/\b(sodass|sofern|sobald|solange|anstatt dass|ohne dass|wobei|wodurch|weshalb)\b/i.test(lower)) return 'b2';
+            if (/\b(dessen|deren|wessen)\b/i.test(lower) && w > 4) return 'b2';
+            if (g.length > 115) return 'b2';
+            if (w >= 17) return 'b2';
+            if (/\b(wurde|wurden|worden)\b/i.test(lower) && w > 6) return 'b2';
+
+            if (w <= 10 && g.length <= 75) return 'b1';
+            if (w <= 13) return 'b1';
+
+            return 'b2';
+        }
+
+        function mullerBibliotecaTextToBxBuckets(text) {
+            const buckets = { vocabulario: [], verbos: [], preposiciones: [], conectores: [], redemittel: [] };
+            const flat = mullerBibliotecaFlatItems(text);
+            for (const { cat, item } of flat) {
                 buckets[cat].push(item);
             }
             return {
@@ -499,7 +532,7 @@
                     preposiciones: buckets.preposiciones.length,
                     conectores: buckets.conectores.length,
                     redemittel: buckets.redemittel.length,
-                    total: segs.length
+                    total: flat.length
                 }
             };
         }
@@ -889,7 +922,7 @@
             nav_b1: { title: 'B1 Fundamentos', what: 'Banco de frases modelo (JSON) por categorías: vocabulario, verbos, preposiciones, conectores, Redemittel y modo mix.', tips: ['Alterna MIX con categorías débiles.', 'Escucha la frase varias veces antes de leer la traducción.', 'Anota en Escritura las que quieras fijar.'] },
             nav_b2: { title: 'B2 Meisterklasse', what: 'Misma estructura que B1 pero con estructuras más altas; útil para subir registro y conectores complejos.', tips: ['Lee en voz alta la versión “alta” para automatizar.', 'Compara con la línea básica si el JSON la trae.', 'Lleva un cuaderno de frases copiadas a mano.'] },
             nav_progreso: { title: 'Progreso', what: 'Resumen de racha, mazos difícil/normal, gramática, gráfico semanal y exportación PDF/Anki.', tips: ['Exporta PDF antes de examen para revisar en papel.', 'Los mazos se alimentan desde Vocab y gramática guardada en Historia.', 'SRS de vocabulario tiene su propio contador en la pantalla de ayuda.'] },
-            nav_biblioteca: { title: 'Biblioteca', what: 'Guardas guiones pegados desde la IA y listas de vocabulario personalizadas; puedes enviar un texto pegado a las subpestañas B1/B2 (vocabulario, verbos, etc.) y mezclar lecciones para practicar.', tips: ['Revisa el formato del prompt de IA antes de pegar.', '“Distribuir texto → B1/B2” clasifica con reglas locales; revisa en las pestañas B1/B2.', 'Las lecciones de vocab se practican con el botón Practicar.', 'Borra lo que ya no uses para no mezclar temas viejos.'] },
+            nav_biblioteca: { title: 'Biblioteca', what: 'Guardas guiones pegados desde la IA y listas de vocabulario personalizadas; puedes enviar un texto pegado a B1 o B2 (vocabulario, verbos, etc.) con nivel automático por frase o forzando un nivel.', tips: ['Revisa el formato del prompt de IA antes de pegar.', '“Distribuir” estima B1/B2 por heurística local (no es IA); puedes forzar todo a B1 o B2.', 'Las tarjetas del archivo b1-b2-database.json no son “tuyas”: “Borrar aportaciones” solo quita lo añadido desde Distribuir.', 'Las lecciones de vocab se practican con el botón Practicar.'] },
             nav_telc: { title: 'Día del examen TELC', what: 'Checklist estática: qué llevar, tiempos orientativos y consejos. No sustituye la convocatoria oficial.', tips: ['Imprime o exporta la lista la noche anterior.', 'Llega con margen para el registro.', 'Hidrátate y duerme bien: el examen es resistencia.'] },
             nav_ia: { title: 'IA Story Builder', what: 'Genera un guion nuevo con nivel y tema; útil cuando quieres vocabulario fresco sin pegar texto manual.', tips: ['Indica bien el nivel (B1/B2) y el tema.', 'Tras generar, guarda y estudia en Historia.', 'Combina con vocab propio en el campo de palabras si existe.'] },
             historia_base: { title: 'Historia — vista general', what: 'Escuchas y lees escenas; el vocabulario resaltado enlaza con las tarjetas. Abajo tienes play, escenas y velocidad.', tips: ['Primero escucha, luego muestra traducción.', 'Sube o baja la velocidad según el nivel del día.', 'PDF del guion sirve para repaso offline.'] },
@@ -924,7 +957,7 @@
             progreso_dashboard: { title: 'Progreso — panel', what: 'Ves racha, monedas, mazos y exportaciones; el bloque morado resume entrenamiento avanzado si lo usas.', tips: ['Haz PDF antes de vacaciones para no perder la foto.', 'Revisa mazos difícil cada pocos días.', 'Combina con backup JSON flotante para copia total.'] },
             guiones_import: { title: 'Biblioteca — guiones', what: 'Pegas texto de la IA con título y lo guardas; al cargarlo se vuelve tu Historia activa.', tips: ['Comprueba títulos para encontrar lecciones rápido.', 'Borra versiones viejas para no confundirte.', 'El prompt sugerido está arriba: cópialo tal cual a ChatGPT/Gemini.'] },
             guiones_vocab_custom: { title: 'Biblioteca — vocabulario propio', what: 'Pegas listas “alemán — español” y guardas lecciones; luego Practicar o mezcla.', tips: ['Una línea por palabra facilita el parseo.', 'Mezcla varias lecciones para simular examen amplio.', 'Exporta a Anki desde Progreso si usas mazos allí.'] },
-            guiones_bx_distrib: { title: 'Biblioteca → B1 / B2 (subpestañas)', what: 'Desde un texto pegado se extraen frases y se clasifican en vocabulario, verbos, preposiciones, conectores y Redemittel; se guardan en tu navegador y se mezclan con b1-b2-database.json.', tips: ['Usa el mismo formato que el guion (Nombre: …) o listas palabra - traducción.', 'En B1/B2, las tarjetas “Tu biblioteca” permiten eliminar o mover de categoría si la heurística se equivocó.', '“Borrar mis aportaciones” solo quita lo añadido desde Biblioteca, no el JSON del repo ni las tarjetas del archivo base.'] },
+            guiones_bx_distrib: { title: 'Biblioteca → B1 / B2 (subpestañas)', what: 'Desde un texto pegado se extraen frases y se clasifican por tipo (vocabulario, verbos, etc.); cada frase se coloca en B1 o B2 según reglas locales o en un solo nivel si lo fuerzas.', tips: ['Usa el mismo formato que el guion (Nombre: …) o listas palabra - traducción.', 'El nivel automático es una estimación: revisa en B1/B2 y mueve o borra tarjetas con “Tu biblioteca”.', '“Borrar mis aportaciones” vacía solo tu overlay local; el contenido del archivo b1-b2-database.json del proyecto sigue visible.'] },
             guiones_mix: { title: 'Mezclar lecciones de vocabulario', what: 'Seleccionas varias lecciones guardadas y generas una sesión única en la pestaña Vocab.', tips: ['Marca al menos dos lecciones si quieres variedad.', 'Las tarjetas difíciles se suelen repetir al final.', 'Úsalo antes de un examen para repaso amplio.'] },
             storybuilder: { title: 'IA Story Builder', what: 'Pides a la app/IA integrada un guion según nivel y tema; luego lo estudias como cualquier Historia.', tips: ['Sé concreto en el tema (trabajo, medio ambiente…).', 'Revisa que el vocabulario coincida con tus metas.', 'Guarda siempre en Biblioteca para no perderlo.'] },
             practice_mazos: { title: 'Entrenamiento rápido (mazos)', what: 'Repasas tarjetas guardadas como difícil, normal o gramática: audio, revelar traducción, siguiente.', tips: ['No mires revelar hasta haber intentado recordar.', 'Haz lotes cortos varias veces al día.', 'Cuando vacíe un mazo, vuelve a Historia para añadir nuevas frases.'] },
@@ -1703,40 +1736,56 @@
           const handleBxDistribToLevels = (target) => {
               const text = (bxImportText || '').trim() || (scriptInput || '').trim();
               if (!text) { alert('Pega texto en el cuadro de “Distribuir a B1/B2” o en el guion de arriba.'); return; }
-              const { buckets, counts } = mullerBibliotecaTextToBxBuckets(text);
-              if (counts.total === 0) { alert('No se detectaron frases. Usa formato Nombre: Alemán. (Traducción) o listas “alemán - español” por línea.'); return; }
+              const flat = mullerBibliotecaFlatItems(text);
+              if (flat.length === 0) { alert('No se detectaron frases. Usa formato Nombre: Alemán. (Traducción) o listas “alemán - español” por línea.'); return; }
+              const z = () => ({ vocabulario: 0, verbos: 0, preposiciones: 0, conectores: 0, redemittel: 0 });
+              let snap = null;
               setBxUserOverlay((prev) => {
                   const base = normalizeBxPayload(prev);
-                  const levels = target === 'both' ? ['b1', 'b2'] : [target];
-                  levels.forEach((lv) => {
-                      Object.keys(BX_DB_EMPTY).forEach((cat) => {
-                          const add = buckets[cat] || [];
-                          add.forEach((it) => {
-                              const ky = mullerBxItemKey(it);
-                              const exists = (base[lv][cat] || []).some((x) => mullerBxItemKey(x) === ky);
-                              if (exists) return;
-                              base[lv][cat].push({
-                                  ...it,
-                                  _mullerUser: true,
-                                  _mullerUid: 'bx_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 11),
-                                  _mullerCategory: cat
-                              });
-                          });
+                  const c1 = z();
+                  const c2 = z();
+                  let nuevos = 0;
+                  flat.forEach(({ cat, item, seg }) => {
+                      const lv = target === 'auto' ? mullerGuessBibliotecaItemLevel(item, seg) : target;
+                      const trickBase = 'Biblioteca · ' + cat + (target === 'auto' ? ' · nivel estimado ' + lv.toUpperCase() : ' · heurística local (sin IA)');
+                      const it = { ...item, trick: trickBase };
+                      const ky = mullerBxItemKey(item);
+                      const exists = (base[lv][cat] || []).some((x) => mullerBxItemKey(x) === ky);
+                      if (exists) return;
+                      base[lv][cat].push({
+                          ...it,
+                          _mullerUser: true,
+                          _mullerUid: 'bx_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 11),
+                          _mullerCategory: cat
                       });
+                      if (lv === 'b2') c2[cat]++; else c1[cat]++;
+                      nuevos++;
                   });
                   try { localStorage.setItem(MULLER_BX_USER_OVERLAY_KEY, JSON.stringify(base)); } catch (e) {}
+                  snap = { c1, c2, nuevos, target, detectados: flat.length };
                   return base;
               });
-              const label = target === 'both' ? 'B1 y B2' : target.toUpperCase();
-              setBxImportSummary(`Añadido a ${label}: vocab ${counts.vocabulario}, verbos ${counts.verbos}, prep. ${counts.preposiciones}, conectores ${counts.conectores}, Redemittel ${counts.redemittel} · segmentos: ${counts.total}`);
+              const sum = (c) => `vocab ${c.vocabulario}, vb. ${c.verbos}, prep. ${c.preposiciones}, conn. ${c.conectores}, R ${c.redemittel}`;
+              if (snap) {
+                  if (snap.target === 'auto') {
+                      setBxImportSummary(`Nivel automático · B1: ${sum(snap.c1)} · B2: ${sum(snap.c2)} · nuevos: ${snap.nuevos} (detectados: ${snap.detectados})`);
+                  } else {
+                      const c = snap.target === 'b2' ? snap.c2 : snap.c1;
+                      setBxImportSummary(`Todo a ${snap.target.toUpperCase()}: ${sum(c)} · nuevos: ${snap.nuevos} (detectados: ${snap.detectados})`);
+                  }
+              }
           };
 
           const clearBxUserOverlay = () => {
-              if (!window.confirm('¿Borrar todas las frases que añadiste desde Biblioteca a las pestañas B1/B2? (No borra b1-b2-database.json en el servidor.)')) return;
+              if (!window.confirm('Esto borra solo lo que añadiste con «Distribuir texto» (tu biblioteca local). Las tarjetas del archivo b1-b2-database.json del proyecto no se quitan: seguirán viéndose en B1/B2. ¿Borrar tus aportaciones?')) return;
               const empty = normalizeBxPayload({});
               setBxUserOverlay(empty);
-              try { localStorage.removeItem(MULLER_BX_USER_OVERLAY_KEY); } catch (e) {}
+              try {
+                  localStorage.removeItem(MULLER_BX_USER_OVERLAY_KEY);
+                  localStorage.setItem(MULLER_BX_USER_OVERLAY_KEY, JSON.stringify(empty));
+              } catch (e) {}
               setBxImportSummary('');
+              setBxIndex(0);
           };
 
           const handleBxUserCardDelete = () => {
@@ -3765,12 +3814,12 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 text-emerald-300"><Icon name="layout-grid" className="w-5 h-5 md:w-6 md:h-6" /> Distribuir texto → B1 / B2</h2>
                                       <ExerciseHelpBtn helpId="guiones_bx_distrib" compact />
                                   </div>
-                                  <p className="text-[11px] md:text-xs text-gray-400 mb-3 leading-relaxed">Pega un guion (<code className="text-gray-300">Nombre:</code> …), listas <code className="text-gray-300">alemán - español</code> o líneas sueltas. La app recoge frases y palabras y las reparte en <strong className="text-gray-200">vocabulario, verbos, preposiciones, conectores y Redemittel</strong> con reglas locales (sin IA de pago). Si el cuadro de abajo está vacío, se usa el texto del guion de arriba. Todo se guarda en este navegador y se suma a <code className="text-gray-300">b1-b2-database.json</code>.</p>
+                                  <p className="text-[11px] md:text-xs text-gray-400 mb-3 leading-relaxed">Pega un guion (<code className="text-gray-300">Nombre:</code> …), listas <code className="text-gray-300">alemán - español</code> o líneas sueltas. La app clasifica cada trozo en <strong className="text-gray-200">vocabulario, verbos, preposiciones, conectores o Redemittel</strong> y, con <strong className="text-gray-200">nivel automático</strong>, estima si va a B1 o B2 (heurística local, no IA). Si el cuadro está vacío, se usa el texto del guion de arriba. Tus aportaciones se guardan en el navegador y se <strong className="text-gray-200">mezclan</strong> con las tarjetas del archivo <code className="text-gray-300">b1-b2-database.json</code> (esas no se borran con el botón rojo).</p>
                                   <textarea className="w-full min-h-[100px] md:min-h-[120px] bg-black/50 border border-emerald-800/60 p-3 rounded-lg text-white font-mono text-xs md:text-sm mb-3 outline-none focus:border-emerald-500 resize-none" placeholder="Pega aquí o déjalo vacío para usar el cuadro del guion de arriba…" value={bxImportText} onChange={(e) => setBxImportText(e.target.value)} />
                                   <div className="flex flex-wrap gap-2 mb-3">
-                                      <button type="button" onClick={() => handleBxDistribToLevels('b1')} className="flex-1 min-w-[120px] bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Solo B1</button>
-                                      <button type="button" onClick={() => handleBxDistribToLevels('b2')} className="flex-1 min-w-[120px] bg-sky-700 hover:bg-sky-600 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Solo B2</button>
-                                      <button type="button" onClick={() => handleBxDistribToLevels('both')} className="flex-1 min-w-[140px] bg-gradient-to-r from-emerald-600 to-sky-600 hover:opacity-95 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ B1 y B2</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('auto')} className="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-700 to-sky-700 hover:opacity-95 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm shadow-lg">→ Nivel automático (B1 o B2 por frase)</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('b1')} className="flex-1 min-w-[120px] bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Todo a B1</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('b2')} className="flex-1 min-w-[120px] bg-sky-800 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Todo a B2</button>
                                   </div>
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                       <button type="button" onClick={clearBxUserOverlay} className="text-xs md:text-sm text-red-400 hover:text-red-300 underline">Borrar mis aportaciones B1/B2</button>
