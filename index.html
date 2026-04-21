@@ -5054,26 +5054,33 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           <span className="flex items-center gap-1 font-black text-yellow-400 text-xs md:text-sm"><Icon name="coins" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {coinsUiLabel}</span>
                       </div>
                       {activeTab === 'historia' && (
-                          <div className="hidden md:flex relative">
+                          <div className="flex relative">
                               <button type="button" onClick={() => setShowHistoriaMenu(v => !v)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border whitespace-nowrap ${showHistoriaMenu ? 'bg-blue-700 border-blue-500 text-white' : 'bg-black/50 border-white/20 text-gray-200 hover:bg-white/10'}`}>
                                   <Icon name="sliders-horizontal" className="w-3.5 h-3.5" /> Opciones Historia
                               </button>
                               {showHistoriaMenu && (
-                                  <div className="absolute right-0 top-full mt-1 z-[200] bg-zinc-900 border border-white/15 rounded-xl shadow-2xl p-1.5 flex flex-col gap-0.5 min-w-[190px]">
-                                      <button onClick={()=>{setPodcastMode(v=>!v); setBlindMode(false); setDiktatMode(false); setPuzzleMode(false); setHistoriaAudioOnly(false); setShowHistoriaMenu(false);}} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition w-full text-left ${podcastMode ? 'bg-indigo-600 text-white' : 'text-gray-200 hover:bg-white/10'}`}>
-                                          <Icon name="car" className="w-3.5 h-3.5" /> Podcast
-                                      </button>
-                                      <button type="button" disabled={savedScripts.length === 0} onClick={() => { setHistoriaPlaylistAllScripts(v=>!v); setShowHistoriaMenu(false); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition w-full text-left ${historiaPlaylistAllScripts ? 'bg-fuchsia-700 text-white' : 'text-gray-200 hover:bg-white/10'} ${savedScripts.length === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                                          <Icon name="repeat" className="w-3.5 h-3.5" /> Todos los guiones
-                                      </button>
-                                      <button type="button" onClick={() => { setHistoriaAudioOnly(v=>!v); if (!historiaAudioOnly) setPodcastMode(false); setShowHistoriaMenu(false); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition w-full text-left ${historiaAudioOnly ? 'bg-violet-600 text-white' : 'text-gray-200 hover:bg-white/10'}`}>
-                                          <Icon name="headphones" className="w-3.5 h-3.5" /> Solo audio
-                                      </button>
-                                      <div className="my-0.5 border-t border-white/10" />
-                                      <button type="button" onClick={() => { setActiveTab('historia'); setMode('interview'); setOralQIdx(0); setOralDeadline(Date.now() + oralSecs * 1000); setOralClock(0); stopAudio(); setPodcastMode(false); setHistoriaAudioOnly(false); setShowHistoriaMenu(false); }} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-emerald-200 hover:bg-emerald-900/50 transition w-full text-left">
-                                          <Icon name="mic" className="w-3.5 h-3.5" /> Oral B1
-                                      </button>
-                                  </div>
+                                  <>
+                                      <div className="fixed inset-0 z-[199] bg-black/60" onClick={() => setShowHistoriaMenu(false)} />
+                                      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] bg-zinc-900 border border-white/15 rounded-2xl shadow-2xl p-3 flex flex-col gap-1.5 w-[90vw] max-w-xs">
+                                          <p className="text-[11px] font-bold text-white/40 uppercase tracking-widest px-1 pb-0.5">Opciones Historia</p>
+                                          <button onClick={()=>{setPodcastMode(v=>!v); setBlindMode(false); setDiktatMode(false); setPuzzleMode(false); setHistoriaAudioOnly(false); setShowHistoriaMenu(false);}} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition w-full text-left ${podcastMode ? 'bg-indigo-600 text-white' : 'text-gray-200 hover:bg-white/10'}`}>
+                                              <Icon name="car" className="w-4 h-4 shrink-0" /> Podcast
+                                          </button>
+                                          <button type="button" disabled={savedScripts.length === 0} onClick={() => { setHistoriaPlaylistAllScripts(v=>!v); setShowHistoriaMenu(false); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition w-full text-left ${historiaPlaylistAllScripts ? 'bg-fuchsia-700 text-white' : 'text-gray-200 hover:bg-white/10'} ${savedScripts.length === 0 ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                              <Icon name="repeat" className="w-4 h-4 shrink-0" /> Todos los guiones
+                                          </button>
+                                          <button type="button" onClick={() => { setHistoriaAudioOnly(v=>!v); if (!historiaAudioOnly) setPodcastMode(false); setShowHistoriaMenu(false); }} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition w-full text-left ${historiaAudioOnly ? 'bg-violet-600 text-white' : 'text-gray-200 hover:bg-white/10'}`}>
+                                              <Icon name="headphones" className="w-4 h-4 shrink-0" /> Solo audio
+                                          </button>
+                                          <div className="my-0.5 border-t border-white/10" />
+                                          <button type="button" onClick={() => { setActiveTab('historia'); setMode('interview'); setOralQIdx(0); setOralDeadline(Date.now() + oralSecs * 1000); setOralClock(0); stopAudio(); setPodcastMode(false); setHistoriaAudioOnly(false); setShowHistoriaMenu(false); }} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-emerald-200 hover:bg-emerald-900/50 transition w-full text-left">
+                                              <Icon name="mic" className="w-4 h-4 shrink-0" /> Oral B1
+                                          </button>
+                                          <button type="button" onClick={() => setShowHistoriaMenu(false)} className="mt-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white/50 hover:bg-white/10 transition w-full">
+                                              Cerrar
+                                          </button>
+                                      </div>
+                                  </>
                               )}
                           </div>
                       )}
