@@ -387,6 +387,41 @@
     <script type="text/babel">
         const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
 
+        class MullerErrorBoundary extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, message: '' };
+            }
+            static getDerivedStateFromError(error) {
+                return { hasError: true, message: error && error.message ? String(error.message) : 'Error inesperado' };
+            }
+            componentDidCatch(error, errorInfo) {
+                try { console.error('MullerErrorBoundary', error, errorInfo); } catch (e) {}
+            }
+            handleReload = () => {
+                try { window.location.reload(); } catch (e) {}
+            };
+            render() {
+                if (!this.state.hasError) return this.props.children;
+                return (
+                    <div style={{ minHeight: '100vh', background: '#020617', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                        <div style={{ width: '100%', maxWidth: '540px', border: '1px solid rgba(255,255,255,0.16)', borderRadius: '14px', background: 'rgba(15,23,42,0.85)', padding: '1rem 1.1rem' }}>
+                            <h2 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Se recuperó un error de la interfaz</h2>
+                            <p style={{ margin: '0.55rem 0 0.2rem', fontSize: '0.88rem', color: '#cbd5e1' }}>
+                                La app evitó una pantalla negra completa. Puedes recargar para continuar.
+                            </p>
+                            <p style={{ margin: '0.35rem 0 0.9rem', fontSize: '0.78rem', color: '#94a3b8' }}>
+                                Detalle: {this.state.message || 'sin detalle'}
+                            </p>
+                            <button type="button" onClick={this.handleReload} style={{ background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.55rem 0.9rem', fontWeight: 700, cursor: 'pointer' }}>
+                                Recargar aplicación
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+        }
+
         /** Supabase (gratis): Dashboard → Project Settings → API → Project URL y anon public key */
         window.MULLER_SUPABASE_URL = window.MULLER_SUPABASE_URL || 'https://mrimappoycvfujzegxdt.supabase.co';
         window.MULLER_SUPABASE_ANON_KEY = window.MULLER_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaW1hcHBveWN2ZnVqemVneGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MzI1MDMsImV4cCI6MjA5MjIwODUwM30.L_5Lk3S_TgiaSe8jAAhTcQTbUsQiTjxA9pWq0ZDayBY';
@@ -1096,6 +1131,7 @@
         const MULLER_READING_FONT_MIN = 14;
         const MULLER_READING_FONT_MAX = 34;
         const MULLER_READING_FONT_STEP = 1;
+        const MULLER_MIC_PERMISSION_PREF_KEY = 'muller_auto_request_mic_v1';
         const mullerClamp = (n, min, max) => Math.max(min, Math.min(max, n));
         const mullerNormalizeGermanWordToken = (raw) => String(raw || '')
             .toLowerCase()
@@ -1109,6 +1145,32 @@
                 const clean = mullerNormalizeGermanWordToken(chunk);
                 return { text: chunk, word: clean, clickable: !!clean };
             });
+        const mullerRequestMicPermission = async ({ autoPrompt = true, showToast = false } = {}) => {
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+                if (showToast && window.__mullerToast) window.__mullerToast('Este navegador no permite pedir micrófono.', 'error');
+                return false;
+            }
+            try {
+                const p = navigator.permissions && navigator.permissions.query ? await navigator.permissions.query({ name: 'microphone' }) : null;
+                if (p && p.state === 'granted') return true;
+                if (p && p.state === 'denied') {
+                    if (showToast && window.__mullerToast) window.__mullerToast('Micrófono bloqueado en el navegador. Habilítalo en ajustes del sitio.', 'error');
+                    return false;
+                }
+                if (!autoPrompt) return false;
+            } catch (e) {}
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                if (stream && stream.getTracks) stream.getTracks().forEach((t) => t.stop());
+                return true;
+            } catch (err) {
+                if (showToast && window.__mullerToast) window.__mullerToast('No se concedió permiso de micrófono.', 'error');
+                return false;
+            }
+        };
+        const mullerEnsureMicPermission = async ({ autoPrompt = true, showToast = false } = {}) => mullerRequestMicPermission({ autoPrompt, showToast });
+        window.mullerRequestMicPermission = mullerRequestMicPermission;
+        window.mullerEnsureMicPermission = mullerEnsureMicPermission;
 
         const germanWordDistanceOk = (a, b) => {
             if (a === b) return true;
@@ -3284,9 +3346,11 @@ const finishPlacementWithLevel = (finalLevel) => {
               return false;
           };
 
-          const startRutaListen = () => {
+          const startRutaListen = async () => {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) { alert('Para leer en voz alta usa Chrome o Edge en escritorio.'); return; }
+              const ok = await mullerEnsureMicPermission({ autoPrompt: true, showToast: true });
+              if (!ok) { setRutaSpeakErr('No hay permiso de micrófono. Puedes continuar sin grabar.'); return; }
               try { if (rutaRecRef.current) rutaRecRef.current.stop(); } catch (e) {}
               const rec = new SpeechRecognition();
               rec.lang = 'de-DE';
@@ -3445,9 +3509,11 @@ const finishPlacementWithLevel = (finalLevel) => {
               setReadingFeedback(enriched);
           };
 
-          const startReadingListen = () => {
+          const startReadingListen = async () => {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) { alert('Para lectura en voz alta usa Chrome o Edge.'); return; }
+              const ok = await mullerEnsureMicPermission({ autoPrompt: true, showToast: true });
+              if (!ok) return;
               try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
               const rec = new SpeechRecognition();
               rec.lang = 'de-DE';
@@ -3488,6 +3554,15 @@ const finishPlacementWithLevel = (finalLevel) => {
           useEffect(() => {
               if (activeTab === 'lectura') return;
               try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
+              setReadingListening(false);
+          }, [activeTab]);
+          useEffect(() => {
+              // Evita que una grabación de una pestaña siga viva al cambiar a otra.
+              try { if (recognitionRef.current) recognitionRef.current.stop(); } catch (e) {}
+              try { if (rutaRecRef.current) rutaRecRef.current.stop(); } catch (e) {}
+              try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
+              setIsListening(false);
+              setRutaListening(false);
               setReadingListening(false);
           }, [activeTab]);
 
@@ -4594,10 +4669,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               }
           };
 
-          const handleVoiceStart = (targetText = null, evalOpts = {}) => {
+          const handleVoiceStart = async (targetText = null, evalOpts = {}) => {
               if (userStats.hearts <= 0 && evalOpts.mode !== 'shadow') { setShowDeathModal(true); return; }
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) { alert("Tu navegador no soporta esta función. Usa Google Chrome."); return; }
+              const ok = await mullerEnsureMicPermission({ autoPrompt: true, showToast: true });
+              if (!ok) {
+                  setGrammarPolizeiMsg('Sin permiso de micrófono. Puedes seguir con texto y audio.');
+                  return;
+              }
               if (recognitionRef.current) {
                   try { recognitionRef.current.stop(); } catch (e) {}
               }
@@ -8945,7 +9025,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
 
             const requestMicPermission = async () => {
                 try {
-                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const ok = await window.mullerRequestMicPermission && window.mullerRequestMicPermission({ autoPrompt: true, showToast: true });
+                    if (!ok) return;
                     window.__mullerToast && window.__mullerToast('Micrófono concedido. Ya puedes usar reconocimiento de voz.', 'success');
                 } catch (err) {
                     window.__mullerToast && window.__mullerToast('No se pudo obtener permiso del micrófono.', 'error');
@@ -9100,6 +9181,14 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 };
             }, [exportDecksOnly, exportSrsOnly]);
 
+            React.useEffect(() => {
+                let enable = false;
+                try { enable = localStorage.getItem(MULLER_MIC_PERMISSION_PREF_KEY) !== '0'; } catch (e) {}
+                if (!enable) return undefined;
+                const t = window.setTimeout(() => { requestMicPermission(); }, 600);
+                return () => window.clearTimeout(t);
+            }, []);
+
             return (
                 <>
                     <input id="muller-backup-file-input" type="file" accept=".json" onChange={importData} className="hidden" />
@@ -9109,11 +9198,13 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
 
       const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(
-            <>
-                <App />
-                <FloatingButtons />
-                <AdvancedPracticePanelFinal />
-            </>
+            <MullerErrorBoundary>
+                <>
+                    <App />
+                    <FloatingButtons />
+                    <AdvancedPracticePanelFinal />
+                </>
+            </MullerErrorBoundary>
         );
 // ========== MÓDULO COMPLETO Y DEFINITIVO (4 PESTAÑAS + AUDIOLIBRO REAL) ==========
 // No modifica nada del código original, solo añade funcionalidad.
