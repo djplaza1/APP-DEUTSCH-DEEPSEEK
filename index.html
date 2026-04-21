@@ -1507,6 +1507,7 @@
                     {
                         id: 'a0-1-l1',
                         title: 'Sonidos + presentaciones mínimas',
+                        topic: 'presentacion',
                         rewardCoins: 12,
                         rewardXp: 18,
                         grammarTip: 'En alemán, la frase base suele ir con verbo en 2ª posición: Ich bin Ana.',
@@ -1521,6 +1522,7 @@
                     {
                         id: 'a0-1-l2',
                         title: 'Clase y objetos básicos',
+                        topic: 'clase',
                         rewardCoins: 12,
                         rewardXp: 18,
                         grammarTip: 'Memoriza sustantivo + artículo como bloque: der Tisch, die Tür, das Buch.',
@@ -1542,6 +1544,7 @@
                     {
                         id: 'a1-1-l1',
                         title: 'Saludos y presentación',
+                        topic: 'presentacion',
                         rewardCoins: 15,
                         rewardXp: 20,
                         grammarTip: 'En frases declarativas el verbo conjugado va en 2.ª posición: sujeto – verbo – resto.',
@@ -1556,6 +1559,7 @@
                     {
                         id: 'a1-1-l2',
                         title: 'Artículos básicos',
+                        topic: 'hogar',
                         rewardCoins: 15,
                         rewardXp: 22,
                         grammarTip: 'der (m), die (f), das (n). Muchos plurales llevan «die».',
@@ -1577,6 +1581,7 @@
                     {
                         id: 'a1-2-l1',
                         title: 'Hora y días',
+                        topic: 'rutina',
                         rewardCoins: 18,
                         rewardXp: 24,
                         grammarTip: '«Um acht Uhr» = a las ocho. Los días llevan mayúscula: Montag, Dienstag…',
@@ -1591,6 +1596,7 @@
                     {
                         id: 'a1-2-l2',
                         title: 'Comida simple',
+                        topic: 'alimentos',
                         rewardCoins: 18,
                         rewardXp: 25,
                         grammarTip: '«Ich möchte» + Akkusativ del objeto: Ich möchte einen Kaffee.',
@@ -1612,6 +1618,7 @@
                     {
                         id: 'a2-1-l1',
                         title: '«Weil» y verbo al final',
+                        topic: 'conectores',
                         rewardCoins: 22,
                         rewardXp: 30,
                         grammarTip: 'Tras «weil/dass/obwohl» el verbo conjugado va al final de la suboración.',
@@ -1625,6 +1632,7 @@
                     {
                         id: 'a2-1-l2',
                         title: 'Perfekt básico',
+                        topic: 'gramatica',
                         rewardCoins: 22,
                         rewardXp: 32,
                         grammarTip: 'Perfekt: habe/hat + participio al final (regulares: ge- + stem + -t).',
@@ -1788,6 +1796,7 @@
           const [rutaRun, setRutaRun] = useState(null);
           const [rutaVerbDb, setRutaVerbDb] = useState({ meta: null, verbs: [] });
           const [rutaArticleDb, setRutaArticleDb] = useState([]);
+          const [rutaTopicFilter, setRutaTopicFilter] = useState('all');
           // --- NUEVOS ESTADOS PARA TEST ADAPTATIVO (30 PREGUNTAS) ---
 const [placementQuestions, setPlacementQuestions] = useState([]);
 const [placementAnswers, setPlacementAnswers] = useState([]);
@@ -2018,6 +2027,8 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   if (byLevel[lv]) byLevel[lv].push(v);
               });
               const mkLesson = (levelKey, chunk, idx) => {
+                  const topicCycle = ['familia', 'trabajo', 'alimentos', 'viajes', 'vivienda', 'salud', 'tiempo_libre', 'tramites'];
+                  const topic = topicCycle[idx % topicCycle.length];
                   const title = `${levelKey} · Verbos ${idx + 1}`;
                   const phrases = chunk.slice(0, 3).map((v) => ({
                       de: (v && v.examples && v.examples[0] && v.examples[0].de) || `Ich ${v.lemma}.`,
@@ -2027,6 +2038,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   return {
                       id: `auto-${levelKey.toLowerCase()}-${idx + 1}`,
                       title,
+                      topic,
                       rewardCoins: 16 + Math.min(16, idx),
                       rewardXp: 22 + Math.min(20, idx * 2),
                       grammarTip: `Nivel ${levelKey}: práctica de verbos frecuentes y sus formas.`,
@@ -2059,12 +2071,15 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   C1: ['demzufolge', 'folglich', 'somit', 'nichtsdestotrotz', 'infolgedessen']
               };
               const mkArticleLesson = (levelKey, items, idx) => {
+                  const topicCycle = ['familia', 'trabajo', 'alimentos', 'vivienda', 'viajes', 'salud'];
+                  const topic = topicCycle[idx % topicCycle.length];
                   const sample = items[0] || {};
                   const de = String(sample.de || 'das Buch');
                   const article = de.split(/\s+/)[0] || 'das';
                   return {
                       id: `auto-art-${levelKey.toLowerCase()}-${idx + 1}`,
                       title: `${levelKey} · Artículos ${idx + 1}`,
+                      topic,
                       rewardCoins: 15 + idx,
                       rewardXp: 20 + idx * 2,
                       grammarTip: `Nivel ${levelKey}: artículo + sustantivo y concordancia en frase.`,
@@ -2079,6 +2094,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   return {
                       id: `auto-conn-${levelKey.toLowerCase()}-${idx + 1}`,
                       title: `${levelKey} · Conectores ${idx + 1}`,
+                      topic: 'conectores',
                       rewardCoins: 18 + idx,
                       rewardXp: 24 + idx * 2,
                       grammarTip: `Conector ${con}: practica posición verbal según tipo de oración.`,
@@ -7518,6 +7534,26 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   </div>
                                   {rutaSubTab === 'camino' && (
                                       <div className="space-y-6">
+                                          <div className="rounded-2xl border border-fuchsia-500/25 bg-slate-900/45 p-3 md:p-4">
+                                              <p className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-300 mb-2">Sección temática</p>
+                                              <div className="flex flex-wrap gap-2">
+                                                  {[
+                                                      { id: 'all', label: 'Todo' },
+                                                      { id: 'presentacion', label: 'Presentación' },
+                                                      { id: 'familia', label: 'Familia' },
+                                                      { id: 'trabajo', label: 'Trabajo' },
+                                                      { id: 'alimentos', label: 'Alimentos' },
+                                                      { id: 'vivienda', label: 'Vivienda' },
+                                                      { id: 'viajes', label: 'Viajes' },
+                                                      { id: 'salud', label: 'Salud' },
+                                                      { id: 'tiempo_libre', label: 'Tiempo libre' },
+                                                      { id: 'conectores', label: 'Conectores' },
+                                                      { id: 'gramatica', label: 'Gramática' }
+                                                  ].map((t) => (
+                                                      <button key={t.id} type="button" onClick={() => setRutaTopicFilter(t.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition ${rutaTopicFilter === t.id ? 'bg-fuchsia-600 border-fuchsia-400 text-white' : 'bg-black/40 border-white/10 text-gray-400 hover:text-white'}`}>{t.label}</button>
+                                                  ))}
+                                              </div>
+                                          </div>
                                           {(rutaLevels || []).map((lv, levelIdx) => (
                                               <div key={lv.id} className="rounded-2xl border border-fuchsia-500/25 bg-slate-900/50 p-4 md:p-5">
                                                   <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
@@ -7525,12 +7561,16 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                                       <span className="text-xs font-bold uppercase tracking-wider text-fuchsia-400">{lv.badge}</span>
                                                   </div>
                                                   <div className="flex flex-col gap-2">
-                                                      {lv.lessons.map((lesson, lessonIdx) => {
-                                                          const unlocked = typeof window.mullerRutaIsLessonUnlocked === 'function' && window.mullerRutaIsLessonUnlocked(rutaLevels || [], levelIdx, lessonIdx, rutaProgress.completed || {});
+                                                      {lv.lessons
+                                                          .map((lesson, origIdx) => ({ lesson, origIdx }))
+                                                          .filter(({ lesson }) => rutaTopicFilter === 'all' || (lesson.topic || '') === rutaTopicFilter)
+                                                          .map(({ lesson, origIdx }) => {
+                                                          const unlocked = typeof window.mullerRutaIsLessonUnlocked === 'function' && window.mullerRutaIsLessonUnlocked(rutaLevels || [], levelIdx, origIdx, rutaProgress.completed || {});
                                                           const done = !!(rutaProgress.completed && rutaProgress.completed[lesson.id]);
                                                           return (
-                                                              <button key={lesson.id} type="button" disabled={!unlocked} onClick={() => { if (!unlocked) return; setRutaRun({ levelIdx, lessonIdx, step: 0 }); setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr(''); }} className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition ${!unlocked ? 'opacity-40 cursor-not-allowed border-white/5' : done ? 'border-emerald-500/40 bg-emerald-950/30 hover:bg-emerald-900/40' : 'border-white/15 bg-black/30 hover:bg-fuchsia-950/40'}`}>
+                                                              <button key={lesson.id} type="button" disabled={!unlocked} onClick={() => { if (!unlocked) return; setRutaRun({ levelIdx, lessonIdx: origIdx, step: 0 }); setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr(''); }} className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3 text-left transition ${!unlocked ? 'opacity-40 cursor-not-allowed border-white/5' : done ? 'border-emerald-500/40 bg-emerald-950/30 hover:bg-emerald-900/40' : 'border-white/15 bg-black/30 hover:bg-fuchsia-950/40'}`}>
                                                                   <span className="font-bold text-white">{lesson.title}</span>
+                                                                  <span className="text-[10px] uppercase tracking-wider text-cyan-300/90">{String(lesson.topic || 'general').replace('_', ' ')}</span>
                                                                   <span className="text-xs font-bold text-amber-300">+{lesson.rewardCoins} · {lesson.rewardXp} XP</span>
                                                                   {done ? <span className="text-xs text-emerald-400">Hecho</span> : unlocked ? <span className="text-xs text-fuchsia-300">Empezar</span> : <span className="text-xs text-gray-500">Bloqueado</span>}
                                                               </button>
