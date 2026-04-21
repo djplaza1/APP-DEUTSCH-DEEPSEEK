@@ -2719,23 +2719,137 @@
               setRutaFillInput(''); setRutaTranscript(''); setRutaSpeakErr('');
           };
 
-          const finishPlacementTest = () => {
-              const qs = window.MULLER_PLACEMENT_Q || [];
-              if (placementSel.some((x) => x === null || x === undefined)) {
-                  alert('Responde las cuatro preguntas antes de ver el resultado.');
-                  return;
-              }
-              let score = 0;
-              qs.forEach((q, i) => { if (placementSel[i] === q.ok) score++; });
-              const suggested = score <= 1 ? 0 : score <= 3 ? 1 : 2;
-              const next = { ...rutaProgress, placementDone: true, suggestedLevelIdx: suggested };
-              if (typeof window.mullerRutaSave === 'function') window.mullerRutaSave(next);
-              setRutaProgress(next);
-              setRutaSubTab('camino');
-              window.__mullerPlaySfx && window.__mullerPlaySfx('levelup');
-              setCelebrationModal({ title: 'Test de nivel', subtitle: 'Te sugerimos empezar por el nivel ' + (suggested + 1), xp: 0, coins: 15, milestone: false, placement: true });
-              saveProgress({ coins: userStats.coins + 15, activityByDay: mergeActivityPoints(20) });
-          };
+      // ========== NUEVO TEST ADAPTATIVO (30 PREGUNTAS) ==========
+const startPlacementTest = () => {
+  const initialQuestions = selectQuestionsForLevel('A2', 5);
+  setPlacementQuestions(initialQuestions);
+  setPlacementAnswers(new Array(initialQuestions.length).fill(null));
+  setPlacementIndex(0);
+  setPlacementLevel('A2');
+  setPlacementScore({ correct: 0, total: 0 });
+  setPlacementFinished(false);
+};
+
+const selectQuestionsForLevel = (level, count) => {
+  const allQuestions = window.MULLER_PLACEMENT_QUESTIONS || [];
+  const levelQuestions = allQuestions.filter(q => q.level === level);
+  const shuffled = [...levelQuestions].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, levelQuestions.length));
+};
+
+const handlePlacementAnswer = (selectedOpt) => {
+  const currentQ = placementQuestions[placementIndex];
+  if (!currentQ) return;
+  
+  const isCorrect = (selectedOpt === currentQ.ok);
+  
+  // Actualizar respuestas
+  const newAnswers = [...placementAnswers];
+  newAnswers[placementIndex] = selectedOpt;
+  setPlacementAnswers(newAnswers);
+  
+  // Actualizar puntuación del nivel actual
+  const newScore = {
+    correct: placementScore.correct + (isCorrect ? 1 : 0),
+    total: placementScore.total + 1
+  };
+  setPlacementScore(newScore);
+  
+  // Reproducir sonido de acierto/fallo
+  if (window.__mullerNotifyExerciseOutcome) {
+    window.__mullerNotifyExerciseOutcome(isCorrect);
+  }
+  
+  // Lógica adaptativa
+  const performanceRatio = newScore.correct / newScore.total;
+  let nextLevel = placementLevel;
+  let shouldFinish = false;
+  
+  if (newScore.total >= 5) {
+    if (performanceRatio >= 0.7) {
+      // Buen rendimiento: subir de nivel
+      if (placementLevel === 'A1') nextLevel = 'A2';
+      else if (placementLevel === 'A2') nextLevel = 'B1';
+      else if (placementLevel === 'B1') nextLevel = 'B2';
+      else if (placementLevel === 'B2') shouldFinish = true;
+    } else if (performanceRatio <= 0.3) {
+      // Mal rendimiento: bajar de nivel
+      if (placementLevel === 'B2') nextLevel = 'B1';
+      else if (placementLevel === 'B1') nextLevel = 'A2';
+      else if (placementLevel === 'A2') nextLevel = 'A1';
+      else if (placementLevel === 'A1') shouldFinish = true;
+    } else {
+      // Rendimiento intermedio: continuar mismo nivel
+      if (newScore.total >= 8) shouldFinish = true;
+    }
+  }
+  
+  // Si no hay más preguntas del nivel, finalizar
+  if (placementIndex >= placementQuestions.length - 1) {
+    shouldFinish = true;
+  }
+  
+  if (shouldFinish) {
+    const recommendedLevel = calculateRecommendedLevel();
+    finishPlacementWithLevel(recommendedLevel);
+    return;
+  }
+  
+  if (nextLevel !== placementLevel) {
+    // Cambiar de nivel
+    const newQuestions = selectQuestionsForLevel(nextLevel, 5);
+    setPlacementQuestions(newQuestions);
+    setPlacementAnswers(new Array(newQuestions.length).fill(null));
+    setPlacementIndex(0);
+    setPlacementLevel(nextLevel);
+    setPlacementScore({ correct: 0, total: 0 });
+  } else {
+    // Siguiente pregunta mismo nivel
+    setPlacementIndex(placementIndex + 1);
+  }
+};
+
+const calculateRecommendedLevel = () => {
+  const ratio = placementScore.total > 0 ? placementScore.correct / placementScore.total : 0;
+  if (placementLevel === 'A1' && ratio >= 0.6) return 'A2';
+  if (placementLevel === 'A2' && ratio >= 0.6) return 'B1';
+  if (placementLevel === 'B1' && ratio >= 0.6) return 'B2';
+  return placementLevel;
+};
+
+const finishPlacementWithLevel = (finalLevel) => {
+  const levelIndexMap = { 'A1': 0, 'A2': 1, 'B1': 2, 'B2': 3 };
+  const suggestedIdx = levelIndexMap[finalLevel] || 0;
+  
+  const next = { ...rutaProgress, placementDone: true, suggestedLevelIdx: suggestedIdx };
+  if (typeof window.mullerRutaSave === 'function') window.mullerRutaSave(next);
+  setRutaProgress(next);
+  setRutaSubTab('camino');
+  
+  if (window.__mullerPlaySfx) window.__mullerPlaySfx('levelup');
+  
+  setCelebrationModal({
+    title: 'Test de nivel completado',
+    subtitle: `Nivel recomendado: ${finalLevel}`,
+    xp: 0,
+    coins: 20,
+    milestone: false,
+    placement: true
+  });
+  
+  saveProgress({
+    coins: userStats.coins + 20,
+    activityByDay: mergeActivityPoints(25)
+  });
+  
+  // Resetear test
+  setPlacementQuestions([]);
+  setPlacementAnswers([]);
+  setPlacementIndex(0);
+  setPlacementFinished(false);
+};
+
+// ========== FIN NUEVO TEST ADAPTATIVO ==========
 
           const checkRutaFillAnswer = (lesson) => {
               if (!lesson || !lesson.fill) return false;
