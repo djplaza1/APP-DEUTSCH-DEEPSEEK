@@ -5991,6 +5991,34 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       .sort((a, b) => (window.__mullerRankVoiceNatural(b) || 0) - (window.__mullerRankVoiceNatural(a) || 0));
               } catch (e) { return []; }
           }, [voicesLoaded, showMullerHub, ttsPrefsEpoch]);
+          const healthSnapshot = useMemo(() => {
+              const listeningBusy = !!(isListening || rutaListening || readingListening);
+              let micOk = false;
+              try {
+                  micOk = !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function');
+              } catch (e) { micOk = false; }
+              let voiceCount = 0;
+              try {
+                  if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'function') {
+                      voiceCount = window.speechSynthesis.getVoices().length || 0;
+                  }
+              } catch (e) { voiceCount = 0; }
+              const savedScriptsCount = Array.isArray(savedScripts) ? savedScripts.length : 0;
+              const storyScenesCount = Array.isArray(guionData) ? guionData.length : 0;
+              const micLabel = micOk
+                  ? (listeningBusy ? 'Disponible (activo)' : 'Disponible')
+                  : 'No soportado';
+              const ok = micOk && voiceCount > 0 && (savedScriptsCount > 0 || storyScenesCount > 0);
+              return {
+                  ok,
+                  micOk,
+                  micLabel,
+                  voiceCount,
+                  savedScriptsCount,
+                  storyScenesCount,
+                  listeningBusy
+              };
+          }, [isListening, rutaListening, readingListening, savedScripts, guionData, voicesLoaded]);
 
           const oralLeftSec = (mode === 'interview' && oralDeadline)
               ? Math.max(0, Math.ceil((oralDeadline - Date.now()) / 1000))
