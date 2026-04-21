@@ -1871,6 +1871,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [writingDictSource, setWritingDictSource] = useState('builtin');
           const [writingDictScriptId, setWritingDictScriptId] = useState('__current__');
           const [writingCanvasKey, setWritingCanvasKey] = useState(0);
+          const [writingCanvasSnapshot, setWritingCanvasSnapshot] = useState({ padKey: 0, data: '' });
           const [writingVocabIdx, setWritingVocabIdx] = useState(0);
           const [ocrHistoryList, setOcrHistoryList] = useState(() => {
               try { return JSON.parse(localStorage.getItem(MULLER_OCR_HIST_KEY) || '[]'); } catch (e) { return []; }
@@ -4464,7 +4465,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           const currentPracticeItem = currentPracticeList ? currentPracticeList[practiceIndex] : null;
 
           /** Lienzo para lápiz óptico / dedo: pointer capture, sin scroll al trazar. Herramientas: lápiz, goma, marcador, subrayado + deshacer. */
-          const TabletWritingCanvas = ({ padKey, grid, strokeW, compareTarget, onOcrCompared }) => {
+          const TabletWritingCanvas = ({ padKey, grid, strokeW, compareTarget, onOcrCompared, snapshotData, snapshotPadKey, onSnapshotChange }) => {
               const wrapRef = useRef(null);
               const canvasRef = useRef(null);
               const ctxRef = useRef(null);
@@ -4521,6 +4522,17 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               }, [padKey]);
 
               useEffect(() => { layoutCanvas(); }, [layoutCanvas]);
+              useEffect(() => {
+                  const canvas = canvasRef.current;
+                  const ctx = ctxRef.current;
+                  if (!canvas || !ctx) return;
+                  if (!snapshotData || snapshotPadKey !== padKey) return;
+                  const img = new Image();
+                  img.onload = () => {
+                      try { ctx.drawImage(img, 0, 0, sizeRef.current.w, sizeRef.current.h); } catch (err) {}
+                  };
+                  img.src = snapshotData;
+              }, [snapshotData, snapshotPadKey, padKey]);
 
               const getPos = (e) => {
                   const canvas = canvasRef.current;
@@ -4621,6 +4633,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       ctx.putImageData(snap, 0, 0);
                   } catch (err) {}
                   setCanUndo(undoStackRef.current.length > 0);
+                  try {
+                      if (typeof onSnapshotChange === 'function' && canvasRef.current) onSnapshotChange(canvasRef.current.toDataURL('image/png'));
+                  } catch (err) {}
               };
 
               const startDraw = (e) => {
@@ -4675,6 +4690,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   currentHlPathRef.current = [];
                   strokeBaseRef.current = null;
                   try { if (e.pointerId != null) canvasRef.current.releasePointerCapture(e.pointerId); } catch (err) {}
+                  try {
+                      if (typeof onSnapshotChange === 'function' && canvasRef.current) onSnapshotChange(canvasRef.current.toDataURL('image/png'));
+                  } catch (err) {}
               };
 
               const clearPad = () => {
@@ -4684,6 +4702,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   ctx.clearRect(0, 0, w, h);
                   undoStackRef.current = [];
                   setCanUndo(false);
+                  if (typeof onSnapshotChange === 'function') onSnapshotChange('');
               };
               const savePng = () => {
                   const canvas = canvasRef.current;
@@ -4975,10 +4994,10 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               const fromScenes = (scenes, originLabel) => {
                   if (!Array.isArray(scenes)) return [];
                   return scenes
-                      .filter((s) => s && typeof s.text === 'string' && s.text.trim())
+                      .filter((s) => s && typeof s.text === 'string' && s.text.trim() && typeof s.translation === 'string' && s.translation.trim())
                       .map((s, idx) => ({
                           de: String(s.text).trim(),
-                          es: s && s.translation ? String(s.translation).trim() : '',
+                          es: String(s.translation).trim(),
                           origin: originLabel,
                           idx
                       }));
@@ -6974,6 +6993,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               grid={writingGrid}
                               strokeW={writingStroke}
                               compareTarget={writingCompareTarget}
+                              snapshotData={writingCanvasSnapshot.data}
+                              snapshotPadKey={writingCanvasSnapshot.padKey}
+                              onSnapshotChange={(dataUrl) => setWritingCanvasSnapshot({ padKey: writingCanvasKey, data: dataUrl || '' })}
                               onOcrCompared={(payload) => {
                                   const arr = mullerPushOcrHistory(payload);
                                   setOcrHistoryList(arr);
