@@ -2011,10 +2011,16 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [readingScore, setReadingScore] = useState(null);
           const [readingFeedback, setReadingFeedback] = useState([]);
           const [diagnosticOpen, setDiagnosticOpen] = useState(false);
+          const [showSelfCheckPanel, setShowSelfCheckPanel] = useState(false);
           const [sfxEpoch, setSfxEpoch] = useState(0);
           const rutaRecRef = useRef(null);
           const readingRecRef = useRef(null);
           const readingFinalRef = useRef('');
+          const readingLiveTranscriptRef = useRef('');
+          const readingStopRequestedRef = useRef(false);
+          const readingAutoRestartRef = useRef(false);
+          const readingRestartTimerRef = useRef(null);
+          const readingSessionIdRef = useRef(0);
           const readingTextSurfaceRef = useRef(null);
           const [guionData, setGuionData] = useState(DEFAULT_GUION);
           const [activeScriptTitle, setActiveScriptTitle] = useState("Lektion 17: Kunst");
@@ -2131,6 +2137,10 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [writingCopyIdx, setWritingCopyIdx] = useState(0);
           const [writingPromptIdx, setWritingPromptIdx] = useState(0);
           const [writingTelcIdx, setWritingTelcIdx] = useState(0);
+          const [writingTelcInputMode, setWritingTelcInputMode] = useState('pen');
+          const [writingTelcTypedText, setWritingTelcTypedText] = useState('');
+          const [writingTelcLastOcrText, setWritingTelcLastOcrText] = useState('');
+          const [writingTelcCoach, setWritingTelcCoach] = useState(null);
           const [writingDictIdx, setWritingDictIdx] = useState(0);
           const [writingLetterIdx, setWritingLetterIdx] = useState(0);
           const [writingGuionWriteIdx, setWritingGuionWriteIdx] = useState(0);
@@ -3686,6 +3696,11 @@ const finishPlacementWithLevel = (finalLevel) => {
               setReadingScore(pct);
               setReadingFeedback(enriched);
           };
+          const finalizeReadingSession = useCallback(() => {
+              const finalText = collapseStutterRepeats((readingFinalRef.current || readingLiveTranscriptRef.current || '').trim());
+              setReadingTranscript(finalText);
+              runReadingCompare(readingTargetText, finalText);
+          }, [readingTargetText]);
 
           const startReadingListen = async () => {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -3693,44 +3708,104 @@ const finishPlacementWithLevel = (finalLevel) => {
               const ok = await mullerEnsureMicPermission({ autoPrompt: true, showToast: true });
               if (!ok) return;
               try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
-              const rec = new SpeechRecognition();
-              rec.lang = 'de-DE';
-              rec.continuous = true;
-              rec.interimResults = true;
-              rec.maxAlternatives = 1;
+              if (readingRestartTimerRef.current) {
+                  window.clearTimeout(readingRestartTimerRef.current);
+                  readingRestartTimerRef.current = null;
+              }
+              readingStopRequestedRef.current = false;
+              readingAutoRestartRef.current = true;
+              const sessionId = Date.now();
+              readingSessionIdRef.current = sessionId;
               readingFinalRef.current = '';
+              readingLiveTranscriptRef.current = '';
               setReadingTranscript('');
               setReadingScore(null);
               setReadingFeedback([]);
-              rec.onresult = (event) => {
-                  let interim = '';
-                  for (let i = event.resultIndex; i < event.results.length; i++) {
-                      const r = event.results[i];
-                      const t = (r[0] && r[0].transcript) ? String(r[0].transcript).trim() : '';
-                      if (!t) continue;
-                      if (r.isFinal) readingFinalRef.current = mergeSpeechFinalChunk(readingFinalRef.current, t);
-                      else interim = t;
+
+              const startCycle = () => {
+                  if (readingSessionIdRef.current !== sessionId) return;
+                  if (readingStopRequestedRef.current || !readingAutoRestartRef.current) return;
+                  const rec = new SpeechRecognition();
+                  rec.lang = 'de-DE';
+                  rec.continuous = true;
+                  rec.interimResults = true;
+                  rec.maxAlternatives = 1;
+                  rec.onresult = (event) => {
+                      if (readingSessionIdRef.current !== sessionId) return;
+                      let interim = '';
+                      for (let i = event.resultIndex; i < event.results.length; i++) {
+                          const r = event.results[i];
+                          const t = (r[0] && r[0].transcript) ? String(r[0].transcript).trim() : '';
+                          if (!t) continue;
+                          if (r.isFinal) readingFinalRef.current = mergeSpeechFinalChunk(readingFinalRef.current, t);
+                          else interim = t;
+                      }
+                      const merged = collapseStutterRepeats((readingFinalRef.current + (interim ? (' ' + interim) : '')).trim());
+                      readingLiveTranscriptRef.current = merged;
+                      setReadingTranscript(merged);
+                  };
+                  rec.onerror = (evt) => {
+                      if (readingSessionIdRef.current !== sessionId) return;
+                      const errType = evt && evt.error ? String(evt.error) : '';
+                      if (errType === 'not-allowed' || errType === 'service-not-allowed') {
+                          readingStopRequestedRef.current = true;
+                          readingAutoRestartRef.current = false;
+                          setReadingListening(false);
+                          if (window.__mullerToast) window.__mullerToast('Permiso de micrófono no disponible.', 'error');
+                      }
+                  };
+                  rec.onend = () => {
+                      if (readingSessionIdRef.current !== sessionId) return;
+                      if (readingRecRef.current === rec) readingRecRef.current = null;
+                      if (readingStopRequestedRef.current || !readingAutoRestartRef.current) {
+                          setReadingListening(false);
+                          finalizeReadingSession();
+                          return;
+                      }
+                      readingRestartTimerRef.current = window.setTimeout(() => {
+                          startCycle();
+                      }, 120);
+                  };
+                  readingRecRef.current = rec;
+                  setReadingListening(true);
+                  try {
+                      rec.start();
+                  } catch (e) {
+                      readingRestartTimerRef.current = window.setTimeout(() => {
+                          startCycle();
+                      }, 260);
                   }
-                  const merged = collapseStutterRepeats((readingFinalRef.current + (interim ? (' ' + interim) : '')).trim());
-                  setReadingTranscript(merged);
               };
-              rec.onerror = () => setReadingListening(false);
-              rec.onend = () => {
-                  setReadingListening(false);
-                  runReadingCompare(readingTargetText, readingFinalRef.current || readingTranscript || '');
-              };
-              readingRecRef.current = rec;
-              setReadingListening(true);
-              try { rec.start(); } catch (e) { setReadingListening(false); }
+              startCycle();
           };
 
           const stopReadingListen = () => {
+              readingStopRequestedRef.current = true;
+              readingAutoRestartRef.current = false;
+              if (readingRestartTimerRef.current) {
+                  window.clearTimeout(readingRestartTimerRef.current);
+                  readingRestartTimerRef.current = null;
+              }
               const r = readingRecRef.current;
-              if (!r) return;
-              try { r.stop(); } catch (e) {}
+              if (!r) {
+                  setReadingListening(false);
+                  finalizeReadingSession();
+                  return;
+              }
+              try { r.stop(); } catch (e) {
+                  setReadingListening(false);
+                  finalizeReadingSession();
+              }
           };
           useEffect(() => {
               if (activeTab === 'lectura') return;
+              readingSessionIdRef.current = Date.now();
+              readingStopRequestedRef.current = true;
+              readingAutoRestartRef.current = false;
+              if (readingRestartTimerRef.current) {
+                  window.clearTimeout(readingRestartTimerRef.current);
+                  readingRestartTimerRef.current = null;
+              }
               try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
               setReadingListening(false);
           }, [activeTab]);
@@ -3739,10 +3814,25 @@ const finishPlacementWithLevel = (finalLevel) => {
               try { if (recognitionRef.current) recognitionRef.current.stop(); } catch (e) {}
               try { if (rutaRecRef.current) rutaRecRef.current.stop(); } catch (e) {}
               try { if (readingRecRef.current) readingRecRef.current.stop(); } catch (e) {}
+              readingSessionIdRef.current = Date.now();
+              readingStopRequestedRef.current = true;
+              readingAutoRestartRef.current = false;
+              if (readingRestartTimerRef.current) {
+                  window.clearTimeout(readingRestartTimerRef.current);
+                  readingRestartTimerRef.current = null;
+              }
               setIsListening(false);
               setRutaListening(false);
               setReadingListening(false);
           }, [activeTab]);
+          useEffect(() => {
+              return () => {
+                  if (readingRestartTimerRef.current) {
+                      window.clearTimeout(readingRestartTimerRef.current);
+                      readingRestartTimerRef.current = null;
+                  }
+              };
+          }, []);
 
           const getWeeklyChartBars = () => {
               const raw = [];
@@ -5690,7 +5780,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           onOcrCompared({
                               pct: computedPct,
                               textSnippet: (t || '').slice(0, 120),
-                              targetSnippet: typeof compareTarget === 'string' ? compareTarget.slice(0, 120) : ''
+                              targetSnippet: typeof compareTarget === 'string' ? compareTarget.slice(0, 120) : '',
+                              recognizedText: t || ''
                           });
                       }
                   } catch (err) {
@@ -5956,6 +6047,69 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               if (writingMode === 'vocab' && currentVocabList.length) return currentVocabList[writingVocabIdx % currentVocabList.length].de;
               return null;
           }, [activeTab, writingMode, writingCopyIdx, writingDictIdx, writingLetterIdx, writingGuionWriteIdx, writingVocabIdx, guionData, currentVocabList, writingDictationPool, writingTelcIdx]);
+          const getSelfCheckItems = useCallback(() => {
+              const items = [
+                  { id: 'mic-api', label: 'Micrófono API', ok: !!(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') },
+                  { id: 'tts-api', label: 'Voz TTS', ok: !!(window.speechSynthesis && typeof window.speechSynthesis.speak === 'function') },
+                  { id: 'stories', label: 'Texto disponible', ok: String(readingTargetText || '').trim().length > 0 },
+                  { id: 'lectura-mic', label: 'Lectura continua', ok: !readingListening || !!readingAutoRestartRef.current },
+                  { id: 'telc-mode', label: 'TELC activo', ok: writingMode === 'telc' || WRITING_TELC_TASKS.length > 0 },
+                  { id: 'telc-input', label: 'TELC teclado/lápiz', ok: writingMode !== 'telc' || ['pen', 'keyboard'].includes(writingTelcInputMode) }
+              ];
+              return items;
+          }, [readingTargetText, readingListening, writingMode, writingTelcInputMode]);
+          const runTelcWritingCoach = useCallback((rawText, task) => {
+              const text = String(rawText || '').trim();
+              if (!text) {
+                  setWritingTelcCoach(null);
+                  return;
+              }
+              const t = text;
+              const low = normalizeGermanSpeechText(t);
+              const words = low.split(/\s+/).filter(Boolean);
+              const sentences = t.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+              const connectors = ['weil', 'deshalb', 'außerdem', 'denn', 'damit', 'trotzdem', 'obwohl', 'zuerst', 'danach', 'zum schluss', 'daher', 'allerdings'];
+              const formalMarkers = ['sehr geehrte', 'mit freundlichen grüßen', 'ich möchte', 'hiermit', 'vielen dank', 'bitte'];
+              const informalMarkers = ['liebe', 'hallo', 'viele grüße', 'bis bald'];
+              const hasFormal = formalMarkers.some((x) => low.includes(x));
+              const hasInformal = informalMarkers.some((x) => low.includes(x));
+              const connectorHits = connectors.filter((x) => low.includes(x)).length;
+              const scoreTask = Math.max(0, Math.min(5, Math.round((words.length >= 65 ? 3 : words.length >= 40 ? 2 : 1) + (task && Array.isArray(task.checklist) ? Math.min(2, task.checklist.filter((c) => low.includes(normalizeGermanSpeechText(c).split(/\s+/)[0] || '')).length) : 0))));
+              const scoreRegister = Math.max(0, Math.min(5, hasFormal ? 5 : hasInformal ? 3 : 2));
+              const scoreCohesion = Math.max(0, Math.min(5, Math.round((sentences.length >= 4 ? 2 : 1) + Math.min(3, connectorHits))));
+              const umlautHits = (t.match(/[äöüß]/gi) || []).length;
+              const punctHits = (t.match(/[.,!?]/g) || []).length;
+              const scoreGrammar = Math.max(0, Math.min(5, Math.round((punctHits >= 3 ? 2 : 1) + (umlautHits >= 2 ? 1 : 0) + (words.length >= 50 ? 2 : words.length >= 30 ? 1 : 0))));
+              const total = scoreTask + scoreRegister + scoreCohesion + scoreGrammar;
+              const max = 20;
+              const pct = Math.round((total / max) * 100);
+              const suggestion = [
+                  scoreTask < 4 ? 'Añade más contenido concreto del encargo (datos, petición y cierre).' : null,
+                  scoreRegister < 4 ? 'Refuerza registro formal TELC (Sehr geehrte..., Mit freundlichen Grüßen).' : null,
+                  scoreCohesion < 4 ? 'Usa más conectores: weil, deshalb, außerdem, trotzdem.' : null,
+                  scoreGrammar < 4 ? 'Revisa signos de puntuación, mayúsculas de sustantivos y umlauts.' : null
+              ].filter(Boolean);
+              setWritingTelcCoach({
+                  total,
+                  max,
+                  pct,
+                  scoreTask,
+                  scoreRegister,
+                  scoreCohesion,
+                  scoreGrammar,
+                  suggestionText: suggestion.length ? suggestion.join(' ') : 'Muy buen texto para TELC. Solo pule estilo y precisión.'
+              });
+          }, []);
+          const runTelcCoachFromCurrentInput = useCallback(() => {
+              if (!WRITING_TELC_TASKS.length) return;
+              const task = WRITING_TELC_TASKS[writingTelcIdx % WRITING_TELC_TASKS.length];
+              const sourceText = writingTelcInputMode === 'keyboard' ? writingTelcTypedText : writingTelcLastOcrText;
+              runTelcWritingCoach(sourceText, task);
+          }, [writingTelcIdx, writingTelcInputMode, writingTelcTypedText, writingTelcLastOcrText, runTelcWritingCoach]);
+          useEffect(() => {
+              if (writingMode !== 'telc') return;
+              setWritingTelcCoach(null);
+          }, [writingMode, writingTelcIdx, writingTelcInputMode]);
 
           const persistDailyPatch = (patch) => {
               const k = 'muller_daily_v1_' + new Date().toISOString().slice(0, 10);
@@ -8104,6 +8258,38 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   <p className="text-[11px] text-gray-500">
                                       Redacta a mano como en examen real con bolígrafo óptico. Cubre todos los puntos del enunciado.
                                   </p>
+                                  <div className="rounded-lg border border-orange-500/35 bg-orange-950/25 p-2.5 space-y-2">
+                                      <p className="text-[10px] font-bold uppercase tracking-wider text-orange-200">Método de escritura TELC</p>
+                                      <div className="flex flex-wrap gap-2">
+                                          <button
+                                              type="button"
+                                              onClick={() => setWritingTelcInputMode('pen')}
+                                              className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${writingTelcInputMode === 'pen' ? 'bg-orange-600 text-white border-orange-300/60' : 'bg-black/40 text-gray-300 border-white/10 hover:text-white'}`}
+                                          >
+                                              ✍ Lápiz óptico
+                                          </button>
+                                          <button
+                                              type="button"
+                                              onClick={() => setWritingTelcInputMode('keyboard')}
+                                              className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${writingTelcInputMode === 'keyboard' ? 'bg-orange-600 text-white border-orange-300/60' : 'bg-black/40 text-gray-300 border-white/10 hover:text-white'}`}
+                                          >
+                                              ⌨ Teclado
+                                          </button>
+                                      </div>
+                                      {writingTelcInputMode === 'keyboard' && (
+                                          <textarea
+                                              value={writingTelcTypedText}
+                                              onChange={(e) => setWritingTelcTypedText(e.target.value)}
+                                              placeholder="Escribe aquí tu carta/email TELC con teclado…"
+                                              className="w-full min-h-[140px] bg-black/45 border border-white/15 rounded-xl p-3 text-sm text-white outline-none focus:border-orange-400"
+                                          />
+                                      )}
+                                      {writingTelcInputMode === 'pen' && (
+                                          <p className="text-[11px] text-orange-100/90">
+                                              Usa el lienzo de abajo y luego pulsa <strong>Evaluar texto TELC</strong> (leerá el OCR).
+                                          </p>
+                                      )}
+                                  </div>
                                   <p className="text-[10px] text-rose-200/75">
                                       Tarea {Math.min(writingTelcIdx + 1, Math.max(1, WRITING_TELC_TASKS.length))} de {Math.max(1, WRITING_TELC_TASKS.length)} · {WRITING_TELC_TASKS[writingTelcIdx % Math.max(1, WRITING_TELC_TASKS.length)]?.level || 'TELC'}
                                   </p>
@@ -8139,7 +8325,29 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       >
                                           <Icon name="volume-2" className="w-3.5 h-3.5" /> Escuchar enunciado
                                       </button>
+                                      <button
+                                          type="button"
+                                          onClick={runTelcCoachFromCurrentInput}
+                                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 border border-emerald-400/40 inline-flex items-center gap-1.5"
+                                      >
+                                          <Icon name="clipboard-check" className="w-3.5 h-3.5" /> Evaluar texto TELC
+                                      </button>
                                   </div>
+                                  {writingTelcCoach && (
+                                      <div className="rounded-xl border border-emerald-500/35 bg-emerald-950/25 p-3 space-y-2">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                              <p className="text-sm font-black text-emerald-200">TELC Writing Coach</p>
+                                              <span className="text-xs font-black text-white bg-black/35 border border-white/10 rounded-full px-2 py-0.5">{writingTelcCoach.total}/{writingTelcCoach.max} · {writingTelcCoach.pct}%</span>
+                                          </div>
+                                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                                              <p className="rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span className="text-gray-400">Aufgabe</span><br /><strong className="text-emerald-200">{writingTelcCoach.scoreTask}/5</strong></p>
+                                              <p className="rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span className="text-gray-400">Register</span><br /><strong className="text-emerald-200">{writingTelcCoach.scoreRegister}/5</strong></p>
+                                              <p className="rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span className="text-gray-400">Kohärenz</span><br /><strong className="text-emerald-200">{writingTelcCoach.scoreCohesion}/5</strong></p>
+                                              <p className="rounded-lg bg-black/30 border border-white/10 px-2 py-1"><span className="text-gray-400">Grammatik</span><br /><strong className="text-emerald-200">{writingTelcCoach.scoreGrammar}/5</strong></p>
+                                          </div>
+                                          <p className="text-[11px] text-emerald-100/95">{writingTelcCoach.suggestionText}</p>
+                                      </div>
+                                  )}
                               </div>
                           )}
 
@@ -8208,6 +8416,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               onOcrCompared={(payload) => {
                                   const arr = mullerPushOcrHistory(payload);
                                   setOcrHistoryList(arr);
+                                  if (writingMode === 'telc') {
+                                      setWritingTelcLastOcrText(String(payload && payload.recognizedText ? payload.recognizedText : '').trim());
+                                  }
                               }}
                           />
                       </div>
@@ -8486,6 +8697,25 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   <p className="text-cyan-200 font-black text-sm flex items-center gap-2"><Icon name="stethoscope" className="w-4 h-4" /> Diagnóstico rápido</p>
                                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${healthSnapshot.ok ? 'bg-emerald-800/60 text-emerald-200 border border-emerald-500/40' : 'bg-amber-900/60 text-amber-200 border border-amber-500/40'}`}>{healthSnapshot.ok ? 'Estado: OK' : 'Revisar'}</span>
                               </div>
+                              <div className="mb-2 flex items-center gap-2">
+                                  <button
+                                      type="button"
+                                      onClick={() => setShowSelfCheckPanel((v) => !v)}
+                                      className="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-cyan-400/45 bg-cyan-900/30 text-cyan-100 hover:bg-cyan-800/40"
+                                  >
+                                      {showSelfCheckPanel ? 'Ocultar autochequeo' : 'Autochequeo guiado'}
+                                  </button>
+                                  <span className="text-[10px] text-cyan-200/80">Comprueba rápido que todo lo crítico está OK.</span>
+                              </div>
+                              {showSelfCheckPanel && (
+                                  <div className="mb-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+                                      {getSelfCheckItems().map((it) => (
+                                          <div key={it.id} className={`rounded-lg border px-2.5 py-1.5 ${it.ok ? 'border-emerald-500/35 bg-emerald-950/25 text-emerald-200' : 'border-amber-500/35 bg-amber-950/30 text-amber-100'}`}>
+                                              <span className="font-bold">{it.ok ? '✓' : '⚠'} {it.label}</span>
+                                          </div>
+                                      ))}
+                                  </div>
+                              )}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
                                   <div className="rounded-lg border border-white/10 bg-black/30 px-2.5 py-2">
                                       <p className="text-gray-400">Micrófono</p>
