@@ -2004,6 +2004,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           });
           const [readingWordInfo, setReadingWordInfo] = useState(null);
           const [readingFocusMode, setReadingFocusMode] = useState(false);
+          const [readingSelectedSnippet, setReadingSelectedSnippet] = useState('');
           const [readingWordAudioBusy, setReadingWordAudioBusy] = useState(false);
           const [readingListening, setReadingListening] = useState(false);
           const [readingTranscript, setReadingTranscript] = useState('');
@@ -2014,6 +2015,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const rutaRecRef = useRef(null);
           const readingRecRef = useRef(null);
           const readingFinalRef = useRef('');
+          const readingTextSurfaceRef = useRef(null);
           const [guionData, setGuionData] = useState(DEFAULT_GUION);
           const [activeScriptTitle, setActiveScriptTitle] = useState("Lektion 17: Kunst");
           const [isDefaultScript, setIsDefaultScript] = useState(true);
@@ -2711,7 +2713,11 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   setTtsDeUri(localStorage.getItem('muller_tts_de') || '');
                   setTtsEsUri(localStorage.getItem('muller_tts_es') || '');
               } catch (e) {}
-              window.speechSynthesis.getVoices();
+              try {
+                  if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'function') {
+                      window.speechSynthesis.getVoices();
+                  }
+              } catch (e) {}
           }, [showMullerHub]);
 
           useEffect(() => {
@@ -3563,9 +3569,96 @@ const finishPlacementWithLevel = (finalLevel) => {
                   });
               }
           }, []);
+          const readingSentences = useMemo(() => {
+              const chunks = String(readingTargetText || '').match(/[^.!?…\n]+[.!?…]?/g) || [];
+              return chunks.map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+          }, [readingTargetText]);
+          const readingCaptureCurrentSelection = useCallback(() => {
+              try {
+                  if (typeof window === 'undefined' || typeof window.getSelection !== 'function') return;
+                  const host = readingTextSurfaceRef.current;
+                  if (!host) return;
+                  const sel = window.getSelection();
+                  if (!sel || sel.rangeCount === 0) return;
+                  const anchorNode = sel.anchorNode;
+                  const focusNode = sel.focusNode;
+                  if ((anchorNode && !host.contains(anchorNode)) || (focusNode && !host.contains(focusNode))) return;
+                  const raw = String(sel.toString() || '');
+                  const text = raw.replace(/\s+/g, ' ').trim();
+                  if (!text || text.length < 2) return;
+                  setReadingSelectedSnippet(text);
+              } catch (e) {}
+          }, []);
+          const readingSpeakText = useCallback((rawText, opts = {}) => {
+              const text = String(rawText || '').replace(/\s+/g, ' ').trim();
+              if (!text) return false;
+              const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+              if (!synth || typeof window.SpeechSynthesisUtterance !== 'function') {
+                  if (window.__mullerToast) window.__mullerToast('Tu navegador no soporta reproducción de voz.', 'error');
+                  return false;
+              }
+              const defaultRate = Number(opts.rate);
+              const fallbackRate = Number.isFinite(defaultRate) ? defaultRate : 0.92;
+              let finalRate = fallbackRate;
+              try {
+                  const storedRate = parseFloat(localStorage.getItem(MULLER_TTS_RATE_KEY) || String(fallbackRate));
+                  if (Number.isFinite(storedRate) && storedRate >= 0.5 && storedRate <= 1.5) finalRate = storedRate;
+              } catch (e) {}
+              try {
+                  setReadingWordAudioBusy(true);
+                  synth.cancel();
+                  const utter = new SpeechSynthesisUtterance(text);
+                  utter.lang = 'de-DE';
+                  utter.rate = finalRate;
+                  if (typeof window.__mullerApplyPreferredDeVoice === 'function') window.__mullerApplyPreferredDeVoice(utter);
+                  utter.onend = () => setReadingWordAudioBusy(false);
+                  utter.onerror = () => setReadingWordAudioBusy(false);
+                  synth.speak(utter);
+                  return true;
+              } catch (e) {
+                  setReadingWordAudioBusy(false);
+                  if (window.__mullerToast) window.__mullerToast('No se pudo reproducir el audio ahora.', 'error');
+                  return false;
+              }
+          }, []);
+          const speakReadingWord = useCallback((rawWord) => {
+              const cleanWord = mullerNormalizeGermanWordToken(rawWord);
+              if (!cleanWord) return;
+              readingSpeakText(cleanWord, { rate: 0.9 });
+          }, [readingSpeakText]);
+          const speakReadingSentenceWithWord = useCallback((rawWord) => {
+              const pickedSnippet = String(readingSelectedSnippet || '').replace(/\s+/g, ' ').trim();
+              if (pickedSnippet) {
+                  readingSpeakText(pickedSnippet, { rate: 0.92 });
+                  return;
+              }
+              const cleanWord = mullerNormalizeGermanWordToken(rawWord);
+              if (!cleanWord) {
+                  if (window.__mullerToast) window.__mullerToast('Selecciona una palabra o una frase.', 'info');
+                  return;
+              }
+              const sentence = readingSentences.find((s) => {
+                  const tokens = mullerReadingTokenizeText(s);
+                  return tokens.some((t) => t.word === cleanWord);
+              });
+              if (sentence) {
+                  readingSpeakText(sentence, { rate: 0.92 });
+                  return;
+              }
+              readingSpeakText(cleanWord, { rate: 0.92 });
+          }, [readingSelectedSnippet, readingSentences, readingSpeakText]);
           useEffect(() => {
               try { localStorage.setItem(MULLER_READING_FONT_STORAGE, String(readingFontPx)); } catch (e) {}
           }, [readingFontPx]);
+          useEffect(() => {
+              setReadingSelectedSnippet('');
+          }, [readingTargetText]);
+          useEffect(() => {
+              if (activeTab !== 'lectura') return undefined;
+              const onSelection = () => readingCaptureCurrentSelection();
+              document.addEventListener('selectionchange', onSelection);
+              return () => document.removeEventListener('selectionchange', onSelection);
+          }, [activeTab, readingCaptureCurrentSelection]);
 
           const readingTipForWord = (w) => {
               const x = String(w || '').toLowerCase();
@@ -3734,10 +3827,25 @@ const finishPlacementWithLevel = (finalLevel) => {
           }, [bxIndex, bxCategory, bxCurrentList, bxUserOverlay, activeTab]);
 
           useEffect(() => {
+            const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+            if (!synth) return undefined;
             const handleVoicesChanged = () => setVoicesLoaded(true);
-            window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
-            if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true);
-            return () => window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+            try {
+                if (typeof synth.getVoices === 'function' && synth.getVoices().length > 0) setVoicesLoaded(true);
+            } catch (e) {}
+            if (typeof synth.addEventListener === 'function') {
+                synth.addEventListener('voiceschanged', handleVoicesChanged);
+                return () => {
+                    try { synth.removeEventListener('voiceschanged', handleVoicesChanged); } catch (e) {}
+                };
+            }
+            const previous = synth.onvoiceschanged;
+            synth.onvoiceschanged = handleVoicesChanged;
+            return () => {
+                try {
+                    if (synth.onvoiceschanged === handleVoicesChanged) synth.onvoiceschanged = previous || null;
+                } catch (e) {}
+            };
           }, []);
 
           const updateTempusVerbList = (text) => {
@@ -7639,7 +7747,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       <button
                                           type="button"
                                           onClick={() => readingSelectedWord && speakReadingWord(readingSelectedWord)}
-                                          disabled={!readingSelectedWord}
+                                          disabled={!readingSelectedWord || readingWordAudioBusy}
                                           className="px-2 py-0.5 text-[10px] font-bold rounded border border-cyan-400/55 text-cyan-100 hover:bg-cyan-900/50 disabled:opacity-40"
                                       >
                                           🔊 Palabra
@@ -7647,38 +7755,70 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       <button
                                           type="button"
                                           onClick={() => speakReadingSentenceWithWord(readingSelectedWord)}
-                                          disabled={!readingSelectedWord}
+                                          disabled={(!readingSelectedWord && !readingSelectedSnippet) || readingWordAudioBusy}
                                           className="px-2 py-0.5 text-[10px] font-bold rounded border border-teal-400/55 text-teal-100 hover:bg-teal-900/50 disabled:opacity-40"
                                       >
-                                          🔊 Frase
+                                          🔊 {readingSelectedSnippet ? 'Frase sel.' : 'Frase'}
+                                      </button>
+                                      <button
+                                          type="button"
+                                          onClick={() => setReadingSelectedSnippet('')}
+                                          disabled={!readingSelectedSnippet}
+                                          className="px-2 py-0.5 text-[10px] font-bold rounded border border-slate-400/45 text-slate-200 hover:bg-slate-800/70 disabled:opacity-35"
+                                      >
+                                          Limpiar frase
                                       </button>
                                   </div>
                               </div>
+                              <p className="text-[11px] text-sky-200/80 mb-2">
+                                  Puedes seleccionar una frase con el dedo o ratón y usar 🔊 Frase para reproducir solo esa parte.
+                              </p>
                               {readingFocusMode && (
                                   <p className="text-[11px] text-emerald-200/90 mb-2">
                                       Modo lectura activo: se ocultan resultados de evaluación para concentrarte en comprensión + diccionario.
                                   </p>
                               )}
                               {readingTargetText ? (
-                                  <div className="text-white leading-relaxed whitespace-pre-wrap" style={{ fontSize: `${readingFontPx}px`, lineHeight: 1.65 }}>
+                                  <div
+                                      ref={readingTextSurfaceRef}
+                                      className="text-white leading-relaxed whitespace-pre-wrap"
+                                      onMouseUp={readingCaptureCurrentSelection}
+                                      onTouchEnd={readingCaptureCurrentSelection}
+                                      onKeyUp={readingCaptureCurrentSelection}
+                                      style={{ fontSize: `${readingFontPx}px`, lineHeight: 1.65, userSelect: 'text', WebkitUserSelect: 'text' }}
+                                  >
                                       {readingWordTokens.map((token, idx) => {
                                           if (!token.clickable) return <span key={`s-${idx}`}>{token.text}</span>;
                                           const isActive = token.word === readingSelectedWord;
                                           return (
-                                              <button
+                                              <span
                                                   key={`w-${idx}`}
-                                                  type="button"
+                                                  role="button"
+                                                  tabIndex={0}
                                                   className={`reading-word-token ${isActive ? 'is-active' : ''}`}
                                                   onClick={() => runReadingWordLookup(token.word)}
+                                                  onKeyDown={(e) => {
+                                                      if (e.key === 'Enter' || e.key === ' ') {
+                                                          e.preventDefault();
+                                                          runReadingWordLookup(token.word);
+                                                      }
+                                                  }}
                                                   title="Tocar para ver traducción y tiempos"
                                               >
                                                   {token.text}
-                                              </button>
+                                              </span>
                                           );
                                       })}
                                   </div>
                               ) : (
                                   <p className="text-sm md:text-base text-white leading-relaxed whitespace-pre-wrap">No hay texto disponible para comparar.</p>
+                              )}
+                              {readingSelectedSnippet && (
+                                  <div className="mt-2 rounded-lg border border-teal-500/30 bg-teal-950/25 px-2.5 py-2">
+                                      <p className="text-[11px] text-teal-100">
+                                          Frase seleccionada: <span className="text-white">{readingSelectedSnippet.length > 160 ? `${readingSelectedSnippet.slice(0, 160)}…` : readingSelectedSnippet}</span>
+                                      </p>
+                                  </div>
                               )}
                           </div>
 
