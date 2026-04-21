@@ -1667,6 +1667,24 @@
                     { t: 'Conectores', b: '«trotzdem», «deshalb», «außerdem» — practica posición del verbo en cada tipo.' },
                 ],
             },
+            {
+                level: 'B2',
+                title: 'Estructuras avanzadas',
+                blocks: [
+                    { t: 'Conectores complejos', b: 'Introduce «während», «sobald», «falls», «hingegen». Ajusta el orden verbal según subordinada/principal.' },
+                    { t: 'Nominalización y registro', b: 'Convierte acciones en sustantivos cuando el registro lo pide: «die Entscheidung treffen».' },
+                    { t: 'Pasiva y enfoque informativo', b: 'Alterna activa/pasiva según el foco de la frase: proceso vs agente.' },
+                ],
+            },
+            {
+                level: 'C1',
+                title: 'Precisión y estilo',
+                blocks: [
+                    { t: 'Conectores de argumentación', b: 'Usa «demzufolge», «folglich», «infolgedessen», «nichtsdestotrotz» con control de registro.' },
+                    { t: 'Subordinación compleja', b: 'Encadena ideas con subordinadas sin perder claridad ni control de verbos al final.' },
+                    { t: 'Matiz léxico', b: 'Elige verbo y conector por intención comunicativa (formal, neutral, académico).' },
+                ],
+            },
         ];
 
  window.MULLER_PLACEMENT_QUESTIONS = [
@@ -1769,6 +1787,7 @@
           const [rutaProgress, setRutaProgress] = useState(() => (typeof window.mullerRutaLoad === 'function' ? window.mullerRutaLoad() : { completed: {}, placementDone: false, suggestedLevelIdx: 0, playTimeMs: 0, lessonsCompleted: 0 }));
           const [rutaRun, setRutaRun] = useState(null);
           const [rutaVerbDb, setRutaVerbDb] = useState({ meta: null, verbs: [] });
+          const [rutaArticleDb, setRutaArticleDb] = useState([]);
           // --- NUEVOS ESTADOS PARA TEST ADAPTATIVO (30 PREGUNTAS) ---
 const [placementQuestions, setPlacementQuestions] = useState([]);
 const [placementAnswers, setPlacementAnswers] = useState([]);
@@ -1979,6 +1998,18 @@ const [placementFinished, setPlacementFinished] = useState(false);
               loadVerbDb();
               return () => { cancelled = true; };
           }, []);
+          useEffect(() => {
+              let cancelled = false;
+              const URL_ART = 'https://gist.githubusercontent.com/djplaza1/a53fde18c901a7f2d86977174b5b9a72/raw/articulos.json';
+              fetch(`${URL_ART}?nocache=${Date.now()}`, { cache: 'no-cache' })
+                  .then((r) => r.ok ? r.json() : null)
+                  .then((data) => {
+                      if (cancelled || !Array.isArray(data)) return;
+                      setRutaArticleDb(data);
+                  })
+                  .catch(() => {});
+              return () => { cancelled = true; };
+          }, []);
           const rutaLevels = useMemo(() => {
               const base = Array.isArray(window.MULLER_RUTA_LEVELS) ? window.MULLER_RUTA_LEVELS : [];
               const byLevel = { A0: [], A1: [], A2: [], B1: [], B2: [], C1: [] };
@@ -2015,13 +2046,65 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   const lessons = chunks.map((c, i) => mkLesson(levelKey, c, i));
                   return { id: `auto-${levelKey.toLowerCase()}`, title, badge, lessons };
               };
+              const getArticleByLevel = (levelKey) => (rutaArticleDb || []).filter((a) => {
+                  const one = String(a && a.level ? a.level : '').toUpperCase();
+                  const many = Array.isArray(a && a.levels) ? a.levels.map((x) => String(x).toUpperCase()) : [];
+                  return one === levelKey || many.includes(levelKey);
+              });
+              const connectorByLevel = {
+                  A1: ['und', 'aber', 'oder', 'denn'],
+                  A2: ['weil', 'dass', 'wenn', 'deshalb', 'deswegen'],
+                  B1: ['obwohl', 'damit', 'trotzdem', 'außerdem', 'danach'],
+                  B2: ['während', 'sobald', 'falls', 'insofern', 'hingegen'],
+                  C1: ['demzufolge', 'folglich', 'somit', 'nichtsdestotrotz', 'infolgedessen']
+              };
+              const mkArticleLesson = (levelKey, items, idx) => {
+                  const sample = items[0] || {};
+                  const de = String(sample.de || 'das Buch');
+                  const article = de.split(/\s+/)[0] || 'das';
+                  return {
+                      id: `auto-art-${levelKey.toLowerCase()}-${idx + 1}`,
+                      title: `${levelKey} · Artículos ${idx + 1}`,
+                      rewardCoins: 15 + idx,
+                      rewardXp: 20 + idx * 2,
+                      grammarTip: `Nivel ${levelKey}: artículo + sustantivo y concordancia en frase.`,
+                      phrases: items.slice(0, 3).map((x) => ({ de: `${x.de} ist wichtig.`, es: `${x.es || x.de} es importante.` })),
+                      fill: { prompt: `Completa: ___ ${de.split(/\s+/).slice(1).join(' ')} ist hier.`, answer: article, hint: 'Piensa en el género del sustantivo.' },
+                      speak: { target: `${de} ist wichtig.` }
+                  };
+              };
+              const mkConnectorLesson = (levelKey, idx) => {
+                  const c = connectorByLevel[levelKey] || [];
+                  const con = c[idx % c.length] || 'weil';
+                  return {
+                      id: `auto-conn-${levelKey.toLowerCase()}-${idx + 1}`,
+                      title: `${levelKey} · Conectores ${idx + 1}`,
+                      rewardCoins: 18 + idx,
+                      rewardXp: 24 + idx * 2,
+                      grammarTip: `Conector ${con}: practica posición verbal según tipo de oración.`,
+                      phrases: [
+                          { de: `Ich lerne Deutsch, ${con} ich in Deutschland arbeiten möchte.`, es: `Aprendo alemán, ${con === 'weil' ? 'porque' : 'usando conector'} quiero trabajar en Alemania.` },
+                          { de: `${con.charAt(0).toUpperCase() + con.slice(1)} es regnet, bleibe ich zu Hause.`, es: 'Si/como llueve, me quedo en casa.' }
+                      ],
+                      fill: { prompt: `Completa con conector (${levelKey}): Ich lerne Deutsch, ___ ich reisen will.`, answer: con, hint: 'Usa el conector trabajado en esta lección.' },
+                      speak: { target: `Ich lerne Deutsch, ${con} ich reisen will.` }
+                  };
+              };
               const dynamic = [];
-              if (byLevel.A2.length) dynamic.push(mkLevel('A2', 'Nivel A2 · Consolidación', 'A2', byLevel.A2));
-              if (byLevel.B1.length) dynamic.push(mkLevel('B1', 'Nivel B1 · Intermedio', 'B1', byLevel.B1));
-              if (byLevel.B2.length) dynamic.push(mkLevel('B2', 'Nivel B2 · Avanzado', 'B2', byLevel.B2));
-              if (byLevel.C1.length) dynamic.push(mkLevel('C1', 'Nivel C1 · Dominio', 'C1', byLevel.C1));
+              const mkMergedLevel = (levelKey, title, badge, sourceVerbs) => {
+                  const lv = mkLevel(levelKey, title, badge, sourceVerbs);
+                  const arts = getArticleByLevel(levelKey);
+                  for (let i = 0; i < arts.length; i += 10) lv.lessons.push(mkArticleLesson(levelKey, arts.slice(i, i + 10), Math.floor(i / 10)));
+                  const cc = connectorByLevel[levelKey] || [];
+                  for (let i = 0; i < Math.max(1, Math.ceil(cc.length / 2)); i++) lv.lessons.push(mkConnectorLesson(levelKey, i));
+                  return lv;
+              };
+              if (byLevel.A2.length || getArticleByLevel('A2').length) dynamic.push(mkMergedLevel('A2', 'Nivel A2 · Consolidación', 'A2', byLevel.A2));
+              if (byLevel.B1.length || getArticleByLevel('B1').length) dynamic.push(mkMergedLevel('B1', 'Nivel B1 · Intermedio', 'B1', byLevel.B1));
+              if (byLevel.B2.length || getArticleByLevel('B2').length) dynamic.push(mkMergedLevel('B2', 'Nivel B2 · Avanzado', 'B2', byLevel.B2));
+              if (byLevel.C1.length || getArticleByLevel('C1').length) dynamic.push(mkMergedLevel('C1', 'Nivel C1 · Dominio', 'C1', byLevel.C1));
               return [...base, ...dynamic];
-          }, [rutaVerbDb]);
+          }, [rutaVerbDb, rutaArticleDb]);
           useEffect(() => {
               const onToast = (ev) => {
                   const d = (ev && ev.detail) || {};
