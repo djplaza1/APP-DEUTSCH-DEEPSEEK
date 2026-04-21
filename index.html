@@ -174,6 +174,23 @@
             .tempus-panel { font-size: 0.75rem; padding: 0.5rem; }
             .verb-tag { font-size: 0.7rem; }
         }
+        .reading-word-token {
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(125, 211, 252, 0.45);
+            border-radius: 0.22rem;
+            padding: 0 0.12rem;
+            transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+        }
+        .reading-word-token:hover {
+            background: rgba(14, 116, 144, 0.35);
+            color: #f0f9ff;
+            border-color: rgba(186, 230, 253, 0.8);
+        }
+        .reading-word-token.is-active {
+            background: rgba(14, 165, 233, 0.3);
+            color: #ffffff;
+            border-color: rgba(186, 230, 253, 0.95);
+        }
         /* Estilos para el canvas de escritura a mano */
         .handwriting-canvas {
             touch-action: none;
@@ -1075,6 +1092,24 @@
             return t;
         };
 
+        const MULLER_READING_FONT_STORAGE = 'muller_reading_font_px_v1';
+        const MULLER_READING_FONT_MIN = 14;
+        const MULLER_READING_FONT_MAX = 34;
+        const MULLER_READING_FONT_STEP = 1;
+        const mullerClamp = (n, min, max) => Math.max(min, Math.min(max, n));
+        const mullerNormalizeGermanWordToken = (raw) => String(raw || '')
+            .toLowerCase()
+            .replace(/^[^a-zäöüß]+|[^a-zäöüß]+$/gi, '')
+            .trim();
+        const mullerReadingTokenizeText = (text) => String(text || '')
+            .split(/(\s+)/)
+            .map((chunk) => {
+                if (!chunk) return { text: '', word: '', clickable: false };
+                if (/^\s+$/.test(chunk)) return { text: chunk, word: '', clickable: false };
+                const clean = mullerNormalizeGermanWordToken(chunk);
+                return { text: chunk, word: clean, clickable: !!clean };
+            });
+
         const germanWordDistanceOk = (a, b) => {
             if (a === b) return true;
             const d = levenshteinDistance(a, b);
@@ -1816,6 +1851,15 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [readingSource, setReadingSource] = useState('current_story');
           const [readingScriptId, setReadingScriptId] = useState('__current__');
           const [readingTextInput, setReadingTextInput] = useState('');
+          const [readingFontPx, setReadingFontPx] = useState(() => {
+              try {
+                  const raw = Number(localStorage.getItem(MULLER_READING_FONT_STORAGE));
+                  return Number.isFinite(raw) ? mullerClamp(raw, MULLER_READING_FONT_MIN, MULLER_READING_FONT_MAX) : 19;
+              } catch (e) {
+                  return 19;
+              }
+          });
+          const [readingWordInfo, setReadingWordInfo] = useState(null);
           const [readingListening, setReadingListening] = useState(false);
           const [readingTranscript, setReadingTranscript] = useState('');
           const [readingScore, setReadingScore] = useState(null);
@@ -3291,6 +3335,88 @@ const finishPlacementWithLevel = (finalLevel) => {
               const pct = Math.round((i / targetWords.length) * 100);
               return { matched: i, total: targetWords.length, pct };
           }, [readingTargetText, readingTranscript]);
+
+          const readingWordTokens = useMemo(() => mullerReadingTokenizeText(readingTargetText), [readingTargetText]);
+          const readingVerbLookup = useMemo(() => {
+              const map = new Map();
+              (rutaVerbDb && Array.isArray(rutaVerbDb.verbs) ? rutaVerbDb.verbs : []).forEach((verb) => {
+                  if (!verb) return;
+                  const lemmaKey = mullerNormalizeGermanWordToken(verb.lemma || verb.id || '');
+                  if (lemmaKey && !map.has(lemmaKey)) map.set(lemmaKey, verb);
+                  const forms = verb.forms || {};
+                  Object.keys(forms).forEach((tenseKey) => {
+                      const tense = forms[tenseKey];
+                      if (!tense || typeof tense !== 'object') return;
+                      Object.values(tense).forEach((v) => {
+                          const w = mullerNormalizeGermanWordToken(v);
+                          if (w && !map.has(w)) map.set(w, verb);
+                      });
+                  });
+                  const p2 = mullerNormalizeGermanWordToken(verb.partizip2 || '');
+                  if (p2 && !map.has(p2)) map.set(p2, verb);
+              });
+              return map;
+          }, [rutaVerbDb]);
+          const readingSelectedWord = readingWordInfo ? String(readingWordInfo.word || '') : '';
+          const readingVerbInfo = useMemo(() => {
+              const key = mullerNormalizeGermanWordToken(readingSelectedWord);
+              if (!key) return null;
+              const hit = readingVerbLookup.get(key) || null;
+              if (hit) {
+                  const forms = (hit && hit.forms) || {};
+                  const pr = forms.praeteritum && (forms.praeteritum.ich || forms.praeteritum.er_sie_es || forms.praeteritum.wir || forms.praeteritum.sie_Sie || forms.praeteritum.du);
+                  const pf = forms.perfekt && (forms.perfekt.ich || forms.perfekt.er_sie_es || forms.perfekt.wir || forms.perfekt.sie_Sie || forms.perfekt.du);
+                  return {
+                      infinitive: hit.lemma || hit.id || key,
+                      translation: hit.es || '',
+                      praeteritum: pr || '',
+                      perfekt: pf || '',
+                      level: hit.level || '',
+                      source: 'db'
+                  };
+              }
+              const fallback = resolveTempusVerbInfo(key);
+              if (!fallback) return null;
+              return {
+                  infinitive: fallback.infinitive || key,
+                  translation: '',
+                  praeteritum: '',
+                  perfekt: '',
+                  formsHint: fallback.forms || '',
+                  source: 'fallback'
+              };
+          }, [readingSelectedWord, readingVerbLookup]);
+          const runReadingWordLookup = useCallback(async (rawWord) => {
+              const cleanWord = mullerNormalizeGermanWordToken(rawWord);
+              if (!cleanWord) return;
+              setReadingWordInfo({ word: cleanWord, loading: true, translation: '', error: '', ts: Date.now() });
+              try {
+                  const r = await mullerTranslateGtxFull(cleanWord, 'de', 'es');
+                  const out = String((r && r.text) || '').trim();
+                  if (out) {
+                      setReadingWordInfo((prev) => {
+                          if (!prev || prev.word !== cleanWord) return prev;
+                          return { ...prev, loading: false, translation: out, error: '' };
+                      });
+                      return;
+                  }
+              } catch (e) {}
+              try {
+                  const mm = await mullerTranslateViaMyMemory(cleanWord, 'de|es');
+                  setReadingWordInfo((prev) => {
+                      if (!prev || prev.word !== cleanWord) return prev;
+                      return { ...prev, loading: false, translation: String(mm || '').trim(), error: '' };
+                  });
+              } catch (e2) {
+                  setReadingWordInfo((prev) => {
+                      if (!prev || prev.word !== cleanWord) return prev;
+                      return { ...prev, loading: false, translation: '', error: 'No se pudo traducir ahora mismo.' };
+                  });
+              }
+          }, []);
+          useEffect(() => {
+              try { localStorage.setItem(MULLER_READING_FONT_STORAGE, String(readingFontPx)); } catch (e) {}
+          }, [readingFontPx]);
 
           const readingTipForWord = (w) => {
               const x = String(w || '').toLowerCase();
@@ -7284,6 +7410,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           </div>
                           <p className="text-sky-50/90 text-sm md:text-base mb-4 leading-relaxed">
                               Lee un texto completo y compara tu producción con el original. Puedes usar la historia actual, un guion guardado o pegar un texto manualmente.
+                              Toca cualquier palabra para ver traducción al español y, si es verbo, pasado y Perfekt.
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                               <label className="text-xs font-bold text-sky-200/90 uppercase tracking-wider">
@@ -7307,10 +7434,94 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                           {readingSource === 'paste' && (
                               <textarea value={readingTextInput} onChange={(e) => setReadingTextInput(e.target.value)} placeholder="Pega aquí tu texto en alemán…" className="w-full h-40 bg-black/35 border border-sky-500/30 rounded-xl p-3 text-sm md:text-base text-white mb-3" />
                           )}
+
                           <div className="rounded-xl bg-black/35 border border-sky-500/25 p-3 mb-4">
-                              <p className="text-[11px] text-sky-200/80 mb-2">Texto objetivo</p>
-                              <p className="text-sm md:text-base text-white leading-relaxed whitespace-pre-wrap">{readingTargetText || 'No hay texto disponible para comparar.'}</p>
+                              <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                  <p className="text-[11px] text-sky-200/80">Texto objetivo</p>
+                                  <div className="flex items-center gap-2 rounded-lg border border-sky-500/35 bg-sky-950/40 px-2 py-1">
+                                      <button
+                                          type="button"
+                                          onClick={() => setReadingFontPx((v) => mullerClamp(v - MULLER_READING_FONT_STEP, MULLER_READING_FONT_MIN, MULLER_READING_FONT_MAX))}
+                                          className="px-2 py-0.5 text-xs font-black rounded bg-sky-900/70 hover:bg-sky-800 text-sky-100"
+                                          aria-label="Reducir tamaño de texto"
+                                      >
+                                          A-
+                                      </button>
+                                      <span className="text-[10px] font-bold text-sky-200 tabular-nums">{readingFontPx}px</span>
+                                      <button
+                                          type="button"
+                                          onClick={() => setReadingFontPx((v) => mullerClamp(v + MULLER_READING_FONT_STEP, MULLER_READING_FONT_MIN, MULLER_READING_FONT_MAX))}
+                                          className="px-2 py-0.5 text-xs font-black rounded bg-sky-900/70 hover:bg-sky-800 text-sky-100"
+                                          aria-label="Aumentar tamaño de texto"
+                                      >
+                                          A+
+                                      </button>
+                                      <button
+                                          type="button"
+                                          onClick={() => setReadingFontPx(19)}
+                                          className="px-2 py-0.5 text-[10px] font-bold rounded border border-sky-400/50 text-sky-100 hover:bg-sky-900/60"
+                                      >
+                                          Reset
+                                      </button>
+                                  </div>
+                              </div>
+                              {readingTargetText ? (
+                                  <div className="text-white leading-relaxed whitespace-pre-wrap" style={{ fontSize: `${readingFontPx}px`, lineHeight: 1.65 }}>
+                                      {readingWordTokens.map((token, idx) => {
+                                          if (!token.clickable) return <span key={`s-${idx}`}>{token.text}</span>;
+                                          const isActive = token.word === readingSelectedWord;
+                                          return (
+                                              <button
+                                                  key={`w-${idx}`}
+                                                  type="button"
+                                                  className={`reading-word-token ${isActive ? 'is-active' : ''}`}
+                                                  onClick={() => runReadingWordLookup(token.word)}
+                                                  title="Tocar para ver traducción y tiempos"
+                                              >
+                                                  {token.text}
+                                              </button>
+                                          );
+                                      })}
+                                  </div>
+                              ) : (
+                                  <p className="text-sm md:text-base text-white leading-relaxed whitespace-pre-wrap">No hay texto disponible para comparar.</p>
+                              )}
                           </div>
+
+                          {readingWordInfo && (
+                              <div className="rounded-xl bg-cyan-950/35 border border-cyan-500/30 p-3 mb-4 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                      <p className="text-cyan-200 font-black text-sm">Palabra: <span className="text-white">{readingWordInfo.word}</span></p>
+                                      {readingWordInfo.loading && <span className="text-[10px] font-bold text-cyan-300 animate-pulse">Buscando…</span>}
+                                  </div>
+                                  {readingWordInfo.translation && (
+                                      <p className="text-sm text-cyan-100">
+                                          <span className="font-bold text-cyan-300">Traducción:</span> {readingWordInfo.translation}
+                                      </p>
+                                  )}
+                                  {!readingWordInfo.loading && !readingWordInfo.translation && (
+                                      <p className="text-xs text-cyan-200/80">No se obtuvo traducción automática para esta palabra.</p>
+                                  )}
+                                  {readingWordInfo.error && <p className="text-xs text-red-300">{readingWordInfo.error}</p>}
+                                  {readingVerbInfo && (
+                                      <div className="rounded-lg bg-black/25 border border-white/10 p-2.5">
+                                          <p className="text-xs text-emerald-300 font-black mb-1">
+                                              Verbo detectado{readingVerbInfo.level ? ` · ${readingVerbInfo.level}` : ''}
+                                          </p>
+                                          <p className="text-xs text-emerald-100">Infinitivo: <strong>{readingVerbInfo.infinitive}</strong></p>
+                                          {(readingVerbInfo.translation && !readingWordInfo.translation) && (
+                                              <p className="text-xs text-emerald-100">ES: {readingVerbInfo.translation}</p>
+                                          )}
+                                          {readingVerbInfo.praeteritum && <p className="text-xs text-emerald-100">Pasado (Präteritum): {readingVerbInfo.praeteritum}</p>}
+                                          {readingVerbInfo.perfekt && <p className="text-xs text-emerald-100">Perfekt: {readingVerbInfo.perfekt}</p>}
+                                          {!readingVerbInfo.praeteritum && !readingVerbInfo.perfekt && readingVerbInfo.formsHint && (
+                                              <p className="text-xs text-emerald-100">{readingVerbInfo.formsHint}</p>
+                                          )}
+                                      </div>
+                                  )}
+                              </div>
+                          )}
+
                           <div className="flex flex-wrap gap-3 items-center mb-3">
                               <button type="button" onClick={startReadingListen} disabled={readingListening || !readingTargetText} className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 font-black text-sm">🎤 Empezar lectura</button>
                               <button type="button" onClick={stopReadingListen} disabled={!readingListening} className="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-600 disabled:opacity-40 font-black text-sm">⏹ Parar y evaluar</button>
