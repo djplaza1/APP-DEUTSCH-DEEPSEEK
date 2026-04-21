@@ -29,6 +29,8 @@
 
     <!-- OCR manuscrito / impreso en el navegador: gratis, sin API key (Tesseract + datos de idioma de) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- PDF.js (MVP PDF libros): extracción local de texto por página -->
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js"></script>
     
     <!-- Lucide Icons (versión fija: API estable para data-lucide + createIcons) -->
     <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -1207,6 +1209,22 @@
             t = t.replace(/\s+/g, ' ').trim();
             return t;
         };
+        const mullerPdfCleanText = (s) => String(s || '')
+            .replace(/\u00a0/g, ' ')
+            .replace(/[ \t]+/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/\s+\n/g, '\n')
+            .replace(/\n\s+/g, '\n')
+            .trim();
+        const mullerPdfGuessUnitLesson = (s) => {
+            const txt = String(s || '');
+            const unitHit = txt.match(/\b(?:Lektion|Einheit|Unidad|Unit)\s*[:\-]?\s*([A-Z0-9ÄÖÜa-zäöüß]+)/i);
+            const lessonHit = txt.match(/\b(?:Thema|Tema|Kapitel|Lecci[oó]n)\s*[:\-]?\s*([A-Z0-9ÄÖÜa-zäöüß]+)/i);
+            return {
+                unit: unitHit ? String(unitHit[1] || '').trim() : '',
+                lesson: lessonHit ? String(lessonHit[1] || '').trim() : ''
+            };
+        };
 
         const MULLER_READING_FONT_STORAGE = 'muller_reading_font_px_v1';
         const MULLER_READING_FONT_MIN = 14;
@@ -1370,7 +1388,11 @@
         const MULLER_MAIN_GOAL_KEY = 'muller_main_daily_goal_v1';
         const MULLER_GOAL_CLAIM_KEY = 'muller_main_goal_claim_date_v1';
         const MULLER_OCR_HIST_KEY = 'muller_ocr_history_v1';
+        const MULLER_PDF_STUDY_STORAGE_KEY = 'muller_pdf_study_v1';
+        const MULLER_PDF_STORED_PAGES_MAX = 80;
+        const MULLER_PDF_STORED_TEXT_MAX = 3200;
         const MULLER_TTS_RATE_KEY = 'muller_tts_rate_preset_v1';
+        const MULLER_PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.worker.min.js';
 
         function mullerGetStreakTodayStats() {
             const today = new Date().toISOString().slice(0, 10);
@@ -2153,6 +2175,20 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [ocrHistoryList, setOcrHistoryList] = useState(() => {
               try { return JSON.parse(localStorage.getItem(MULLER_OCR_HIST_KEY) || '[]'); } catch (e) { return []; }
           });
+          const [pdfStudyDoc, setPdfStudyDoc] = useState(() => {
+              try {
+                  const raw = localStorage.getItem(MULLER_PDF_STUDY_STORAGE_KEY);
+                  return raw ? JSON.parse(raw) : null;
+              } catch (e) {
+                  return null;
+              }
+          });
+          const [pdfStudyPageIdx, setPdfStudyPageIdx] = useState(0);
+          const [pdfStudyExtracting, setPdfStudyExtracting] = useState(false);
+          const [pdfStudyErr, setPdfStudyErr] = useState('');
+          const [pdfStudyBusyMsg, setPdfStudyBusyMsg] = useState('');
+          const [pdfStudyOcrBusy, setPdfStudyOcrBusy] = useState(false);
+          const [pdfStudyLastApplied, setPdfStudyLastApplied] = useState('');
           const [ttsPrefsEpoch, setTtsPrefsEpoch] = useState(0);
           const [ttsDeUri, setTtsDeUri] = useState(() => { try { return localStorage.getItem('muller_tts_de') || ''; } catch (e) { return ''; } });
           const [ttsEsUri, setTtsEsUri] = useState(() => { try { return localStorage.getItem('muller_tts_es') || ''; } catch (e) { return ''; } });
@@ -2706,6 +2742,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const noiseContextRef = useRef(null);
           const noiseSourceRef = useRef(null);
           const noiseGainRef = useRef(null);
+          const submitKeyLockRef = useRef({});
 
           /* Tras cada commit React los <i data-lucide> se restauran; hay que volver a pintar SVG en todo el documento */
           useLayoutEffect(() => {
@@ -3447,6 +3484,141 @@ const finishPlacementWithLevel = (finalLevel) => {
               return false;
           };
 
+          const runSingleSubmitAction = useCallback((actionKey, actionFn) => {
+              const now = Date.now();
+              const lastTs = submitKeyLockRef.current[actionKey] || 0;
+              if (now - lastTs < 350) return;
+              submitKeyLockRef.current[actionKey] = now;
+              actionFn();
+          }, []);
+
+          const handleExerciseEnterSubmit = useCallback((e, actionKey, actionFn, opts = {}) => {
+              const { requireCtrlOrMeta = false } = opts;
+              if (e.key !== 'Enter') return;
+              if (e.repeat) {
+                  e.preventDefault();
+                  return;
+              }
+              if (requireCtrlOrMeta) {
+                  if (!(e.ctrlKey || e.metaKey)) return;
+              } else if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) {
+                  return;
+              }
+              e.preventDefault();
+              runSingleSubmitAction(actionKey, actionFn);
+          }, [runSingleSubmitAction]);
+
+          const loadPdfStudyFile = useCallback(async (file) => {
+              if (!file) return;
+              if (!window.pdfjsLib || typeof window.pdfjsLib.getDocument !== 'function') {
+                  setPdfStudyErr('PDF no disponible en este navegador.');
+                  return;
+              }
+              setPdfStudyExtracting(true);
+              setPdfStudyErr('');
+              setPdfStudyBusyMsg('Leyendo PDF…');
+              try {
+                  window.pdfjsLib.GlobalWorkerOptions.workerSrc = MULLER_PDFJS_WORKER_URL;
+                  const buffer = await file.arrayBuffer();
+                  const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
+                  const totalPages = Math.max(1, Number(pdf.numPages) || 1);
+                  const pages = [];
+                  for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                      setPdfStudyBusyMsg(`Extrayendo página ${pageNum}/${totalPages}…`);
+                      let text = '';
+                      try {
+                          const pg = await pdf.getPage(pageNum);
+                          const tc = await pg.getTextContent();
+                          const raw = (tc.items || []).map((it) => String((it && it.str) || '')).join(' ');
+                          text = mullerPdfCleanText(raw);
+                      } catch (err) {}
+                      const firstSlice = text.slice(0, 400);
+                      const meta = mullerPdfGuessUnitLesson(firstSlice);
+                      pages.push({
+                          page: pageNum,
+                          unit: meta.unit,
+                          lesson: meta.lesson,
+                          text: text.slice(0, MULLER_PDF_STORED_TEXT_MAX),
+                          ocrPending: !text
+                      });
+                  }
+                  const compactPages = pages.slice(0, MULLER_PDF_STORED_PAGES_MAX);
+                  const payload = {
+                      id: `pdf-${Date.now()}`,
+                      name: file.name || 'Libro PDF',
+                      size: file.size || 0,
+                      totalPages,
+                      pages: compactPages,
+                      importedAt: new Date().toISOString()
+                  };
+                  setPdfStudyDoc(payload);
+                  setPdfStudyPageIdx(0);
+                  try { localStorage.setItem(MULLER_PDF_STUDY_STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
+                  const extractedCount = compactPages.filter((p) => p.text).length;
+                  setPdfStudyBusyMsg(`PDF listo: ${extractedCount}/${compactPages.length} páginas con texto.`);
+              } catch (err) {
+                  setPdfStudyErr(err && err.message ? err.message : 'No se pudo leer el PDF.');
+              } finally {
+                  setPdfStudyExtracting(false);
+              }
+          }, []);
+
+          const runPdfPageOcr = useCallback(async (pageNumber) => {
+              if (!pdfStudyDoc) return;
+              const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
+              const page = pdfStudyDoc.pages && pdfStudyDoc.pages[idx];
+              if (!page) return;
+              setPdfStudyOcrBusy(true);
+              if (page.text && page.text.length >= 40) {
+                  setPdfStudyBusyMsg('Esta página ya tiene texto; OCR no es necesario.');
+                  setPdfStudyOcrBusy(false);
+                  return;
+              }
+              try {
+                  setPdfStudyErr('');
+                  setPdfStudyBusyMsg('OCR por página: sube imagen/escaneo de esa página en Historias Pro OCR.');
+              } finally {
+                  setPdfStudyOcrBusy(false);
+              }
+          }, [pdfStudyDoc]);
+
+          const applyPdfStudyTextToReading = useCallback((pageNumber) => {
+              if (!pdfStudyDoc) return;
+              const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
+              const page = pdfStudyDoc.pages && pdfStudyDoc.pages[idx];
+              const txt = page && page.text ? String(page.text).trim() : '';
+              if (!txt) {
+                  setPdfStudyErr('Página sin texto extraído todavía.');
+                  return;
+              }
+              setReadingSource('paste');
+              setReadingTextInput(txt);
+              setPdfStudyBusyMsg(`Página ${page.page} enviada a Lectura.`);
+              setPdfStudyLastApplied(`✓ Página ${page.page} cargada en Lectura`);
+          }, [pdfStudyDoc]);
+
+          const applyPdfStudyTextToWriting = useCallback((pageNumber) => {
+              if (!pdfStudyDoc) return;
+              const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
+              const page = pdfStudyDoc.pages && pdfStudyDoc.pages[idx];
+              const txt = page && page.text ? String(page.text).trim() : '';
+              if (!txt) {
+                  setPdfStudyErr('Página sin texto extraído todavía.');
+                  return;
+              }
+              setActiveTab('escritura');
+              setWritingMode('telc');
+              setWritingTelcInputMode('keyboard');
+              setWritingTelcTypedText(txt);
+              setPdfStudyBusyMsg(`Página ${page.page} enviada a Escritura TELC.`);
+              setPdfStudyLastApplied(`✓ Página ${page.page} cargada en Escritura TELC`);
+          }, [pdfStudyDoc]);
+
+          const activePdfPageData = useMemo(() => {
+              if (!pdfStudyDoc || !Array.isArray(pdfStudyDoc.pages) || !pdfStudyDoc.pages.length) return {};
+              const idx = Math.max(0, Math.min(pdfStudyDoc.pages.length - 1, pdfStudyPageIdx));
+              return pdfStudyDoc.pages[idx] || {};
+          }, [pdfStudyDoc, pdfStudyPageIdx]);
           const startRutaListen = async () => {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) { alert('Para leer en voz alta usa Chrome o Edge en escritorio.'); return; }
@@ -7952,10 +8124,87 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       </button>
                                   </div>
                               </div>
-                              <p className="text-[11px] text-sky-200/80 mb-2">
-                                  Puedes seleccionar una frase con el dedo o ratón y usar 🔊 Frase para reproducir solo esa parte.
-                              </p>
-                              {readingFocusMode && (
+                          <p className="text-[11px] text-sky-200/80 mb-2">
+                              Puedes seleccionar una frase con el dedo o ratón y usar 🔊 Frase para reproducir solo esa parte.
+                          </p>
+                          <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/25 p-3 mb-3 space-y-2">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <p className="text-[11px] font-black text-cyan-200 uppercase tracking-wider">PDF estudio (premium · MVP)</p>
+                                  <span className="text-[10px] text-cyan-100/75">Texto por página + OCR fallback</span>
+                              </div>
+                              <div className="flex flex-wrap gap-2 items-center">
+                                  <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-cyan-400/35 bg-black/35 text-xs font-bold text-cyan-100 cursor-pointer">
+                                      <input
+                                          type="file"
+                                          accept="application/pdf"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                              const f = e.target.files && e.target.files[0];
+                                              if (f) loadPdfStudyFile(f);
+                                              e.target.value = '';
+                                          }}
+                                      />
+                                      {pdfStudyExtracting ? '⏳ Procesando PDF…' : '📄 Subir PDF'}
+                                  </label>
+                                  {pdfStudyDoc && (
+                                      <>
+                                          <select
+                                              value={Math.max(1, (activePdfPageData.page || 1))}
+                                              onChange={(e) => setPdfStudyPageIdx(Math.max(0, Number(e.target.value) - 1))}
+                                              className="bg-black/45 border border-cyan-500/35 rounded-lg px-2 py-2 text-xs text-white"
+                                          >
+                                              {(pdfStudyDoc.pages || []).map((p) => (
+                                                  <option key={p.page} value={p.page}>
+                                                      Página {p.page}{p.unit ? ` · U:${p.unit}` : ''}{p.lesson ? ` · L:${p.lesson}` : ''}{p.ocrPending ? ' · OCR pendiente' : ''}
+                                                  </option>
+                                              ))}
+                                          </select>
+                                          <button
+                                              type="button"
+                                              onClick={() => runPdfPageOcr(activePdfPageData.page || 1)}
+                                              disabled={pdfStudyOcrBusy || pdfStudyExtracting}
+                                              className="px-3 py-2 rounded-lg border border-amber-500/35 bg-amber-900/40 hover:bg-amber-800/50 disabled:opacity-45 text-xs font-bold text-amber-100"
+                                          >
+                                              {pdfStudyOcrBusy ? 'OCR…' : 'OCR página'}
+                                          </button>
+                                          <button
+                                              type="button"
+                                              onClick={() => applyPdfStudyTextToReading(activePdfPageData.page || 1)}
+                                              disabled={pdfStudyExtracting}
+                                              className="px-3 py-2 rounded-lg border border-emerald-500/35 bg-emerald-900/40 hover:bg-emerald-800/50 disabled:opacity-45 text-xs font-bold text-emerald-100"
+                                          >
+                                              Usar en Lectura
+                                          </button>
+                                          <button
+                                              type="button"
+                                              onClick={() => applyPdfStudyTextToWriting(activePdfPageData.page || 1)}
+                                              disabled={pdfStudyExtracting}
+                                              className="px-3 py-2 rounded-lg border border-rose-500/35 bg-rose-900/40 hover:bg-rose-800/50 disabled:opacity-45 text-xs font-bold text-rose-100"
+                                          >
+                                              Usar en Escritura
+                                          </button>
+                                      </>
+                                  )}
+                              </div>
+                              {pdfStudyErr ? <p className="text-[11px] text-red-300">{pdfStudyErr}</p> : null}
+                              {pdfStudyBusyMsg ? <p className="text-[11px] text-cyan-100/80">{pdfStudyBusyMsg}</p> : null}
+                              {pdfStudyDoc && (
+                                  <div className="text-[10px] text-cyan-100/80 space-y-1">
+                                      <p><strong className="text-cyan-200">Libro:</strong> {pdfStudyDoc.name} · {pdfStudyDoc.totalPages} páginas</p>
+                                      <p><strong className="text-cyan-200">Unidad:</strong> {activePdfPageData.unit || '—'} · <strong className="text-cyan-200">Lección:</strong> {activePdfPageData.lesson || '—'} · <strong className="text-cyan-200">Página:</strong> {activePdfPageData.page || '—'}</p>
+                                      {pdfStudyLastApplied ? <p className="text-emerald-300/90">{pdfStudyLastApplied}</p> : null}
+                                  </div>
+                              )}
+                              {pdfStudyDoc && (
+                                  <textarea
+                                      value={activePdfPageData.text || ''}
+                                      readOnly
+                                      className="w-full h-28 bg-black/35 border border-cyan-500/25 rounded-xl p-3 text-xs md:text-sm text-cyan-50"
+                                      placeholder="Sin texto extraído en esta página todavía."
+                                  />
+                              )}
+                          </div>
+                          {readingFocusMode && (
                                   <p className="text-[11px] text-emerald-200/90 mb-2">
                                       Modo lectura activo: se ocultan resultados de evaluación para concentrarte en comprensión + diccionario.
                                   </p>
@@ -8651,9 +8900,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           <>
                                               <p className="text-white font-bold mb-3">{lesson.fill.prompt}</p>
                                               {lesson.fill.hint ? <p className="text-xs text-gray-500 mb-2">Pista: {lesson.fill.hint}</p> : null}
-                                              <input value={rutaFillInput} onChange={(e) => setRutaFillInput(e.target.value)} className="w-full rounded-xl bg-black/50 border border-fuchsia-500/40 px-4 py-3 text-white text-lg mb-3 outline-none focus:border-fuchsia-400" placeholder="Tu respuesta" autoComplete="off" />
+                                              <input value={rutaFillInput} onChange={(e) => setRutaFillInput(e.target.value)} onKeyDown={(e) => handleExerciseEnterSubmit(e, 'ruta-fill-submit', () => { if (checkRutaFillAnswer(lesson)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } })} className="w-full rounded-xl bg-black/50 border border-fuchsia-500/40 px-4 py-3 text-white text-lg mb-3 outline-none focus:border-fuchsia-400" placeholder="Tu respuesta" autoComplete="off" />
                                               {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
-                                              <button type="button" onClick={() => { if (checkRutaFillAnswer(lesson)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } }} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black py-3 text-white">Comprobar y continuar</button>
+                                              <button type="button" onClick={() => runSingleSubmitAction('ruta-fill-submit', () => { if (checkRutaFillAnswer(lesson)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } })} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black py-3 text-white">Comprobar y continuar</button>
                                           </>
                                       )}
                                       {st === 2 && lesson.speak && (
@@ -9429,10 +9678,10 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                 {!showDiktatResult ? (
                                     <>
                                         <p className="text-base md:text-xl text-blue-200 font-bold mb-1 md:mb-2">✍️ Escribe lo que oyes:</p>
-                                        <textarea className="w-full h-24 md:h-32 bg-black/50 border-2 border-blue-500/50 rounded-xl p-3 md:p-4 text-base md:text-2xl text-white outline-none" value={diktatInput} onChange={(e) => setDiktatInput(e.target.value)} autoFocus />
+                                        <textarea className="w-full h-24 md:h-32 bg-black/50 border-2 border-blue-500/50 rounded-xl p-3 md:p-4 text-base md:text-2xl text-white outline-none" value={diktatInput} onChange={(e) => setDiktatInput(e.target.value)} onKeyDown={(e) => handleExerciseEnterSubmit(e, 'diktat-check', handleDiktatCheck, { requireCtrlOrMeta: true })} autoFocus />
                                         <div className="flex gap-3 md:gap-4 w-full md:w-auto justify-center">
                                             <button onClick={() => { setIsPlaying(true); togglePlay(); setIsPlaying(true); }} className="bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold flex items-center gap-2 flex-1 md:flex-none justify-center text-xs md:text-sm"><Icon name="volume-2" className="w-3 h-3 md:w-5 md:h-5" /> Audio</button>
-                                            <button onClick={handleDiktatCheck} className="bg-green-600 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-2 flex-1 md:flex-none justify-center text-xs md:text-sm"><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Corregir</button>
+                                            <button onClick={() => runSingleSubmitAction('diktat-check', handleDiktatCheck)} className="bg-green-600 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-2 flex-1 md:flex-none justify-center text-xs md:text-sm"><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Corregir</button>
                                         </div>
                                     </>
                                 ) : (
