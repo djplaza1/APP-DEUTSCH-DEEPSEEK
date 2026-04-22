@@ -1990,7 +1990,8 @@
         // --- COMPONENTE PRINCIPAL ---
         function App() {
           const [activeTab, setActiveTab] = useState(() => { try { return localStorage.getItem('muller_active_tab_v1') || 'inicio'; } catch { return 'inicio'; } });
-          const [showSplash, setShowSplash] = useState(false); 
+          const [showSplash, setShowSplash] = useState(true); 
+          const [splashLogoBlink, setSplashLogoBlink] = useState(false);
           const [rutaSubTab, setRutaSubTab] = useState('camino');
           const [rutaProgress, setRutaProgress] = useState(() => (typeof window.mullerRutaLoad === 'function' ? window.mullerRutaLoad() : { completed: {}, placementDone: false, suggestedLevelIdx: 0, playTimeMs: 0, lessonsCompleted: 0 }));
           const [rutaRun, setRutaRun] = useState(null);
@@ -2892,11 +2893,11 @@ const [placementFinished, setPlacementFinished] = useState(false);
           useEffect(() => { try { localStorage.setItem('muller_active_tab_v1', activeTab); } catch {} }, [activeTab]);
 
           useEffect(() => {
-              if (!showSplash) return undefined;
-              const t = window.setTimeout(() => {
-                  setShowSplash(false);
-                  try { sessionStorage.setItem('muller_splash_session_v1', '1'); } catch (e) {}
-              }, 5000);
+              if (!showSplash) {
+                  setSplashLogoBlink(false);
+                  return undefined;
+              }
+              const t = window.setTimeout(() => setSplashLogoBlink(true), 3000);
               return () => window.clearTimeout(t);
           }, [showSplash]);
 
@@ -6410,16 +6411,29 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             <div className={`flex flex-col muller-main-fill h-[100svh] max-h-[100svh] w-full font-sans md:rounded-xl overflow-x-hidden md:overflow-hidden shadow-2xl relative transition-colors duration-500 muller-theme-bg ${reduceMotionUi ? 'muller-reduce-motion' : ''} ${themeShellClass} ${uiTheme === 'light' ? 'text-slate-900' : 'text-white'} ${getBgColor()}`}>
 
               {showSplash && (
-                  <div className="fixed inset-0 z-[300] overflow-hidden cursor-pointer" role="presentation" onClick={() => setShowSplash(false)}>
-                      <div className="absolute inset-x-0 top-0 h-1/2" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 33%, #DD0000 33%, #DD0000 67%, #FFCE00 67%, #FFCE00 100%)' }} aria-hidden="true" />
-                      <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 33%, #F1BF00 33%, #F1BF00 67%, #AA151B 67%, #AA151B 100%)' }} aria-hidden="true" />
-                      <div className="absolute inset-0 flex items-center justify-center p-5 md:p-8 pointer-events-none">
-                          <div className="w-full max-w-sm md:max-w-md rounded-3xl bg-black/32 backdrop-blur-xl border border-white/25 shadow-[0_20px_90px_rgba(0,0,0,0.65)] px-6 py-7 md:px-8 md:py-8 flex flex-col items-center">
-                              <img src="./icons/profesor-plaza-muller-logo.svg" alt="Profesor Plaza Müller logo" className="w-[min(68vw,250px)] md:w-[300px] h-auto drop-shadow-[0_0_26px_rgba(0,0,0,0.65)]" />
-                              <p className="mt-4 text-center font-black text-white tracking-wide text-xl md:text-2xl drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]">
-                                  Profesor Plaza Müller
+                  <div className="fixed inset-0 z-[300] overflow-hidden" role="dialog" aria-modal="true" aria-label="Pantalla de inicio Profesor Plaza Müller">
+                      <div className="absolute inset-0 flex flex-col">
+                          <div className="flex-1" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 33%, #DD0000 33%, #DD0000 67%, #FFCE00 67%, #FFCE00 100%)' }} aria-hidden="true" />
+                          <div className="h-[80px] md:h-[96px] bg-white border-y-2 border-black/20 shadow-[0_8px_25px_rgba(0,0,0,0.25)] flex items-center px-3 md:px-6">
+                              <button
+                                  type="button"
+                                  onClick={() => setShowSplash(false)}
+                                  className={`shrink-0 rounded-xl p-1.5 md:p-2 bg-black/5 border border-black/20 ${splashLogoBlink ? 'animate-pulse ring-4 ring-amber-400/75' : ''}`}
+                                  aria-label="Entrar a la aplicación pulsando el logo"
+                                  title="Pulsa el logo para entrar"
+                              >
+                                  <img
+                                      src="./icons/profesor-plaza-muller-logo.png"
+                                      alt="Logo Profesor Plaza Müller"
+                                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = './icons/profesor-plaza-muller-logo.svg'; }}
+                                      className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                                  />
+                              </button>
+                              <p className="ml-3 md:ml-5 text-black font-black uppercase tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis text-[clamp(0.88rem,2.3vw,2.1rem)] leading-none">
+                                  PROFESOR PLAZA MÜLLER
                               </p>
                           </div>
+                          <div className="flex-1" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 33%, #F1BF00 33%, #F1BF00 67%, #AA151B 67%, #AA151B 100%)' }} aria-hidden="true" />
                       </div>
                   </div>
               )}
