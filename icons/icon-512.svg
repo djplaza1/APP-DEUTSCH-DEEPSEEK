@@ -1,11 +1,147 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Muller icon">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#1e1b4b" />
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="104" fill="url(#bg)" />
-  <circle cx="256" cy="256" r="176" fill="#581c87" opacity="0.4" />
-  <text x="256" y="348" text-anchor="middle" font-size="260" font-weight="700" fill="#c084fc" font-family="Outfit,system-ui,sans-serif">M</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Profesor Plaza Muller logo">
+  <rect width="512" height="512" rx="104" fill="#070b14" />
+  <g transform="translate(34 82) scale(1.16)">
+    <path
+      d="M42 106
+         C42 78 66 54 96 54
+         H111
+         C117 54 122 49 122 43
+         C122 20 140 2 162 2
+         H287
+         C309 2 327 20 327 43
+         C327 49 332 54 338 54
+         H357
+         C387 54 412 78 412 108
+         V166
+         C412 196 387 221 357 221
+         H338
+         C332 221 327 226 327 232
+         V246
+         C327 250 330 253 334 254
+         C357 259 372 278 372 300
+         V312
+         C372 322 364 330 355 334
+         L346 338
+         C338 341 330 338 326 330
+         L312 302
+         C310 298 306 295 301 294
+         C292 292 285 284 285 274
+         V248
+         C285 236 275 226 263 226
+         H186
+         C174 226 165 236 165 248
+         V272
+         C165 282 158 291 149 293
+         C145 294 141 297 139 301
+         L126 329
+         C122 337 114 341 106 338
+         L97 334
+         C87 330 80 321 80 311
+         V300
+         C80 279 95 260 117 254
+         C121 253 123 250 123 246
+         V232
+         C123 226 118 221 112 221
+         H96
+         C66 221 42 197 42 166
+         Z"
+      fill="none"
+      stroke="#ff1f1f"
+      stroke-width="8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M111 88
+         H338
+         C352 88 364 100 364 114
+         V163
+         C364 177 352 189 338 189
+         H111
+         C97 189 86 177 86 163
+         V114
+         C86 100 97 88 111 88
+         Z"
+      fill="none"
+      stroke="#ff1f1f"
+      stroke-width="6.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M58 121
+         H16
+         C8 121 2 127 2 135
+         V145
+         C2 153 8 159 16 159
+         H58
+         Z"
+      fill="none"
+      stroke="#ff1f1f"
+      stroke-width="6.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M394 121
+         H436
+         C444 121 450 127 450 135
+         V145
+         C450 153 444 159 436 159
+         H394
+         Z"
+      fill="none"
+      stroke="#ff1f1f"
+      stroke-width="6.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M152 111
+         C168 111 180 124 180 139
+         C180 154 168 166 152 166
+         H133
+         C129 166 126 169 126 173
+         V188
+         C126 192 129 195 133 195
+         H211
+         C215 195 218 192 218 188
+         V179
+         C218 175 221 172 225 172
+         H257
+         C261 172 264 175 264 179
+         V188
+         C264 192 267 195 271 195
+         H348
+         C352 195 355 192 355 188
+         V173
+         C355 169 352 166 348 166
+         H332
+         C316 166 304 154 304 139
+         C304 124 316 111 332 111"
+      fill="none"
+      stroke="#e6ff32"
+      stroke-width="6.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M180 139
+         H304"
+      fill="none"
+      stroke="#e6ff32"
+      stroke-width="6.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M190 203
+         H243"
+      fill="none"
+      stroke="#e6ff32"
+      stroke-width="6.2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
 </svg>

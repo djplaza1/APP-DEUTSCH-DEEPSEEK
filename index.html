@@ -6410,14 +6410,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             <div className={`flex flex-col muller-main-fill h-[100svh] max-h-[100svh] w-full font-sans md:rounded-xl overflow-x-hidden md:overflow-hidden shadow-2xl relative transition-colors duration-500 muller-theme-bg ${reduceMotionUi ? 'muller-reduce-motion' : ''} ${themeShellClass} ${uiTheme === 'light' ? 'text-slate-900' : 'text-white'} ${getBgColor()}`}>
 
               {showSplash && (
-                  <div className="fixed inset-0 z-[300] flex flex-col overflow-hidden cursor-pointer" role="presentation" onClick={() => setShowSplash(false)}>
-                      <div className="flex-1 relative" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 33%, #DD0000 33%, #DD0000 67%, #FFCE00 67%, #FFCE00 100%)' }} aria-hidden="true" />
-                      <div className="flex-1 relative" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 33%, #F1BF00 33%, #F1BF00 67%, #AA151B 67%, #AA151B 100%)' }} aria-hidden="true" />
-                      <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-                          <div className="rounded-[2.5rem] bg-black/40 backdrop-blur-2xl border border-white/20 shadow-[0_30px_90px_rgba(0,0,0,0.75),0_0_0_1px_rgba(255,255,255,0.07)] text-center flex flex-col items-center gap-2 px-12 py-11" style={{ width: 'min(90vw,22rem)' }}>
-                              <p className="text-[10px] font-black tracking-[0.35em] text-white/50 uppercase">Profesor Plaza</p>
-                              <h1 className="font-black text-white leading-none drop-shadow-[0_4px_28px_rgba(0,0,0,0.8)] my-1" style={{ fontFamily: 'Outfit, system-ui, sans-serif', fontSize: 'clamp(3.5rem, 16vw, 5.5rem)' }}>Müller</h1>
-                              <p className="text-sm font-black tracking-[0.28em] text-yellow-300/90 uppercase">Deutsch</p>
+                  <div className="fixed inset-0 z-[300] overflow-hidden cursor-pointer" role="presentation" onClick={() => setShowSplash(false)}>
+                      <div className="absolute inset-x-0 top-0 h-1/2" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 33%, #DD0000 33%, #DD0000 67%, #FFCE00 67%, #FFCE00 100%)' }} aria-hidden="true" />
+                      <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 33%, #F1BF00 33%, #F1BF00 67%, #AA151B 67%, #AA151B 100%)' }} aria-hidden="true" />
+                      <div className="absolute inset-0 flex items-center justify-center p-5 md:p-8 pointer-events-none">
+                          <div className="w-full max-w-sm md:max-w-md rounded-3xl bg-black/32 backdrop-blur-xl border border-white/25 shadow-[0_20px_90px_rgba(0,0,0,0.65)] px-6 py-7 md:px-8 md:py-8 flex flex-col items-center">
+                              <img src="./icons/profesor-plaza-muller-logo.svg" alt="Profesor Plaza Müller logo" className="w-[min(68vw,250px)] md:w-[300px] h-auto drop-shadow-[0_0_26px_rgba(0,0,0,0.65)]" />
+                              <p className="mt-4 text-center font-black text-white tracking-wide text-xl md:text-2xl drop-shadow-[0_3px_8px_rgba(0,0,0,0.7)]">
+                                  Profesor Plaza Müller
+                              </p>
                           </div>
                       </div>
                   </div>
