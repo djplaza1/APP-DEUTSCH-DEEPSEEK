@@ -3696,6 +3696,25 @@ const finishPlacementWithLevel = (finalLevel) => {
               setPdfStudyLastApplied(`✓ Página ${page.page} cargada en Escritura TELC`);
           }, [pdfStudyDoc]);
 
+          const updatePdfStudyPageMeta = useCallback((pageNumber, patch = {}) => {
+              if (!pdfStudyDoc) return;
+              const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
+              const pages = Array.isArray(pdfStudyDoc.pages) ? pdfStudyDoc.pages : [];
+              const page = pages[idx];
+              if (!page) return;
+              const nextPages = pages.map((p, pIdx) => {
+                  if (pIdx !== idx) return p;
+                  return {
+                      ...p,
+                      unit: patch && typeof patch.unit === 'string' ? patch.unit.trim() : p.unit,
+                      lesson: patch && typeof patch.lesson === 'string' ? patch.lesson.trim() : p.lesson
+                  };
+              });
+              const nextDoc = { ...pdfStudyDoc, pages: nextPages, updatedAt: new Date().toISOString() };
+              setPdfStudyDoc(nextDoc);
+              try { localStorage.setItem(MULLER_PDF_STUDY_STORAGE_KEY, JSON.stringify(nextDoc)); } catch (e) {}
+          }, [pdfStudyDoc]);
+
           const activePdfPageData = useMemo(() => {
               if (!pdfStudyDoc || !Array.isArray(pdfStudyDoc.pages) || !pdfStudyDoc.pages.length) return {};
               const idx = Math.max(0, Math.min(pdfStudyDoc.pages.length - 1, pdfStudyPageIdx));
@@ -8292,6 +8311,28 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       {pdfStudyLastApplied ? <p className="text-emerald-300/90">{pdfStudyLastApplied}</p> : null}
                                   </div>
                               )}
+                              {pdfStudyDoc && activePdfPageData.page ? (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      <label className="text-[10px] font-bold text-cyan-200/90 uppercase tracking-wider">
+                                          Unidad (manual)
+                                          <input
+                                              value={activePdfPageData.unit || ''}
+                                              onChange={(e) => updatePdfStudyPageMeta(activePdfPageData.page || 1, { unit: e.target.value })}
+                                              placeholder="Ej: 3"
+                                              className="mt-1 w-full bg-black/45 border border-cyan-500/30 rounded-lg px-2 py-1.5 text-xs text-white normal-case"
+                                          />
+                                      </label>
+                                      <label className="text-[10px] font-bold text-cyan-200/90 uppercase tracking-wider">
+                                          Lección (manual)
+                                          <input
+                                              value={activePdfPageData.lesson || ''}
+                                              onChange={(e) => updatePdfStudyPageMeta(activePdfPageData.page || 1, { lesson: e.target.value })}
+                                              placeholder="Ej: A"
+                                              className="mt-1 w-full bg-black/45 border border-cyan-500/30 rounded-lg px-2 py-1.5 text-xs text-white normal-case"
+                                          />
+                                      </label>
+                                  </div>
+                              ) : null}
                               {pdfStudyDoc && (
                                   <textarea
                                       value={activePdfPageData.text || ''}
