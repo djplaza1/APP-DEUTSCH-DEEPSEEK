@@ -1,11 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Muller icon">
-  <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#1e1b4b" />
-    </linearGradient>
-  </defs>
-  <rect width="192" height="192" rx="40" fill="url(#bg)" />
-  <circle cx="96" cy="96" r="64" fill="#581c87" opacity="0.4" />
-  <text x="96" y="128" text-anchor="middle" font-size="96" font-weight="700" fill="#c084fc" font-family="Outfit,system-ui,sans-serif">M</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Profesor Plaza Müller icon">
+  <rect width="192" height="96" fill="#000000" />
+  <rect y="96" width="192" height="96" fill="#AA151B" />
+  <rect y="128" width="192" height="32" fill="#F1BF00" />
+  <g transform="translate(26,22) scale(0.85)">
+    <path d="M18 62C18 46 29 35 45 35h102c16 0 27 11 27 27v20c8 2 14 10 14 20v18c0 12-9 22-21 22h-18v-8h18c8 0 13-6 13-14v-18c0-8-5-14-13-14h-5V62c0-11-8-19-19-19H45c-11 0-19 8-19 19v26h-5c-8 0-13 6-13 14v18c0 8 5 14 13 14h18v8H21c-12 0-21-10-21-22v-18c0-10 6-18 14-20V62z" fill="#FF1A1A"/>
+    <path d="M47 66c0-10 8-18 18-18h60c10 0 18 8 18 18v42c0 10-8 18-18 18H65c-10 0-18-8-18-18V66zm18-10c-6 0-10 4-10 10v42c0 6 4 10 10 10h60c6 0 10-4 10-10V66c0-6-4-10-10-10H65z" fill="#FF1A1A"/>
+    <path d="M67 73c0-8 7-15 15-15h13v8H82c-4 0-7 3-7 7v13h20v8H75v11h34v8H75c-4 0-8-4-8-8V73zm53-15h13c8 0 15 7 15 15v32c0 4-4 8-8 8h-20v-8h20V73c0-4-3-7-7-7h-13v-8z" fill="#F5FF1F"/>
+    <path d="M76 132c0-5 4-9 9-9h28c5 0 9 4 9 9s-4 9-9 9H85c-5 0-9-4-9-9z" fill="#F5FF1F"/>
+    <path d="M34 126h106c13 0 24 10 24 23v0.5l11 3c12 3 21 14 23 26l1 8-11 5-5-10-8-5-11-13-14-6H44c-7 0-13-4-16-10l-6-12h12l2 4c2 4 4 5 8 5z" fill="#FF1A1A"/>
+  </g>
 </svg>
