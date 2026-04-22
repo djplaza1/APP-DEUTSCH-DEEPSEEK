@@ -6414,24 +6414,26 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   <div className="fixed inset-0 z-[300] overflow-hidden" role="dialog" aria-modal="true" aria-label="Pantalla de inicio Profesor Plaza Müller">
                       <div className="absolute inset-0 flex flex-col">
                           <div className="flex-1" style={{ background: 'linear-gradient(180deg, #000000 0%, #000000 33%, #DD0000 33%, #DD0000 67%, #FFCE00 67%, #FFCE00 100%)' }} aria-hidden="true" />
-                          <div className="h-[80px] md:h-[96px] bg-white border-y-2 border-black/20 shadow-[0_8px_25px_rgba(0,0,0,0.25)] flex items-center px-3 md:px-6">
+                          <div className="h-[160px] md:h-[192px] bg-white border-y-2 border-black/20 shadow-[0_8px_25px_rgba(0,0,0,0.25)] flex items-center px-3 md:px-6">
                               <button
                                   type="button"
                                   onClick={() => setShowSplash(false)}
-                                  className={`shrink-0 rounded-xl p-1.5 md:p-2 bg-black/5 border border-black/20 ${splashLogoBlink ? 'animate-pulse ring-4 ring-amber-400/75' : ''}`}
+                                  className={`shrink-0 rounded-xl p-1.5 md:p-2 bg-black/5 border border-black/20 h-[130px] w-[130px] md:h-[160px] md:w-[160px] flex items-center justify-center ${splashLogoBlink ? 'animate-pulse ring-4 ring-amber-400/75' : ''}`}
                                   aria-label="Entrar a la aplicación pulsando el logo"
                                   title="Pulsa el logo para entrar"
                               >
                                   <img
-                                      src="./icons/profesor-plaza-muller-logo.png"
+                                      src="./icons/profesor-plaza-muller-logo.svg"
                                       alt="Logo Profesor Plaza Müller"
-                                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = './icons/profesor-plaza-muller-logo.svg'; }}
-                                      className="h-12 w-12 md:h-16 md:w-16 object-contain"
+                                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = './icons/icon-512.svg'; }}
+                                      className="h-full w-full object-contain"
                                   />
                               </button>
-                              <p className="ml-3 md:ml-5 text-black font-black uppercase tracking-[0.08em] whitespace-nowrap overflow-hidden text-ellipsis text-[clamp(0.88rem,2.3vw,2.1rem)] leading-none">
-                                  PROFESOR PLAZA MÜLLER
-                              </p>
+                              <div className="ml-3 md:ml-5 flex-1 h-full flex items-center justify-center overflow-hidden">
+                                  <p className="w-full text-center text-black font-black uppercase tracking-[0.06em] whitespace-nowrap text-[clamp(1.1rem,4.4vw,3.3rem)] leading-none">
+                                      PROFESOR PLAZA MÜLLER
+                                  </p>
+                              </div>
                           </div>
                           <div className="flex-1" style={{ background: 'linear-gradient(180deg, #AA151B 0%, #AA151B 33%, #F1BF00 33%, #F1BF00 67%, #AA151B 67%, #AA151B 100%)' }} aria-hidden="true" />
                       </div>
