@@ -1390,6 +1390,7 @@
         const MULLER_GOAL_CLAIM_KEY = 'muller_main_goal_claim_date_v1';
         const MULLER_OCR_HIST_KEY = 'muller_ocr_history_v1';
         const MULLER_PDF_STUDY_STORAGE_KEY = 'muller_pdf_study_v1';
+        const MULLER_PDF_NOTES_STORAGE_KEY = 'muller_pdf_study_notes_v1';
         const MULLER_PDF_STORED_PAGES_MAX = 80;
         const MULLER_PDF_STORED_TEXT_MAX = 3200;
         const MULLER_TTS_RATE_KEY = 'muller_tts_rate_preset_v1';
@@ -2191,6 +2192,17 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [pdfStudyBusyMsg, setPdfStudyBusyMsg] = useState('');
           const [pdfStudyOcrBusy, setPdfStudyOcrBusy] = useState(false);
           const [pdfStudyLastApplied, setPdfStudyLastApplied] = useState('');
+          const [pdfStudyFullscreen, setPdfStudyFullscreen] = useState(false);
+          const [pdfStudyInkNonce, setPdfStudyInkNonce] = useState(0);
+          const [pdfStudyNotesByPage, setPdfStudyNotesByPage] = useState(() => {
+              try {
+                  const raw = localStorage.getItem(MULLER_PDF_NOTES_STORAGE_KEY);
+                  return raw ? JSON.parse(raw) : {};
+              } catch (e) {
+                  return {};
+              }
+          });
+          const [pdfStudyBlobUrl, setPdfStudyBlobUrl] = useState('');
           const [ttsPrefsEpoch, setTtsPrefsEpoch] = useState(0);
           const [ttsDeUri, setTtsDeUri] = useState(() => { try { return localStorage.getItem('muller_tts_de') || ''; } catch (e) { return ''; } });
           const [ttsEsUri, setTtsEsUri] = useState(() => { try { return localStorage.getItem('muller_tts_es') || ''; } catch (e) { return ''; } });
@@ -2201,6 +2213,13 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const validTabs = new Set(['inicio', 'ruta', 'historia', 'lectura', 'shadowing', 'escritura', 'vocabulario', 'entrenamiento', 'bxbank', 'progreso', 'guiones', 'lexikon', 'telc', 'storybuilder', 'historiaspro', 'comunidad']);
               if (!validTabs.has(activeTab)) setActiveTab('inicio');
           }, [activeTab]);
+
+          useEffect(() => {
+              return () => {
+                  if (!pdfStudyBlobUrl) return;
+                  try { URL.revokeObjectURL(pdfStudyBlobUrl); } catch (e) {}
+              };
+          }, [pdfStudyBlobUrl]);
 
           useEffect(() => {
               const openSettings = (ev) => {
@@ -3518,6 +3537,17 @@ const finishPlacementWithLevel = (finalLevel) => {
                   setPdfStudyErr('PDF no disponible en este navegador.');
                   return;
               }
+              try {
+                  const nextUrl = URL.createObjectURL(file);
+                  setPdfStudyBlobUrl((prev) => {
+                      if (prev) {
+                          try { URL.revokeObjectURL(prev); } catch (e) {}
+                      }
+                      return nextUrl;
+                  });
+              } catch (e) {
+                  setPdfStudyBlobUrl('');
+              }
               setPdfStudyExtracting(true);
               setPdfStudyErr('');
               setPdfStudyBusyMsg('Leyendo PDF…');
@@ -3720,6 +3750,50 @@ const finishPlacementWithLevel = (finalLevel) => {
               const idx = Math.max(0, Math.min(pdfStudyDoc.pages.length - 1, pdfStudyPageIdx));
               return pdfStudyDoc.pages[idx] || {};
           }, [pdfStudyDoc, pdfStudyPageIdx]);
+          const activePdfPageNotes = useMemo(() => {
+              const page = activePdfPageData && activePdfPageData.page ? Number(activePdfPageData.page) : 0;
+              if (!page || !pdfStudyNotesByPage || typeof pdfStudyNotesByPage !== 'object') return { drawing: '', typed: '' };
+              const entry = pdfStudyNotesByPage[String(page)] || {};
+              return {
+                  drawing: typeof entry.drawing === 'string' ? entry.drawing : '',
+                  typed: typeof entry.typed === 'string' ? entry.typed : ''
+              };
+          }, [activePdfPageData, pdfStudyNotesByPage]);
+          const pdfStudyCanvasPadKey = useMemo(() => {
+              const basePage = Math.max(1, Number(activePdfPageData && activePdfPageData.page ? activePdfPageData.page : 1));
+              const nonce = Math.max(0, Number(pdfStudyInkNonce) || 0);
+              return (basePage * 1000) + nonce;
+          }, [activePdfPageData, pdfStudyInkNonce]);
+
+          const updatePdfPageNotes = useCallback((pageNumber, patch = {}) => {
+              const safePage = Math.max(1, Number(pageNumber) || 1);
+              setPdfStudyNotesByPage((prev) => {
+                  const base = prev && typeof prev === 'object' ? prev : {};
+                  const key = String(safePage);
+                  const current = base[key] && typeof base[key] === 'object' ? base[key] : {};
+                  const next = {
+                      ...base,
+                      [key]: {
+                          ...current,
+                          drawing: patch && typeof patch.drawing === 'string' ? patch.drawing : (typeof current.drawing === 'string' ? current.drawing : ''),
+                          typed: patch && typeof patch.typed === 'string' ? patch.typed : (typeof current.typed === 'string' ? current.typed : ''),
+                          updatedAt: new Date().toISOString()
+                      }
+                  };
+                  try { localStorage.setItem(MULLER_PDF_NOTES_STORAGE_KEY, JSON.stringify(next)); } catch (e) {}
+                  return next;
+              });
+          }, []);
+          const openPdfStudyFullscreen = useCallback((pageNumber) => {
+              if (!pdfStudyDoc) return;
+              const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
+              setPdfStudyPageIdx(idx);
+              setPdfStudyInkNonce(0);
+              setPdfStudyFullscreen(true);
+          }, [pdfStudyDoc]);
+          const closePdfStudyFullscreen = useCallback(() => {
+              setPdfStudyFullscreen(false);
+          }, []);
           const startRutaListen = async () => {
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) { alert('Para leer en voz alta usa Chrome o Edge en escritorio.'); return; }
@@ -5737,7 +5811,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           const currentPracticeItem = currentPracticeList ? currentPracticeList[practiceIndex] : null;
 
           /** Lienzo para lápiz óptico / dedo: pointer capture, sin scroll al trazar. Herramientas: lápiz, goma, marcador, subrayado + deshacer. */
-          const TabletWritingCanvas = ({ padKey, grid, strokeW, compareTarget, onOcrCompared, snapshotData, snapshotPadKey, onSnapshotChange }) => {
+          const TabletWritingCanvas = ({ padKey, grid, strokeW, compareTarget, onOcrCompared, snapshotData, snapshotPadKey, onSnapshotChange, backgroundImageData = '' }) => {
               const wrapRef = useRef(null);
               const canvasRef = useRef(null);
               const ctxRef = useRef(null);
@@ -5798,13 +5872,30 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   const canvas = canvasRef.current;
                   const ctx = ctxRef.current;
                   if (!canvas || !ctx) return;
-                  if (!snapshotData || snapshotPadKey !== padKey) return;
-                  const img = new Image();
-                  img.onload = () => {
-                      try { ctx.drawImage(img, 0, 0, sizeRef.current.w, sizeRef.current.h); } catch (err) {}
+                  let cancelled = false;
+                  const drawSnapshot = () => {
+                      if (!snapshotData || snapshotPadKey !== padKey) return;
+                      const img = new Image();
+                      img.onload = () => {
+                          if (cancelled) return;
+                          try { ctx.drawImage(img, 0, 0, sizeRef.current.w, sizeRef.current.h); } catch (err) {}
+                      };
+                      img.src = snapshotData;
                   };
-                  img.src = snapshotData;
-              }, [snapshotData, snapshotPadKey, padKey]);
+                  ctx.clearRect(0, 0, sizeRef.current.w, sizeRef.current.h);
+                  if (backgroundImageData) {
+                      const bg = new Image();
+                      bg.onload = () => {
+                          if (cancelled) return;
+                          try { ctx.drawImage(bg, 0, 0, sizeRef.current.w, sizeRef.current.h); } catch (err) {}
+                          drawSnapshot();
+                      };
+                      bg.src = backgroundImageData;
+                  } else {
+                      drawSnapshot();
+                  }
+                  return () => { cancelled = true; };
+              }, [snapshotData, snapshotPadKey, padKey, backgroundImageData]);
 
               const getPos = (e) => {
                   const canvas = canvasRef.current;
@@ -5972,6 +6063,13 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                   const { w, h } = sizeRef.current;
                   if (!ctx) return;
                   ctx.clearRect(0, 0, w, h);
+                  if (backgroundImageData) {
+                      const bg = new Image();
+                      bg.onload = () => {
+                          try { ctx.drawImage(bg, 0, 0, w, h); } catch (err) {}
+                      };
+                      bg.src = backgroundImageData;
+                  }
                   undoStackRef.current = [];
                   setCanUndo(false);
                   if (typeof onSnapshotChange === 'function') onSnapshotChange('');
@@ -8299,6 +8397,14 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           >
                                               Usar en Escritura
                                           </button>
+                                          <button
+                                              type="button"
+                                              onClick={() => openPdfStudyFullscreen(activePdfPageData.page || 1)}
+                                              disabled={pdfStudyExtracting}
+                                              className="px-3 py-2 rounded-lg border border-indigo-500/35 bg-indigo-900/45 hover:bg-indigo-800/55 disabled:opacity-45 text-xs font-bold text-indigo-100"
+                                          >
+                                              Abrir PDF completo
+                                          </button>
                                       </>
                                   )}
                               </div>
@@ -8342,6 +8448,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   />
                               )}
                           </div>
+                              
                           {readingFocusMode && (
                                   <p className="text-[11px] text-emerald-200/90 mb-2">
                                       Modo lectura activo: se ocultan resultados de evaluación para concentrarte en comprensión + diccionario.
@@ -9994,6 +10101,103 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       </div>
                   </div>
               )}
+              {pdfStudyFullscreen && pdfStudyDoc ? (
+                  <div className="fixed inset-0 z-[120] bg-black/95 flex flex-col">
+                      <div className="flex items-center justify-between gap-3 px-3 md:px-5 py-3 border-b border-white/10 bg-slate-950/95">
+                          <div className="min-w-0">
+                              <p className="text-xs md:text-sm font-black text-cyan-100 truncate">PDF Coach · {pdfStudyDoc.name || 'Libro PDF'}</p>
+                              <p className="text-[10px] md:text-xs text-cyan-300/80">Página {activePdfPageData.page || 1}/{pdfStudyDoc.totalPages || (pdfStudyDoc.pages || []).length || 1}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                              <button
+                                  type="button"
+                                  onClick={() => setPdfStudyInkNonce((k) => k + 1)}
+                                  className="px-2.5 py-1.5 rounded-lg border border-amber-500/45 bg-amber-900/45 hover:bg-amber-800/60 text-[11px] font-bold text-amber-100"
+                              >
+                                  Nuevo lienzo
+                              </button>
+                              <button
+                                  type="button"
+                                  onClick={closePdfStudyFullscreen}
+                                  className="px-3 py-1.5 rounded-lg border border-rose-500/45 bg-rose-900/50 hover:bg-rose-800/60 text-[11px] font-black text-white"
+                              >
+                                  Cerrar ✕
+                              </button>
+                          </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-3 md:p-5 grid grid-cols-1 xl:grid-cols-2 gap-4 bg-gradient-to-b from-slate-950 to-slate-900">
+                          <section className="rounded-2xl border border-cyan-500/25 bg-black/35 p-3 md:p-4 space-y-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                      type="button"
+                                      onClick={() => setPdfStudyPageIdx((i) => Math.max(0, i - 1))}
+                                      disabled={pdfStudyPageIdx <= 0}
+                                      className="px-3 py-1.5 rounded-lg border border-white/15 bg-slate-900/70 hover:bg-slate-800 disabled:opacity-40 text-xs font-bold text-white"
+                                  >
+                                      ← Página
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={() => setPdfStudyPageIdx((i) => Math.min(Math.max(0, (pdfStudyDoc.pages || []).length - 1), i + 1))}
+                                      disabled={pdfStudyPageIdx >= Math.max(0, (pdfStudyDoc.pages || []).length - 1)}
+                                      className="px-3 py-1.5 rounded-lg border border-white/15 bg-slate-900/70 hover:bg-slate-800 disabled:opacity-40 text-xs font-bold text-white"
+                                  >
+                                      Página →
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={() => runPdfPageOcr(activePdfPageData.page || 1)}
+                                      disabled={pdfStudyOcrBusy}
+                                      className="px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-900/45 hover:bg-amber-800/55 disabled:opacity-45 text-xs font-bold text-amber-100"
+                                  >
+                                      {pdfStudyOcrBusy ? 'OCR…' : 'OCR página'}
+                                  </button>
+                              </div>
+                              {pdfStudyBlobUrl ? (
+                                  <div className="rounded-xl border border-white/10 overflow-hidden bg-black/45">
+                                      <iframe
+                                          title="PDF estudio fullscreen"
+                                          src={`${pdfStudyBlobUrl}#page=${activePdfPageData.page || 1}&view=FitH`}
+                                          className="w-full h-[52vh] md:h-[64vh] border-0"
+                                      />
+                                  </div>
+                              ) : (
+                                  <div className="rounded-xl border border-amber-600/35 bg-amber-950/35 p-3">
+                                      <p className="text-xs text-amber-100">Vista PDF no disponible en esta sesión. Vuelve a subir el PDF para ver el documento completo aquí.</p>
+                                  </div>
+                              )}
+                              <textarea
+                                  value={activePdfPageData.text || ''}
+                                  readOnly
+                                  className="w-full h-32 bg-black/45 border border-cyan-500/25 rounded-xl p-3 text-xs text-cyan-50"
+                                  placeholder="Texto detectado de esta página."
+                              />
+                          </section>
+                          <section className="rounded-2xl border border-rose-500/25 bg-black/35 p-3 md:p-4 space-y-3">
+                              <p className="text-xs font-black text-rose-200 uppercase tracking-wider">Notas de estudio por página (stylus + teclado)</p>
+                              <TabletWritingCanvas
+                                  padKey={pdfStudyCanvasPadKey}
+                                  grid={true}
+                                  strokeW={4}
+                                  compareTarget={activePdfPageData.text || ''}
+                                  snapshotData={activePdfPageNotes.drawing}
+                                  snapshotPadKey={pdfStudyCanvasPadKey}
+                                  onSnapshotChange={(dataUrl) => updatePdfPageNotes(activePdfPageData.page || 1, { drawing: dataUrl || '' })}
+                                  onOcrCompared={() => {}}
+                              />
+                              <label className="block text-[11px] font-bold text-rose-200 uppercase tracking-wider">
+                                  Notas rápidas (teclado)
+                                  <textarea
+                                      value={activePdfPageNotes.typed || ''}
+                                      onChange={(e) => updatePdfPageNotes(activePdfPageData.page || 1, { typed: e.target.value })}
+                                      placeholder="Ejemplos, dudas, vocabulario clave, errores típicos…"
+                                      className="mt-1 w-full min-h-[120px] bg-black/45 border border-rose-500/30 rounded-xl p-3 text-xs text-white normal-case"
+                                  />
+                              </label>
+                          </section>
+                      </div>
+                  </div>
+              ) : null}
             </div>
           );
         }
