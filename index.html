@@ -1393,6 +1393,7 @@
         const MULLER_PDF_NOTES_STORAGE_KEY = 'muller_pdf_study_notes_v1';
         const MULLER_PDF_STORED_PAGES_MAX = 80;
         const MULLER_PDF_STORED_TEXT_MAX = 3200;
+        const MULLER_PDF_OCR_RETRY_MAX = 1;
         const MULLER_PDF_EXTRACT_YIELD_EVERY = 2;
         const MULLER_TTS_RATE_KEY = 'muller_tts_rate_preset_v1';
         const MULLER_PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.worker.min.js';
@@ -3630,64 +3631,80 @@ const finishPlacementWithLevel = (finalLevel) => {
               }
               setPdfStudyOcrBusy(true);
               let worker = null;
+              let attemptNo = 0;
+              const attemptCap = 1 + Math.max(0, Number(MULLER_PDF_OCR_RETRY_MAX) || 0);
               try {
                   setPdfStudyErr('');
                   const safePage = Math.max(1, Number(page.page || pageNumber) || 1);
-                  setPdfStudyBusyMsg(`Preparando OCR página ${safePage}…`);
-                  window.pdfjsLib.GlobalWorkerOptions.workerSrc = MULLER_PDFJS_WORKER_URL;
-                  let pdf = pdfStudyDocHandleRef.current;
-                  if (!pdf) {
-                      pdf = await window.pdfjsLib.getDocument({ data: pdfStudyBufferRef.current }).promise;
-                      pdfStudyDocHandleRef.current = pdf;
-                  }
-                  const pg = await pdf.getPage(safePage);
-                  let ocrText = '';
-                  const scales = [1.6, 2.1];
-                  for (let attempt = 0; attempt < scales.length; attempt++) {
-                      const scale = scales[attempt];
-                      const viewport = pg.getViewport({ scale });
-                      const canvas = document.createElement('canvas');
-                      canvas.width = Math.max(1, Math.floor(viewport.width));
-                      canvas.height = Math.max(1, Math.floor(viewport.height));
-                      const ctx = canvas.getContext('2d');
-                      if (!ctx) throw new Error('No se pudo crear el contexto de imagen para OCR.');
-                      await pg.render({ canvasContext: ctx, viewport }).promise;
-                      setPdfStudyBusyMsg(`OCR página ${safePage}: intento ${attempt + 1}/${scales.length}…`);
-                      worker = await Tesseract.createWorker('deu', 1, {
-                          logger: (m) => {
-                              if (m && m.status === 'recognizing text' && typeof m.progress === 'number') {
-                                  setPdfStudyBusyMsg(`OCR página ${safePage}: ${Math.round(100 * m.progress)}%`);
-                              }
+                  while (attemptNo < attemptCap) {
+                      try {
+                          setPdfStudyBusyMsg(`Preparando OCR página ${safePage}${attemptNo > 0 ? ` (reintento ${attemptNo}/${attemptCap - 1})` : ''}…`);
+                          window.pdfjsLib.GlobalWorkerOptions.workerSrc = MULLER_PDFJS_WORKER_URL;
+                          let pdf = pdfStudyDocHandleRef.current;
+                          if (!pdf) {
+                              pdf = await window.pdfjsLib.getDocument({ data: pdfStudyBufferRef.current }).promise;
+                              pdfStudyDocHandleRef.current = pdf;
                           }
-                      });
-                      const result = await worker.recognize(canvas);
-                      await worker.terminate();
-                      worker = null;
-                      const raw = result && result.data ? result.data.text : '';
-                      ocrText = mullerPdfCleanText(raw);
-                      if (ocrText.length >= 24 || attempt === scales.length - 1) break;
+                          const pg = await pdf.getPage(safePage);
+                          let ocrText = '';
+                          const scales = [1.6, 2.1];
+                          for (let attempt = 0; attempt < scales.length; attempt++) {
+                              const scale = scales[attempt];
+                              const viewport = pg.getViewport({ scale });
+                              const canvas = document.createElement('canvas');
+                              canvas.width = Math.max(1, Math.floor(viewport.width));
+                              canvas.height = Math.max(1, Math.floor(viewport.height));
+                              const ctx = canvas.getContext('2d');
+                              if (!ctx) throw new Error('No se pudo crear el contexto de imagen para OCR.');
+                              await pg.render({ canvasContext: ctx, viewport }).promise;
+                              setPdfStudyBusyMsg(`OCR página ${safePage}: intento ${attempt + 1}/${scales.length}${attemptNo > 0 ? ` · retry ${attemptNo}` : ''}…`);
+                              worker = await Tesseract.createWorker('deu', 1, {
+                                  logger: (m) => {
+                                      if (m && m.status === 'recognizing text' && typeof m.progress === 'number') {
+                                          setPdfStudyBusyMsg(`OCR página ${safePage}: ${Math.round(100 * m.progress)}%`);
+                                      }
+                                  }
+                              });
+                              const result = await worker.recognize(canvas);
+                              await worker.terminate();
+                              worker = null;
+                              const raw = result && result.data ? result.data.text : '';
+                              ocrText = mullerPdfCleanText(raw);
+                              if (ocrText.length >= 24 || attempt === scales.length - 1) break;
+                          }
+                          if (!ocrText) {
+                              setPdfStudyErr('OCR sin texto. Prueba una página más nítida o con más contraste.');
+                              setPdfStudyBusyMsg(`OCR página ${safePage}: sin texto detectado.`);
+                              return;
+                          }
+                          const meta = mullerPdfGuessUnitLesson(ocrText.slice(0, 400));
+                          const nextPages = pages.map((p, pIdx) => {
+                              if (pIdx !== idx) return p;
+                              return {
+                                  ...p,
+                                  unit: p.unit || meta.unit,
+                                  lesson: p.lesson || meta.lesson,
+                                  text: ocrText.slice(0, MULLER_PDF_STORED_TEXT_MAX),
+                                  ocrPending: false,
+                                  ocrUpdatedAt: new Date().toISOString()
+                              };
+                          });
+                          const nextDoc = { ...pdfStudyDoc, pages: nextPages, updatedAt: new Date().toISOString() };
+                          setPdfStudyDoc(nextDoc);
+                          try { localStorage.setItem(MULLER_PDF_STUDY_STORAGE_KEY, JSON.stringify(nextDoc)); } catch (e) {}
+                          setPdfStudyBusyMsg(`OCR completado en página ${safePage}.`);
+                          return;
+                      } catch (attemptErr) {
+                          if (worker) {
+                              try { await worker.terminate(); } catch (e) {}
+                              worker = null;
+                          }
+                          attemptNo += 1;
+                          if (attemptNo >= attemptCap) throw attemptErr;
+                          setPdfStudyBusyMsg(`OCR página ${safePage}: error temporal, reintentando…`);
+                          await new Promise((resolve) => setTimeout(resolve, 220));
+                      }
                   }
-                  if (!ocrText) {
-                      setPdfStudyErr('OCR sin texto. Prueba una página más nítida o con más contraste.');
-                      setPdfStudyBusyMsg(`OCR página ${safePage}: sin texto detectado.`);
-                      return;
-                  }
-                  const meta = mullerPdfGuessUnitLesson(ocrText.slice(0, 400));
-                  const nextPages = pages.map((p, pIdx) => {
-                      if (pIdx !== idx) return p;
-                      return {
-                          ...p,
-                          unit: p.unit || meta.unit,
-                          lesson: p.lesson || meta.lesson,
-                          text: ocrText.slice(0, MULLER_PDF_STORED_TEXT_MAX),
-                          ocrPending: false,
-                          ocrUpdatedAt: new Date().toISOString()
-                      };
-                  });
-                  const nextDoc = { ...pdfStudyDoc, pages: nextPages, updatedAt: new Date().toISOString() };
-                  setPdfStudyDoc(nextDoc);
-                  try { localStorage.setItem(MULLER_PDF_STUDY_STORAGE_KEY, JSON.stringify(nextDoc)); } catch (e) {}
-                  setPdfStudyBusyMsg(`OCR completado en página ${safePage}.`);
               } catch (err) {
                   setPdfStudyErr(err && err.message ? err.message : 'Error al ejecutar OCR de página.');
               } finally {
