@@ -1450,6 +1450,7 @@
         const MULLER_PDF_NOTES_STORAGE_KEY = 'muller_pdf_study_notes_v1';
         const MULLER_PDF_NOTES_LEGACY_DOC_ID = '__legacy__';
         const MULLER_PDF_COACH_STATS_KEY = 'muller_pdf_coach_stats_v1';
+        const MULLER_PDF_DIDACTIC_LIBRARY_KEY = 'muller_pdf_didactic_library_v1';
         const MULLER_PDF_STORED_PAGES_MAX = 80;
         const MULLER_PDF_STORED_TEXT_MAX = 3200;
         const MULLER_PDF_OCR_RETRY_MAX = 1;
@@ -2195,6 +2196,14 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [bxImportSummary, setBxImportSummary] = useState('');
           const [bxMoveTargetCat, setBxMoveTargetCat] = useState('verbos');
           const [pdfDidacticPack, setPdfDidacticPack] = useState(null);
+          const [pdfDidacticPackLibrary, setPdfDidacticPackLibrary] = useState(() => {
+              try {
+                  const raw = localStorage.getItem(MULLER_PDF_DIDACTIC_LIBRARY_KEY);
+                  return raw ? JSON.parse(raw) : [];
+              } catch (e) {
+                  return [];
+              }
+          });
           const [chromeAiText, setChromeAiText] = useState('');
           const [chromeAiOut, setChromeAiOut] = useState('');
           const [chromeAiBusy, setChromeAiBusy] = useState(false);
@@ -3979,6 +3988,83 @@ const finishPlacementWithLevel = (finalLevel) => {
               setPdfDidacticPack(pack);
               setPdfStudyBusyMsg(`Análisis didáctico listo (página ${pack.page}): ${pack.keywords.length} palabras clave y ${pack.phrases.length} frases.`);
           }, [pdfStudyDoc]);
+
+          const savePdfDidacticPack = useCallback(() => {
+              if (!pdfDidacticPack) return;
+              setPdfDidacticPackLibrary((prev) => {
+                  const arr = Array.isArray(prev) ? prev : [];
+                  const key = `${pdfDidacticPack.sourceDocId || ''}::${pdfDidacticPack.page || 1}`;
+                  const tagged = { ...pdfDidacticPack, _libraryKey: key, savedAt: new Date().toISOString() };
+                  const withoutSame = arr.filter((p) => String((p && p._libraryKey) || '') !== key);
+                  const next = [tagged, ...withoutSame].slice(0, 60);
+                  try { localStorage.setItem(MULLER_PDF_DIDACTIC_LIBRARY_KEY, JSON.stringify(next)); } catch (e) {}
+                  return next;
+              });
+              setPdfStudyBusyMsg(`Pack didáctico guardado (página ${pdfDidacticPack.page}).`);
+          }, [pdfDidacticPack]);
+
+          const loadPdfDidacticPackFromLibrary = useCallback((libraryKey) => {
+              const arr = Array.isArray(pdfDidacticPackLibrary) ? pdfDidacticPackLibrary : [];
+              const hit = arr.find((p) => String((p && p._libraryKey) || '') === String(libraryKey || ''));
+              if (!hit) return;
+              setPdfDidacticPack(hit);
+              setPdfStudyBusyMsg(`Pack didáctico cargado: p${hit.page || '-'}.`);
+          }, [pdfDidacticPackLibrary]);
+
+          const removePdfDidacticPackFromLibrary = useCallback((libraryKey) => {
+              setPdfDidacticPackLibrary((prev) => {
+                  const arr = Array.isArray(prev) ? prev : [];
+                  const next = arr.filter((p) => String((p && p._libraryKey) || '') !== String(libraryKey || ''));
+                  try { localStorage.setItem(MULLER_PDF_DIDACTIC_LIBRARY_KEY, JSON.stringify(next)); } catch (e) {}
+                  return next;
+              });
+          }, []);
+
+          const clearPdfDidacticPackLibrary = useCallback(() => {
+              setPdfDidacticPackLibrary([]);
+              try { localStorage.setItem(MULLER_PDF_DIDACTIC_LIBRARY_KEY, JSON.stringify([])); } catch (e) {}
+              setPdfStudyBusyMsg('Biblioteca de packs didácticos vaciada.');
+          }, []);
+
+          const exportAllPdfCoachData = useCallback(() => {
+              const payload = {
+                  type: 'muller_pdf_coach_full_export_v1',
+                  exportedAt: new Date().toISOString(),
+                  didacticPacks: Array.isArray(pdfDidacticPackLibrary) ? pdfDidacticPackLibrary : [],
+                  coachStats: rutaPdfCoachStats && typeof rutaPdfCoachStats === 'object' ? rutaPdfCoachStats : {}
+              };
+              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `pdf_coach_full_${new Date().toISOString().slice(0, 10)}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+          }, [pdfDidacticPackLibrary, rutaPdfCoachStats]);
+
+          const importAllPdfCoachData = useCallback((file) => {
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                  try {
+                      const parsed = JSON.parse(String(ev && ev.target && ev.target.result ? ev.target.result : '{}'));
+                      if (!parsed || parsed.type !== 'muller_pdf_coach_full_export_v1') {
+                          setPdfStudyErr('Archivo completo de PDF Coach no válido.');
+                          return;
+                      }
+                      const packs = Array.isArray(parsed.didacticPacks) ? parsed.didacticPacks : [];
+                      const stats = parsed.coachStats && typeof parsed.coachStats === 'object' ? parsed.coachStats : {};
+                      setPdfDidacticPackLibrary(packs);
+                      setRutaPdfCoachStats(stats);
+                      try { localStorage.setItem(MULLER_PDF_DIDACTIC_LIBRARY_KEY, JSON.stringify(packs)); } catch (e) {}
+                      try { localStorage.setItem(MULLER_PDF_COACH_STATS_KEY, JSON.stringify(stats)); } catch (e) {}
+                      setPdfStudyBusyMsg(`Importación completa PDF Coach: ${packs.length} packs.`);
+                  } catch (err) {
+                      setPdfStudyErr('No se pudo importar el backup completo de PDF Coach.');
+                  }
+              };
+              reader.readAsText(file);
+          }, []);
 
           const sendPdfDidacticToVocab = useCallback(() => {
               if (!pdfDidacticPack || !pdfDidacticPack.keywords || pdfDidacticPack.keywords.length === 0) return;
@@ -9162,7 +9248,61 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                           >
                                               Enviar a Vocabulario
                                           </button>
+                                          <button
+                                              type="button"
+                                              onClick={() => runSingleSubmitAction('pdf-didactic-save-pack', savePdfDidacticPack)}
+                                              disabled={!pdfDidacticPack}
+                                              className="px-3 py-1.5 rounded-lg border border-emerald-400/40 bg-emerald-900/45 hover:bg-emerald-800/55 disabled:opacity-45 text-[11px] font-bold text-emerald-100"
+                                          >
+                                              Guardar pack
+                                          </button>
+                                          <button
+                                              type="button"
+                                              onClick={exportAllPdfCoachData}
+                                              className="px-3 py-1.5 rounded-lg border border-indigo-400/40 bg-indigo-900/45 hover:bg-indigo-800/55 text-[11px] font-bold text-indigo-100"
+                                          >
+                                              Exportar todo
+                                          </button>
+                                          <label className="px-3 py-1.5 rounded-lg border border-slate-400/30 bg-slate-900/55 hover:bg-slate-800/65 text-[11px] font-bold text-slate-100 cursor-pointer">
+                                              Importar todo
+                                              <input type="file" accept="application/json" className="hidden" onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) importAllPdfCoachData(f); e.target.value = ''; }} />
+                                          </label>
                                       </div>
+                                      {pdfDidacticPackLibrary.length > 0 ? (
+                                          <div className="flex flex-wrap gap-2 items-center">
+                                              <select
+                                                  value="__none__"
+                                                  onChange={(e) => {
+                                                      const key = e.target.value;
+                                                      if (key && key !== '__none__') loadPdfDidacticPackFromLibrary(key);
+                                                      e.target.value = '__none__';
+                                                  }}
+                                                  className="bg-black/45 border border-fuchsia-500/35 rounded-lg px-2 py-1.5 text-[11px] text-white"
+                                              >
+                                                  <option value="__none__">Biblioteca packs didácticos…</option>
+                                                  {pdfDidacticPackLibrary.map((p) => (
+                                                      <option key={p._libraryKey || p.id} value={p._libraryKey || ''}>
+                                                          {p.sourceDocName || 'PDF'} · p{p.page || 1} · U{p.unit || '-'} L{p.lesson || '-'}
+                                                      </option>
+                                                  ))}
+                                              </select>
+                                              <button
+                                                  type="button"
+                                                  onClick={() => { if (pdfDidacticPack && pdfDidacticPack._libraryKey) removePdfDidacticPackFromLibrary(pdfDidacticPack._libraryKey); }}
+                                                  disabled={!pdfDidacticPack || !pdfDidacticPack._libraryKey}
+                                                  className="px-3 py-1.5 rounded-lg border border-rose-400/40 bg-rose-900/45 hover:bg-rose-800/55 disabled:opacity-45 text-[11px] font-bold text-rose-100"
+                                              >
+                                                  Quitar pack
+                                              </button>
+                                              <button
+                                                  type="button"
+                                                  onClick={clearPdfDidacticPackLibrary}
+                                                  className="px-3 py-1.5 rounded-lg border border-orange-400/40 bg-orange-900/45 hover:bg-orange-800/55 text-[11px] font-bold text-orange-100"
+                                              >
+                                                  Vaciar packs
+                                              </button>
+                                          </div>
+                                      ) : null}
                                       {pdfDidacticPack && Number(pdfDidacticPack.page || 0) === Number(activePdfPageData.page || 0) ? (
                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
                                               <div className="rounded-lg border border-fuchsia-400/25 bg-black/30 p-2">
