@@ -3871,6 +3871,24 @@ const finishPlacementWithLevel = (finalLevel) => {
               try { localStorage.setItem(MULLER_PDF_STUDY_STORAGE_KEY, JSON.stringify(hit.doc)); } catch (e) {}
           }, [pdfStudySavedDocs]);
 
+          const removePdfStudyFromLibrary = useCallback((libraryId) => {
+              const id = String(libraryId || '');
+              if (!id) return;
+              setPdfStudySavedDocs((prev) => {
+                  const arr = Array.isArray(prev) ? prev : [];
+                  const next = arr.filter((x) => String((x && x.id) || '') !== id);
+                  try { localStorage.setItem(MULLER_PDF_STUDY_LIBRARY_KEY, JSON.stringify(next)); } catch (e) {}
+                  return next;
+              });
+              setPdfStudyBusyMsg('PDF eliminado de la biblioteca.');
+          }, []);
+
+          const clearPdfStudyLibrary = useCallback(() => {
+              setPdfStudySavedDocs([]);
+              try { localStorage.setItem(MULLER_PDF_STUDY_LIBRARY_KEY, JSON.stringify([])); } catch (e) {}
+              setPdfStudyBusyMsg('Biblioteca PDF vaciada.');
+          }, []);
+
           const openPdfStudyFullscreen = useCallback((pageNumber) => {
               if (!pdfStudyDoc) return;
               const idx = Math.max(0, (Number(pageNumber) || 1) - 1);
@@ -8448,22 +8466,42 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                       {pdfStudyExtracting ? '⏳ Procesando PDF…' : '📄 Subir PDF'}
                                   </label>
                                   {pdfStudySavedDocs.length > 0 && (
-                                      <select
-                                          value="__none__"
-                                          onChange={(e) => {
-                                              const id = e.target.value;
-                                              if (id && id !== '__none__') loadPdfStudyFromLibrary(id);
-                                              e.target.value = '__none__';
-                                          }}
-                                          className="bg-black/45 border border-cyan-500/35 rounded-lg px-2 py-2 text-xs text-white"
-                                      >
-                                          <option value="__none__">Biblioteca PDF…</option>
-                                          {pdfStudySavedDocs.map((d) => (
-                                              <option key={d.id} value={d.id}>
-                                                  {d.name} · {d.totalPages || 0}p
-                                              </option>
-                                          ))}
-                                      </select>
+                                      <>
+                                          <select
+                                              value="__none__"
+                                              onChange={(e) => {
+                                                  const id = e.target.value;
+                                                  if (id && id !== '__none__') loadPdfStudyFromLibrary(id);
+                                                  e.target.value = '__none__';
+                                              }}
+                                              className="bg-black/45 border border-cyan-500/35 rounded-lg px-2 py-2 text-xs text-white"
+                                          >
+                                              <option value="__none__">Biblioteca PDF…</option>
+                                              {pdfStudySavedDocs.map((d) => (
+                                                  <option key={d.id} value={d.id}>
+                                                      {d.name} · {d.totalPages || 0}p
+                                                  </option>
+                                              ))}
+                                          </select>
+                                          <button
+                                              type="button"
+                                              onClick={() => {
+                                                  if (!pdfStudyDoc || !pdfStudyDoc.id) return;
+                                                  removePdfStudyFromLibrary(pdfStudyDoc.id);
+                                              }}
+                                              disabled={!pdfStudyDoc || !pdfStudyDoc.id}
+                                              className="px-3 py-2 rounded-lg border border-orange-500/35 bg-orange-900/40 hover:bg-orange-800/50 disabled:opacity-45 text-xs font-bold text-orange-100"
+                                          >
+                                              Borrar guardado
+                                          </button>
+                                          <button
+                                              type="button"
+                                              onClick={clearPdfStudyLibrary}
+                                              className="px-3 py-2 rounded-lg border border-amber-600/35 bg-amber-950/45 hover:bg-amber-900/55 text-xs font-bold text-amber-100"
+                                          >
+                                              Vaciar biblioteca
+                                          </button>
+                                      </>
                                   )}
                                   {pdfStudyDoc && (
                                       <>
