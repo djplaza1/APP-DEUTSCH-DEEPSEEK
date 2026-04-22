@@ -8853,7 +8853,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   <p className="text-rose-200/90 text-sm font-bold">Copia la frase (caligrafía alemana)</p>
                                   <p className="text-lg md:text-2xl text-white font-medium leading-snug">{WRITING_COPY_DRILLS[writingCopyIdx % WRITING_COPY_DRILLS.length]}</p>
                                   <div className="flex flex-wrap gap-2 pt-2">
-                                      <button type="button" onClick={() => { setWritingCopyIdx((i) => (i + 1) % WRITING_COPY_DRILLS.length); setWritingCanvasKey((k) => k + 1); }} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40">Otra frase →</button>
+                                      <button type="button" onClick={() => runSingleSubmitAction('writing-copy-next', () => { setWritingCopyIdx((i) => (i + 1) % WRITING_COPY_DRILLS.length); setWritingCanvasKey((k) => k + 1); })} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40">Otra frase →</button>
                                   </div>
                               </div>
                           )}
@@ -8962,7 +8962,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                   <p className="text-rose-200/90 text-sm font-bold">Tema para redacción corta</p>
                                   <p className="text-base md:text-lg text-white font-semibold">{WRITING_PROMPTS_DE[writingPromptIdx % WRITING_PROMPTS_DE.length].de}</p>
                                   <p className="text-xs text-gray-500 italic">{WRITING_PROMPTS_DE[writingPromptIdx % WRITING_PROMPTS_DE.length].es}</p>
-                                  <button type="button" onClick={() => { setWritingPromptIdx((i) => (i + 1) % WRITING_PROMPTS_DE.length); setWritingCanvasKey((k) => k + 1); }} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40 mt-2">Otro tema</button>
+                                  <button type="button" onClick={() => runSingleSubmitAction('writing-prompt-next', () => { setWritingPromptIdx((i) => (i + 1) % WRITING_PROMPTS_DE.length); setWritingCanvasKey((k) => k + 1); })} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40 mt-2">Otro tema</button>
                               </div>
                           )}
 
