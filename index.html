@@ -1393,6 +1393,7 @@
         const MULLER_PDF_NOTES_STORAGE_KEY = 'muller_pdf_study_notes_v1';
         const MULLER_PDF_STORED_PAGES_MAX = 80;
         const MULLER_PDF_STORED_TEXT_MAX = 3200;
+        const MULLER_PDF_EXTRACT_YIELD_EVERY = 2;
         const MULLER_TTS_RATE_KEY = 'muller_tts_rate_preset_v1';
         const MULLER_PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.worker.min.js';
 
@@ -3579,6 +3580,9 @@ const finishPlacementWithLevel = (finalLevel) => {
                           text: text.slice(0, MULLER_PDF_STORED_TEXT_MAX),
                           ocrPending: !text
                       });
+                      if ((pageNum % MULLER_PDF_EXTRACT_YIELD_EVERY) === 0) {
+                          await new Promise((resolve) => setTimeout(resolve, 0));
+                      }
                   }
                   const compactPages = pages.slice(0, MULLER_PDF_STORED_PAGES_MAX);
                   const payload = {
