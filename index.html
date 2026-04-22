@@ -3575,6 +3575,22 @@ const finishPlacementWithLevel = (finalLevel) => {
               return () => window.removeEventListener('keydown', onKey);
           }, [mode, diktatMode, showDiktatResult, handleExerciseEnterSubmit, handleNext]);
 
+          useEffect(() => {
+              if (activeTab !== 'ruta') return;
+              if (!rutaRun || (rutaRun.step || 0) !== 2) return;
+              const lv = (window.RUTA_LEVELS || [])[rutaRun.levelIdx];
+              const lesson = lv && lv.lessons && lv.lessons[rutaRun.lessonIdx];
+              if (!lesson || !lesson.speak || !lesson.speak.target) return;
+              const onKey = (e) => {
+                  if (rutaListening) return;
+                  handleExerciseEnterSubmit(e, 'ruta-speak-validate', () => {
+                      if (checkRutaSpeakAnswer(lesson.speak.target)) completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx);
+                  });
+              };
+              window.addEventListener('keydown', onKey);
+              return () => window.removeEventListener('keydown', onKey);
+          }, [activeTab, rutaRun, rutaListening, handleExerciseEnterSubmit, checkRutaSpeakAnswer, completeRutaLesson]);
+
           const loadPdfStudyFile = useCallback(async (file) => {
               if (!file) return;
               if (!window.pdfjsLib || typeof window.pdfjsLib.getDocument !== 'function') {
