@@ -8932,13 +8932,21 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                                               </div>
                                               {rutaTranscript ? <p className="text-sm text-emerald-200/90 mb-2">Detectado: {rutaTranscript}</p> : null}
                                               {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
-                                              <button type="button" onClick={() => { if (checkRutaSpeakAnswer(lesson.speak.target)) completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx); }} className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg">Validar y completar lección</button>
                                               <button
                                                   type="button"
-                                                  onClick={() => {
+                                                  onClick={() => runSingleSubmitAction('ruta-speak-validate', () => {
+                                                      if (checkRutaSpeakAnswer(lesson.speak.target)) completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx);
+                                                  })}
+                                                  className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg"
+                                              >
+                                                  Validar y completar lección
+                                              </button>
+                                              <button
+                                                  type="button"
+                                                  onClick={() => runSingleSubmitAction('ruta-speak-skip', () => {
                                                       setRutaSpeakErr('');
                                                       completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx);
-                                                  }}
+                                                  })}
                                                   className="w-full mt-2 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold py-2.5 text-gray-200 border border-white/15"
                                               >
                                                   Continuar sin grabar voz
