@@ -1,0 +1,14 @@
+{
+  "title": "Viaje / Reise (mini)",
+  "words": [
+    { "de": "die Reise", "es": "el viaje", "diff": 0 },
+    { "de": "der Flug", "es": "el vuelo", "diff": 0 },
+    { "de": "das Gepäck", "es": "el equipaje", "diff": 0 },
+    { "de": "die Verspätung", "es": "el retraso", "diff": 1 },
+    { "de": "sich erholen", "es": "descansar / recuperarse", "diff": 1 },
+    { "de": "die Unterkunft", "es": "el alojamiento", "diff": 0 },
+    { "de": "die Reservierung", "es": "la reserva", "diff": 0 },
+    { "de": "abfahren", "es": "salir (tren/bus)", "diff": 1 }
+  ],
+  "note": "Pega este bloque en Biblioteca: campo de vocabulario con formato der Wort - traducción por línea, o importa como lección personalizada desde la app si añades soporte JSON."
+}

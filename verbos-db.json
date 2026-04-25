@@ -1,0 +1,258 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "lang": "de-es",
+    "levels": ["A1", "A2", "B1", "B2", "C1", "C2"]
+  },
+  "verbs": [
+    {
+      "id": "haben",
+      "level": "A1",
+      "lemma": "haben",
+      "es": "tener",
+      "type": ["irregular"],
+      "aux": "haben",
+      "partizip2": "gehabt",
+      "praeteritum_stamm": "hatte",
+      "regierung": [],
+      "forms": {
+        "praesens": {
+          "ich": "habe",
+          "du": "hast",
+          "er_sie_es": "hat",
+          "wir": "haben",
+          "ihr": "habt",
+          "sie_Sie": "haben"
+        },
+        "praeteritum": {
+          "ich": "hatte",
+          "du": "hattest",
+          "er_sie_es": "hatte",
+          "wir": "hatten",
+          "ihr": "hattet",
+          "sie_Sie": "hatten"
+        },
+        "perfekt": {
+          "ich": "habe gehabt",
+          "du": "hast gehabt",
+          "er_sie_es": "hat gehabt",
+          "wir": "haben gehabt",
+          "ihr": "habt gehabt",
+          "sie_Sie": "haben gehabt"
+        },
+        "plusquamperfekt": {
+          "ich": "hatte gehabt",
+          "du": "hattest gehabt",
+          "er_sie_es": "hatte gehabt",
+          "wir": "hatten gehabt",
+          "ihr": "hattet gehabt",
+          "sie_Sie": "hatten gehabt"
+        },
+        "futur1": {
+          "ich": "werde haben",
+          "du": "wirst haben",
+          "er_sie_es": "wird haben",
+          "wir": "werden haben",
+          "ihr": "werdet haben",
+          "sie_Sie": "werden haben"
+        },
+        "konjunktiv2": {
+          "ich": "hätte",
+          "du": "hättest",
+          "er_sie_es": "hätte",
+          "wir": "hätten",
+          "ihr": "hättet",
+          "sie_Sie": "hätten"
+        }
+      },
+      "examples": [
+        {
+          "de": "Ich habe einen Bruder.",
+          "es": "Tengo un hermano.",
+          "focus": ["praesens", "ich"]
+        },
+        {
+          "de": "Er hat gestern keine Zeit gehabt.",
+          "es": "Él no tuvo tiempo ayer.",
+          "focus": ["perfekt", "er_sie_es"]
+        },
+        {
+          "de": "Wir hatten viel Spaß.",
+          "es": "Tuvimos mucha diversión.",
+          "focus": ["praeteritum", "wir"]
+        },
+        {
+          "de": "Wenn ich Geld hätte, würde ich reisen.",
+          "es": "Si tuviera dinero, viajaría.",
+          "focus": ["konjunktiv2", "ich"]
+        }
+      ]
+    },
+    {
+      "id": "werden",
+      "level": "A1",
+      "lemma": "werden",
+      "es": "llegar a ser / convertirse en",
+      "type": ["irregular"],
+      "aux": "sein",
+      "partizip2": "geworden",
+      "praeteritum_stamm": "wurde",
+      "regierung": [],
+      "forms": {
+        "praesens": {
+          "ich": "werde",
+          "du": "wirst",
+          "er_sie_es": "wird",
+          "wir": "werden",
+          "ihr": "werdet",
+          "sie_Sie": "werden"
+        },
+        "praeteritum": {
+          "ich": "wurde",
+          "du": "wurdest",
+          "er_sie_es": "wurde",
+          "wir": "wurden",
+          "ihr": "wurdet",
+          "sie_Sie": "wurden"
+        },
+        "perfekt": {
+          "ich": "bin geworden",
+          "du": "bist geworden",
+          "er_sie_es": "ist geworden",
+          "wir": "sind geworden",
+          "ihr": "seid geworden",
+          "sie_Sie": "sind geworden"
+        },
+        "plusquamperfekt": {
+          "ich": "war geworden",
+          "du": "warst geworden",
+          "er_sie_es": "war geworden",
+          "wir": "waren geworden",
+          "ihr": "wart geworden",
+          "sie_Sie": "waren geworden"
+        },
+        "futur1": {
+          "ich": "werde werden",
+          "du": "wirst werden",
+          "er_sie_es": "wird werden",
+          "wir": "werden werden",
+          "ihr": "werdet werden",
+          "sie_Sie": "werden werden"
+        },
+        "konjunktiv2": {
+          "ich": "würde",
+          "du": "würdest",
+          "er_sie_es": "würde",
+          "wir": "würden",
+          "ihr": "würdet",
+          "sie_Sie": "würden"
+        }
+      },
+      "examples": [
+        {
+          "de": "Ich werde müde.",
+          "es": "Me estoy cansando.",
+          "focus": ["praesens", "ich"]
+        },
+        {
+          "de": "Sie ist Lehrerin geworden.",
+          "es": "Ella se ha hecho profesora.",
+          "focus": ["perfekt", "er_sie_es"]
+        },
+        {
+          "de": "Es wurde dunkel.",
+          "es": "Se hizo de noche.",
+          "focus": ["praeteritum", "er_sie_es"]
+        },
+        {
+          "de": "Ich würde gern kommen.",
+          "es": "Me gustaría venir.",
+          "focus": ["konjunktiv2", "ich"]
+        }
+      ]
+    },
+    {
+      "id": "machen",
+      "level": "A1",
+      "lemma": "machen",
+      "es": "hacer",
+      "type": ["regular"],
+      "aux": "haben",
+      "partizip2": "gemacht",
+      "praeteritum_stamm": "machte",
+      "regierung": [],
+      "forms": {
+        "praesens": {
+          "ich": "mache",
+          "du": "machst",
+          "er_sie_es": "macht",
+          "wir": "machen",
+          "ihr": "macht",
+          "sie_Sie": "machen"
+        },
+        "praeteritum": {
+          "ich": "machte",
+          "du": "machtest",
+          "er_sie_es": "machte",
+          "wir": "machten",
+          "ihr": "machtet",
+          "sie_Sie": "machten"
+        },
+        "perfekt": {
+          "ich": "habe gemacht",
+          "du": "hast gemacht",
+          "er_sie_es": "hat gemacht",
+          "wir": "haben gemacht",
+          "ihr": "habt gemacht",
+          "sie_Sie": "haben gemacht"
+        },
+        "plusquamperfekt": {
+          "ich": "hatte gemacht",
+          "du": "hattest gemacht",
+          "er_sie_es": "hatte gemacht",
+          "wir": "hatten gemacht",
+          "ihr": "hattet gemacht",
+          "sie_Sie": "hatten gemacht"
+        },
+        "futur1": {
+          "ich": "werde machen",
+          "du": "wirst machen",
+          "er_sie_es": "wird machen",
+          "wir": "werden machen",
+          "ihr": "werdet machen",
+          "sie_Sie": "werden machen"
+        },
+        "konjunktiv2": {
+          "ich": "machte",
+          "du": "machtest",
+          "er_sie_es": "machte",
+          "wir": "machten",
+          "ihr": "machtet",
+          "sie_Sie": "machten"
+        }
+      },
+      "examples": [
+        {
+          "de": "Ich mache meine Hausaufgaben.",
+          "es": "Hago mis deberes.",
+          "focus": ["praesens", "ich"]
+        },
+        {
+          "de": "Was hast du gestern gemacht?",
+          "es": "¿Qué hiciste ayer?",
+          "focus": ["perfekt", "du"]
+        },
+        {
+          "de": "Wir machten einen Spaziergang.",
+          "es": "Dimos un paseo.",
+          "focus": ["praeteritum", "wir"]
+        },
+        {
+          "de": "Ich machte gern Urlaub.",
+          "es": "Me gustaría ir de vacaciones.",
+          "focus": ["konjunktiv2", "ich"]
+        }
+      ]
+    }
+  ]
+}

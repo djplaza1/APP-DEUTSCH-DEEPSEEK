@@ -1,0 +1,831 @@
+{
+  "version": 1,
+  "b1": {
+    "vocabulario": [
+      {
+        "b1": "Das ist billig.",
+        "b2": "Das ist günstig.",
+        "es": "Eso es barato / a buen precio.",
+        "trick": "'Günstig' suena mucho mejor y más positivo que 'billig' (que a veces significa de mala calidad)."
+      },
+      {
+        "b1": "Ich habe viel Arbeit.",
+        "b2": "Ich bin sehr beschäftigt.",
+        "es": "Estoy muy ocupado.",
+        "trick": "Usar adjetivos en lugar de 'tener cosas'."
+      },
+      {
+        "b1": "Das ist schlecht.",
+        "b2": "Das ist schlimm.",
+        "es": "Eso es grave / malo.",
+        "trick": "'Schlimm' se usa para situaciones, 'schlecht' para calidad o comida."
+      },
+      {
+        "b1": "Ich treffe meine Freunde.",
+        "b2": "Ich verabrede mich mit meinen Freunden.",
+        "es": "Me cito con mis amigos.",
+        "trick": "'sich verabreden' implica planear un encuentro, nivel B1 puro."
+      },
+      {
+        "b1": "Ich mache die Tür zu.",
+        "b2": "Ich schließe die Tür.",
+        "es": "Cierro la puerta.",
+        "trick": "Evita verbos con 'machen', usa el verbo específico (schließen)."
+      },
+      {
+        "b1": "Ich finde das gut.",
+        "b2": "Das spricht mich an.",
+        "es": "Eso me convence / me interesa.",
+        "trick": "En opiniones formales, 'ansprechen' eleva el registro frente a 'gut finden'."
+      },
+      {
+        "b1": "Ich habe keine Zeit.",
+        "b2": "Ich komme zeitlich nicht hin.",
+        "es": "No me da el tiempo / no llego.",
+        "trick": "Excusa muy natural en el trabajo o estudios."
+      },
+      {
+        "b1": "Das ist langweilig.",
+        "b2": "Das ist nicht gerade spannend.",
+        "es": "No es precisamente emocionante.",
+        "trick": "Suavizar críticas con 'nicht gerade' + adjetivo."
+      },
+      {
+        "b1": "Ich kenne ihn.",
+        "b2": "Ich bin mit ihm vertraut.",
+        "es": "Lo conozco bien / tengo confianza con él.",
+        "trick": "'vertraut sein' suena más matizado que solo 'kennen'."
+      },
+      {
+        "b1": "Ich bin müde.",
+        "b2": "Ich bin erschöpft.",
+        "es": "Estoy agotado.",
+        "trick": "'Erschöpft' es más fuerte y preciso que 'müde'."
+      },
+      {
+        "b1": "Das ist einfach.",
+        "b2": "Das ist unkompliziert.",
+        "es": "Es sin complicaciones.",
+        "trick": "En servicios o trámites, 'unkompliziert' transmite profesionalidad."
+      },
+      {
+        "b1": "Ich habe Angst.",
+        "b2": "Ich mache mir Sorgen.",
+        "es": "Me preocupo / tengo inquietud.",
+        "trick": "'Sorgen machen' es más cotidiano que 'Angst haben' en muchos contextos."
+      },
+      {
+        "b1": "Ich gehe einkaufen.",
+        "b2": "Ich erledige den Einkauf.",
+        "es": "Hago la compra (la gestiono).",
+        "trick": "'erledigen' enfatiza la tarea cumplida."
+      },
+      {
+        "b1": "Das passt mir nicht.",
+        "b2": "Das kommt für mich nicht infrage.",
+        "es": "Eso no me encaja / no entra en mis planes.",
+        "trick": "'nicht infrage kommen' es firme pero educado."
+      },
+      {
+        "b1": "Ich warte auf den Bus.",
+        "b2": "Ich warte auf den Bus, und zwar schon lange.",
+        "es": "Llevo mucho rato esperando el autobús.",
+        "trick": "'und zwar' añade matiz (explicación) típico oral B1."
+      }
+    ],
+    "verbos": [
+      {
+        "b1": "Ich interessiere mich für Kunst.",
+        "b2": "Ich habe Interesse an Kunst.",
+        "es": "Tengo interés en el arte.",
+        "trick": "Cambiar verbo reflexivo por sustantivo (Interesse an + Dat)."
+      },
+      {
+        "b1": "Ich freue mich über das Geschenk.",
+        "b2": "Ich bin froh über das Geschenk.",
+        "es": "Me alegro / estoy contento por el regalo.",
+        "trick": "Variar entre alegrarse (verbo) y estar contento (adjetivo)."
+      },
+      {
+        "b1": "Ich nehme an dem Kurs teil.",
+        "b2": "Ich mache bei dem Kurs mit.",
+        "es": "Participo en el curso.",
+        "trick": "Ambos son B1, pero 'teilnehmen an' es más formal que 'mitmachen bei'."
+      },
+      {
+        "b1": "Ich helfe dir.",
+        "b2": "Ich unterstütze dich dabei.",
+        "es": "Te apoyo en ello.",
+        "trick": "'unterstützen' suena más serio que 'helfen' en contextos laborales."
+      },
+      {
+        "b1": "Ich verstehe das nicht.",
+        "b2": "Das geht mir nicht auf.",
+        "es": "No me entra / no lo pillo.",
+        "trick": "'aufgehen' es coloquial pero muy natural en oral."
+      },
+      {
+        "b1": "Ich denke nach.",
+        "b2": "Ich überlege mir das.",
+        "es": "Me lo pienso / lo medito.",
+        "trick": "'überlegen' refleja proceso; 'nachdenken' es más general."
+      },
+      {
+        "b1": "Ich erkläre die Regel.",
+        "b2": "Ich mache die Regel klar.",
+        "es": "Dejo clara la regla.",
+        "trick": "'klarmachen' refuerza claridad explícita."
+      },
+      {
+        "b1": "Ich vergesse das oft.",
+        "b2": "Das entfällt mir oft.",
+        "es": "Se me olvida a menudo.",
+        "trick": "'entfallen' es alternativa elegante a 'vergessen'."
+      },
+      {
+        "b1": "Ich suche eine Wohnung.",
+        "b2": "Ich bin auf Wohnungssuche.",
+        "es": "Estoy buscando piso.",
+        "trick": "Sustantivo compuesto 'Wohnungssuche' suena muy alemán."
+      },
+      {
+        "b1": "Ich lerne Deutsch.",
+        "b2": "Ich eigne mir Deutsch an.",
+        "es": "Me voy apropiando del alemán.",
+        "trick": "'sich aneignen' implica proceso activo (más formal)."
+      },
+      {
+        "b1": "Ich bin einverstanden.",
+        "b2": "Ich kann damit leben.",
+        "es": "Puedo vivir con ello / me vale.",
+        "trick": "Expresión idiomática para aceptación condicional."
+      },
+      {
+        "b1": "Ich entschuldige mich.",
+        "b2": "Ich bitte um Entschuldigung.",
+        "es": "Pido disculpas.",
+        "trick": "Registro más formal para cartas o jefes."
+      },
+      {
+        "b1": "Ich probiere es.",
+        "b2": "Ich versuche es.",
+        "es": "Lo intento.",
+        "trick": "'versuchen' enfatiza esfuerzo; 'probieren' es probar algo."
+      },
+      {
+        "b1": "Ich kaufe Brot.",
+        "b2": "Ich besorge Brot.",
+        "es": "Me hago con pan / lo consigo.",
+        "trick": "'besorgen' incluye la gestión de la compra."
+      },
+      {
+        "b1": "Ich melde mich krank.",
+        "b2": "Ich habe eine Krankschreibung.",
+        "es": "Me doy de baja / tengo parte médica.",
+        "trick": "'krankmelden' + sustantivo 'Krankschreibung' (AU) es lo habitual en DE."
+      }
+    ],
+    "preposiciones": [
+      {
+        "b1": "Ich träume von einem Haus (Dat).",
+        "b2": "Ich denke an das Haus (Akk).",
+        "es": "Sueño con / Pienso en la casa.",
+        "trick": "Memorizar que 'träumen' va con von(Dativ) y 'denken' con an(Akkusativ)."
+      },
+      {
+        "b1": "Er ärgert sich über den Chef (Akk).",
+        "b2": "Er ist wütend auf den Chef (Akk).",
+        "es": "Él se enfada con / está furioso con el jefe.",
+        "trick": "Conocer los adjetivos con preposición."
+      },
+      {
+        "b1": "Ich warte auf den Zug.",
+        "b2": "Ich warte auf den verspäteten Zug.",
+        "es": "Espero al tren (retrasado).",
+        "trick": "'warten auf' siempre Akkusativ."
+      },
+      {
+        "b1": "Ich freue mich auf das Wochenende.",
+        "b2": "Ich freue mich auf das lange Wochenende.",
+        "es": "Tengo ganas del fin de semana.",
+        "trick": "'sich freuen auf' (futuro) vs 'über' (presente/pasado)."
+      },
+      {
+        "b1": "Ich bin zufrieden mit dem Ergebnis.",
+        "b2": "Ich bin mit dem Ergebnis zufrieden.",
+        "es": "Estoy satisfecho con el resultado.",
+        "trick": "Colocación fija 'zufrieden sein mit + Dat'."
+      },
+      {
+        "b1": "Ich leide unter Stress.",
+        "b2": "Ich leide unter starkem Stress.",
+        "es": "Sufro estrés.",
+        "trick": "'leiden unter + Dat' para cargas psicológicas."
+      },
+      {
+        "b1": "Ich konzentriere mich auf die Prüfung.",
+        "b2": "Ich konzentriere mich voll auf die Prüfung.",
+        "es": "Me concentro en el examen.",
+        "trick": "'sich konzentrieren auf + Akk' frecuente en TELC."
+      },
+      {
+        "b1": "Ich bin gegen diese Idee.",
+        "b2": "Ich bin strikt gegen diese Idee.",
+        "es": "Estoy en contra de esta idea.",
+        "trick": "'gegen + Akk' para opinión contraria."
+      },
+      {
+        "b1": "Ich danke dir für die Hilfe.",
+        "b2": "Ich bin dir für die Hilfe dankbar.",
+        "es": "Te agradezco la ayuda.",
+        "trick": "'danken für + Akk' o adjetivo 'dankbar sein'."
+      },
+      {
+        "b1": "Ich ärgere mich über den Lärm.",
+        "b2": "Ich bin genervt vom Lärm.",
+        "es": "Me molesta el ruido.",
+        "trick": "'sich ärgern über' vs 'genervt sein von'."
+      },
+      {
+        "b1": "Ich verlasse mich auf dich.",
+        "b2": "Ich zähle auf dich.",
+        "es": "Cuento contigo.",
+        "trick": "'sich verlassen auf' y 'zählen auf' con Akkusativ."
+      },
+      {
+        "b1": "Ich passe auf das Kind auf.",
+        "b2": "Ich achte auf das Kind.",
+        "es": "Vigilo al niño / presto atención.",
+        "trick": "'aufpassen auf' vs 'achten auf' (matiz de cuidado)."
+      }
+    ],
+    "conectores": [
+      {
+        "b1": "Ich bin krank. Deshalb komme ich nicht.",
+        "b2": "Ich komme nicht, weil ich krank bin.",
+        "es": "No voy porque estoy enfermo.",
+        "trick": "Dominar el cambio entre conector de posición 1 (deshalb) y subordinante (weil)."
+      },
+      {
+        "b1": "Es regnet, trotzdem gehe ich spazieren.",
+        "b2": "Obwohl es regnet, gehe ich spazieren.",
+        "es": "Aunque llueve, voy a pasear.",
+        "trick": "Trotzdem (Hauptsatz) vs Obwohl (Nebensatz)."
+      },
+      {
+        "b1": "Zuerst frühstücke ich. Dann gehe ich zur Arbeit.",
+        "b2": "Nachdem ich gefrühstückt habe, gehe ich zur Arbeit.",
+        "es": "Después de desayunar, voy al trabajo.",
+        "trick": "'nachdem' + Perfekt encaja con secuencia temporal."
+      },
+      {
+        "b1": "Ich lerne viel, damit ich bestehe.",
+        "b2": "Ich lerne viel, um zu bestehen.",
+        "es": "Estudio mucho para aprobar.",
+        "trick": "'damit' (subordinada) vs 'um ... zu' (infinitivo)."
+      },
+      {
+        "b1": "Es ist teuer. Außerdem ist es weit weg.",
+        "b2": "Es ist teuer; darüber hinaus ist es weit.",
+        "es": "Además está lejos.",
+        "trick": "'außerdem' oral; 'darüber hinaus' más escrito."
+      },
+      {
+        "b1": "Ich bleibe, falls es regnet.",
+        "b2": "Ich bleibe, wenn es regnet.",
+        "es": "Me quedo si llueve.",
+        "trick": "'falls' (por si) vs 'wenn' (si/cuando)."
+      },
+      {
+        "b1": "Er kommt, sobald er kann.",
+        "b2": "Er kommt, wenn er kann.",
+        "es": "Viene en cuanto pueda.",
+        "trick": "'sobald' enfatiza inmediatez."
+      },
+      {
+        "b1": "Ich war jung, als ich das lernte.",
+        "b2": "Ich war noch jung, als ich das lernte.",
+        "es": "Era joven cuando aprendí eso.",
+        "trick": "'als' para una vez en el pasado."
+      },
+      {
+        "b1": "Entweder wir gehen jetzt, oder wir kommen zu spät.",
+        "b2": "Entweder gehen wir jetzt, oder wir kommen zu spät.",
+        "es": "O salimos ahora o llegamos tarde.",
+        "trick": "Verbo en posición 1 tras 'entweder' en estilo marcado."
+      },
+      {
+        "b1": "Ich mag ihn nicht, sondern ich respektiere ihn.",
+        "b2": "Ich mag ihn nicht, vielmehr respektiere ich ihn.",
+        "es": "No me cae bien; más bien lo respeto.",
+        "trick": "'sondern' vs 'vielmehr' para corrección fina."
+      },
+      {
+        "b1": "Es war kalt. Trotzdem sind wir spazieren gegangen.",
+        "b2": "Es war kalt; dennoch sind wir spazieren gegangen.",
+        "es": "Hacía frío; no obstante salimos.",
+        "trick": "'dennoch' más formal que 'trotzdem'."
+      },
+      {
+        "b1": "Ich habe Zeit, solange der Laden offen ist.",
+        "b2": "Ich habe Zeit, wenn der Laden noch offen ist.",
+        "es": "Tengo tiempo mientras la tienda siga abierta.",
+        "trick": "'solange' = mientras (duración)."
+      }
+    ],
+    "redemittel": [
+      {
+        "b1": "Wie geht's?",
+        "b2": "Wie läuft's bei dir?",
+        "es": "¿Cómo te va?",
+        "trick": "Alemán de la calle (Alltagsdeutsch)."
+      },
+      {
+        "b1": "Ich glaube ja.",
+        "b2": "Davon gehe ich aus.",
+        "es": "Parto de esa base (Supongo que sí).",
+        "trick": "Muy profesional para el B1."
+      },
+      {
+        "b1": "Das ist mir egal.",
+        "b2": "Das macht mir nichts aus.",
+        "es": "No me importa / No me molesta.",
+        "trick": "Más educado que 'egal'."
+      },
+      {
+        "b1": "Kannst du mir helfen?",
+        "b2": "Könntest du mir bitte helfen?",
+        "es": "¿Podrías ayudarme, por favor?",
+        "trick": "Condicional + 'bitte' suaviza peticiones."
+      },
+      {
+        "b1": "Das weiß ich nicht.",
+        "b2": "Da bin ich mir nicht sicher.",
+        "es": "No estoy seguro.",
+        "trick": "Evita 'keine Ahnung' en contextos formales."
+      },
+      {
+        "b1": "Findest du das gut?",
+        "b2": "Was hältst du davon?",
+        "es": "¿Qué opinas?",
+        "trick": "'Was halten von' es estándar para sondear opiniones."
+      },
+      {
+        "b1": "Ich bin anderer Meinung.",
+        "b2": "Ich sehe das anders.",
+        "es": "Lo veo de otra manera.",
+        "trick": "Para discrepar sin choque."
+      },
+      {
+        "b1": "Das stimmt.",
+        "b2": "Dem kann ich zustimmen.",
+        "es": "Estoy de acuerdo con eso.",
+        "trick": "'zustimmen' refuerza acuerdo explícito."
+      },
+      {
+        "b1": "Viel Erfolg!",
+        "b2": "Ich drücke dir die Daumen!",
+        "es": "¡Mucha suerte! (literalmente: te aprieto los pulgares)",
+        "trick": "Fórmula típica antes de exámenes."
+      },
+      {
+        "b1": "Kein Problem.",
+        "b2": "Das ist überhaupt kein Problem.",
+        "es": "Para nada hay problema.",
+        "trick": "'überhaupt' intensifica tranquilizar."
+      },
+      {
+        "b1": "Bis bald!",
+        "b2": "Wir hören uns!",
+        "es": "¡Hablamos!",
+        "trick": "Despedida oral moderna (teléfono/chat)."
+      },
+      {
+        "b1": "Ich bin spät dran.",
+        "b2": "Ich komme zu spät.",
+        "es": "Voy tarde.",
+        "trick": "'spät dran sein' muy oral."
+      },
+      {
+        "b1": "Mach's gut!",
+        "b2": "Pass auf dich auf!",
+        "es": "¡Cuídate!",
+        "trick": "Despedida cariñosa vs cuidado."
+      }
+    ]
+  },
+  "b2": {
+    "vocabulario": [
+      {
+        "b1": "Das ist ein großes Problem.",
+        "b2": "Das ist eine große Herausforderung.",
+        "es": "Eso es un gran desafío.",
+        "trick": "Evita 'Problem', usa 'Herausforderung' (desafío/reto) en entornos formales."
+      },
+      {
+        "b1": "Ich mache das nicht.",
+        "b2": "Ich weigere mich, das zu tun.",
+        "es": "Me niego a hacer eso.",
+        "trick": "Usar 'sich weigern' (negarse) demuestra dominio."
+      },
+      {
+        "b1": "Das ist sehr wichtig.",
+        "b2": "Das ist von großer Bedeutung.",
+        "es": "Eso es de gran importancia.",
+        "trick": "Usa construcciones con sustantivos: 'von großer Bedeutung'."
+      },
+      {
+        "b1": "Er hat mich angelogen.",
+        "b2": "Er hat mich getäuscht.",
+        "es": "Él me ha engañado.",
+        "trick": "'Täuschen' es mucho más elegante que 'anlügen'."
+      },
+      {
+        "b1": "Wir müssen das ändern.",
+        "b2": "Wir müssen entsprechende Maßnahmen ergreifen.",
+        "es": "Debemos tomar las medidas correspondientes.",
+        "trick": "Típico del B2/C1. 'Maßnahmen ergreifen' = Tomar medidas."
+      },
+      {
+        "b1": "Die Lage ist schwierig.",
+        "b2": "Die Situation ist angespannt.",
+        "es": "La situación está tensa.",
+        "trick": "'angespannt' describe clima social o laboral."
+      },
+      {
+        "b1": "Ich habe viel Stress.",
+        "b2": "Ich stehe unter starkem Druck.",
+        "es": "Estoy muy presionado.",
+        "trick": "'unter Druck stehen' fija colocación."
+      },
+      {
+        "b1": "Das ist eine gute Idee.",
+        "b2": "Das ist ein sinnvoller Vorschlag.",
+        "es": "Es una propuesta sensata.",
+        "trick": "'sinnvoll' eleva el registro frente a 'gut'."
+      },
+      {
+        "b1": "Wir müssen sparen.",
+        "b2": "Wir müssen haushalten.",
+        "es": "Tenemos que apretar el presupuesto.",
+        "trick": "'haushalten' es gestionar recursos con cuidado."
+      },
+      {
+        "b1": "Das Ergebnis ist schlecht.",
+        "b2": "Das Ergebnis fällt enttäuschend aus.",
+        "es": "El resultado es decepcionante.",
+        "trick": "'ausfallen' para resultados que 'salen' de cierta manera."
+      },
+      {
+        "b1": "Ich bin sicher.",
+        "b2": "Ich gehe fest davon aus.",
+        "es": "Doy por seguro que...",
+        "trick": "Fórmula para anticipar algo con convicción."
+      },
+      {
+        "b1": "Es gibt viele Gründe.",
+        "b2": "Es gibt eine Reihe von Gründen.",
+        "es": "Hay una serie de motivos.",
+        "trick": "'eine Reihe von' suena académico y preciso."
+      },
+      {
+        "b1": "Das ist nicht fair.",
+        "b2": "Das ist nicht gerecht.",
+        "es": "No es justo.",
+        "trick": "'gerecht' moral; 'fair' más prestado/informal."
+      },
+      {
+        "b1": "Ich habe Erfolg.",
+        "b2": "Ich habe Erfolg damit.",
+        "es": "Tengo éxito con ello.",
+        "trick": "Añadir 'damit' enlaza con el contexto previo."
+      },
+      {
+        "b1": "Das kostet viel.",
+        "b2": "Das geht ins Geld.",
+        "es": "Eso se va en dinero / es caro.",
+        "trick": "Idiomático para precios elevados."
+      }
+    ],
+    "verbos": [
+      {
+        "b1": "Ich entscheide das.",
+        "b2": "Ich treffe eine Entscheidung.",
+        "es": "Tomo una decisión.",
+        "trick": "Nomen-Verb-Verbindung. Usar sustantivo + verbo vacío (treffen, stehen)."
+      },
+      {
+        "b1": "Ich beantworte die E-Mail.",
+        "b2": "Ich nehme Stellung zu der E-Mail.",
+        "es": "Tomo posición / Respondo a la E-mail.",
+        "trick": "'Stellung nehmen' se usa muchísimo en B2 escrito."
+      },
+      {
+        "b1": "Ich frage ihn.",
+        "b2": "Ich stelle ihm eine Frage.",
+        "es": "Le hago una pregunta.",
+        "trick": "Otra típica Nomen-Verb-Verbindung."
+      },
+      {
+        "b1": "Das Problem kann gelöst werden.",
+        "b2": "Das Problem ist lösbar.",
+        "es": "El problema es resoluble.",
+        "trick": "Sustituto de Passiv. Cambiar 'können + Passiv' por el sufijo '-bar'."
+      },
+      {
+        "b1": "Ich erkläre den Text.",
+        "b2": "Ich interpretiere den Text.",
+        "es": "Interpreto el texto.",
+        "trick": "'interpretieren' para análisis en examen escrito."
+      },
+      {
+        "b1": "Ich kritisiere den Plan.",
+        "b2": "Ich hege Zweifel an dem Plan.",
+        "es": "Albergo dudas sobre el plan.",
+        "trick": "'Zweifel hegen' es muy B2 escrito."
+      },
+      {
+        "b1": "Ich nutze die Chance.",
+        "b2": "Ich ergreife die Gelegenheit.",
+        "es": "Aprovecho la ocasión.",
+        "trick": "'ergreifen' con 'Gelegenheit' es colocación clásica."
+      },
+      {
+        "b1": "Ich hoffe auf besseres Wetter.",
+        "b2": "Ich setze auf besseres Wetter.",
+        "es": "Confío en que mejorará el tiempo.",
+        "trick": "'setzen auf' para apostar/confiar en algo."
+      },
+      {
+        "b1": "Ich vergleiche beide Texte.",
+        "b2": "Ich stelle einen Vergleich zwischen beiden Texten an.",
+        "es": "Establezco una comparación entre ambos textos.",
+        "trick": "Nominalización típica de redacción."
+      },
+      {
+        "b1": "Ich sage meine Meinung.",
+        "b2": "Ich äußere meine Meinung.",
+        "es": "Expreso mi opinión.",
+        "trick": "'äußern' más formal que 'sagen'."
+      },
+      {
+        "b1": "Ich lehne das ab.",
+        "b2": "Ich schließe das aus.",
+        "es": "Descarto eso / lo descarto.",
+        "trick": "'ausschließen' para hipótesis descartadas."
+      },
+      {
+        "b1": "Ich nehme Rücksicht.",
+        "b2": "Ich nehme Rücksicht auf seine Situation.",
+        "es": "Tengo en cuenta su situación.",
+        "trick": "'Rücksicht nehmen auf + Akk'."
+      },
+      {
+        "b1": "Ich setze mich dafür ein.",
+        "b2": "Ich plädiere dafür.",
+        "es": "Abogo por ello.",
+        "trick": "'plädieren' para argumentos formales."
+      },
+      {
+        "b1": "Ich verstehe den Zusammenhang.",
+        "b2": "Ich erfasse den Zusammenhang.",
+        "es": "Capturo el contexto global.",
+        "trick": "'erfassen' implica comprensión completa."
+      },
+      {
+        "b1": "Ich schreibe einen Aufsatz.",
+        "b2": "Ich verfasse einen Aufsatz.",
+        "es": "Redacto un ensayo.",
+        "trick": "'verfassen' es redacción formal."
+      }
+    ],
+    "preposiciones": [
+      {
+        "b1": "Wegen dem Wetter (Dat).",
+        "b2": "Wegen des schlechten Wetters (Gen).",
+        "es": "A causa del mal tiempo.",
+        "trick": "En B2, 'wegen', 'trotz' y 'während' rigen Genitivo sí o sí."
+      },
+      {
+        "b1": "Ich spreche über das Thema.",
+        "b2": "Ich beziehe mich auf das Thema.",
+        "es": "Me refiero al tema.",
+        "trick": "'sich beziehen auf (+Akk)' es clave para cartas formales."
+      },
+      {
+        "b1": "Ich bin gegen diesen Plan.",
+        "b2": "Ich protestiere gegen diesen Plan.",
+        "es": "Protesto contra este plan.",
+        "trick": "Ambos usan 'gegen', pero 'protestieren' eleva el nivel."
+      },
+      {
+        "b1": "Trotz dem Regen (Dat).",
+        "b2": "Trotz des Regens (Gen).",
+        "es": "A pesar de la lluvia.",
+        "trick": "'trotz' + Genitivo en B2 escrito."
+      },
+      {
+        "b1": "Während der Arbeit (Gen).",
+        "b2": "Während der Arbeitszeit (Gen).",
+        "es": "Durante la jornada laboral.",
+        "trick": "'während' + Genitivo."
+      },
+      {
+        "b1": "Ich bin stolz auf dich.",
+        "b2": "Ich bin stolz auf deine Leistung.",
+        "es": "Estoy orgulloso de tu rendimiento.",
+        "trick": "'stolz sein auf + Akk'."
+      },
+      {
+        "b1": "Ich bin abhängig vom Auto.",
+        "b2": "Ich bin vom Auto abhängig.",
+        "es": "Dependo del coche.",
+        "trick": "'abhängig von + Dat'."
+      },
+      {
+        "b1": "Ich zweifle an der Aussage.",
+        "b2": "Ich hege Zweifel an der Aussage.",
+        "es": "Dudo de la afirmación.",
+        "trick": "'zweifeln an + Dat'."
+      },
+      {
+        "b1": "Ich bin überzeugt von der Idee.",
+        "b2": "Ich stehe hinter der Idee.",
+        "es": "Estoy convencido / apoyo la idea.",
+        "trick": "'hinter etwas stehen' = respaldar."
+      },
+      {
+        "b1": "Ich profitiere von dem Kurs.",
+        "b2": "Ich ziehe Nutzen aus dem Kurs.",
+        "es": "Me saco provecho del curso.",
+        "trick": "'Nutzen ziehen aus' más formal."
+      },
+      {
+        "b1": "Ich entschuldige mich für die Verspätung.",
+        "b2": "Ich bitte um Entschuldigung für die Verspätung.",
+        "es": "Pido disculpas por el retraso.",
+        "trick": "Doble registro formal de excusas."
+      },
+      {
+        "b1": "Ich orientiere mich an den Vorgaben.",
+        "b2": "Ich richte mich nach den Vorgaben.",
+        "es": "Me guío por las directrices.",
+        "trick": "'sich richten nach + Dat' en normas."
+      }
+    ],
+    "conectores": [
+      {
+        "b1": "Weil es stark regnet, bleibe ich hier.",
+        "b2": "Aufgrund des starken Regens bleibe ich hier.",
+        "es": "Debido a la fuerte lluvia me quedo aquí.",
+        "trick": "Nominalstil: Cambiar conector verbal 'weil' por preposición 'aufgrund + Genitiv'."
+      },
+      {
+        "b1": "Ich spreche Englisch und Deutsch.",
+        "b2": "Ich spreche sowohl Englisch als auch Deutsch.",
+        "es": "Hablo tanto inglés como alemán.",
+        "trick": "sowohl... als auch... (Conector doble)."
+      },
+      {
+        "b1": "Es ist nicht billig, aber gut.",
+        "b2": "Es ist zwar nicht billig, aber dafür sehr gut.",
+        "es": "No es barato, pero en cambio es muy bueno.",
+        "trick": "zwar... aber (si bien... pero)."
+      },
+      {
+        "b1": "Es gibt viele Gründe. Zum einen ... zum anderen ...",
+        "b2": "Zum einen ... zum anderen ...",
+        "es": "Por un lado... por otro...",
+        "trick": "Estructura paralela para argumentos dobles."
+      },
+      {
+        "b1": "Ich finde das gut. Allerdings gibt es Risiken.",
+        "b2": "Allerdings gibt es Risiken.",
+        "es": "Sin embargo hay riesgos.",
+        "trick": "'allerdings' matiza o introduce contraargumento."
+      },
+      {
+        "b1": "Das ist richtig. Dennoch muss man vorsichtig sein.",
+        "b2": "Dennoch ist Vorsicht geboten.",
+        "es": "No obstante hay que ser prudente.",
+        "trick": "'dennoch' en posición 1 del verbo."
+      },
+      {
+        "b1": "Erstens ist es teuer. Zweitens ist es weit.",
+        "b2": "Erstens ... zweitens ...",
+        "es": "En primer lugar... en segundo...",
+        "trick": "Enumeración formal en textos."
+      },
+      {
+        "b1": "Ich stimme zu, aber mit Einschränkungen.",
+        "b2": "Ich stimme zu, allerdings nur unter Bedingungen.",
+        "es": "Estoy de acuerdo, pero solo bajo condiciones.",
+        "trick": "Condiciones con 'unter Bedingungen'."
+      },
+      {
+        "b1": "Das ist wichtig. Außerdem ist es dringend.",
+        "b2": "Darüber hinaus ist es dringend.",
+        "es": "Además es urgente.",
+        "trick": "'darüber hinaus' encadena en escritos."
+      },
+      {
+        "b1": "Sobald ich fertig bin, melde ich mich.",
+        "b2": "Sobald ich fertig bin, werde ich mich melden.",
+        "es": "En cuanto termine, me pondré en contacto.",
+        "trick": "Futuro I en subordinada temporal (estilo escrito)."
+      },
+      {
+        "b1": "Je mehr ich übe, desto besser werde ich.",
+        "b2": "Je mehr ich übe, umso sicherer fühle ich mich.",
+        "es": "Cuanto más practico, más seguro me siento.",
+        "trick": "Comparación correlativa 'je... desto/umso'."
+      },
+      {
+        "b1": "Anstatt zu warten, rufe ich an.",
+        "b2": "Anstatt zu warten, rufe ich lieber an.",
+        "es": "En lugar de esperar, llamo.",
+        "trick": "'anstatt + zu' para alternativa."
+      }
+    ],
+    "redemittel": [
+      {
+        "b1": "Das nervt mich.",
+        "b2": "Das geht mir auf die Nerven.",
+        "es": "Eso me saca de quicio.",
+        "trick": "Expresión idiomática súper natural."
+      },
+      {
+        "b1": "Ich denke, dass...",
+        "b2": "Ich bin der Auffassung, dass...",
+        "es": "Soy de la opinión de que...",
+        "trick": "Para la parte oral del B2, usa 'Auffassung' o 'Meinung'."
+      },
+      {
+        "b1": "Das ist mir egal.",
+        "b2": "Das spielt für mich keine Rolle.",
+        "es": "Eso no juega ningún papel para mí.",
+        "trick": "Perfecto para discusiones."
+      },
+      {
+        "b1": "Ich bin nicht sicher.",
+        "b2": "Ich lasse das offen.",
+        "es": "Lo dejo en el aire / sin decidir.",
+        "trick": "'offenlassen' para postergar decisión."
+      },
+      {
+        "b1": "Das ist wichtig.",
+        "b2": "Das hat Priorität.",
+        "es": "Eso tiene prioridad.",
+        "trick": "En contextos laborales o exámenes."
+      },
+      {
+        "b1": "Ich verstehe dich.",
+        "b2": "Ich kann deinen Standpunkt nachvollziehen.",
+        "es": "Puedo entender tu punto de vista.",
+        "trick": "'nachvollziehen' es empatía intelectual."
+      },
+      {
+        "b1": "Ich bin dagegen.",
+        "b2": "Ich spreche mich dagegen aus.",
+        "es": "Me expreso en contra.",
+        "trick": "'sich aussprechen' para posición pública."
+      },
+      {
+        "b1": "Gute Besserung!",
+        "b2": "Ich wünsche dir gute Besserung!",
+        "es": "¡Que te mejores!",
+        "trick": "Fórmula fija; no traducir literalmente."
+      },
+      {
+        "b1": "Vielen Dank!",
+        "b2": "Herzlichen Dank für Ihre Unterstützung!",
+        "es": "¡Muchas gracias por su apoyo!",
+        "trick": "Registro 'Sie' en cartas formales TELC."
+      },
+      {
+        "b1": "Bis später!",
+        "b2": "Ich freue mich auf unser Gespräch!",
+        "es": "¡Espero nuestra conversación!",
+        "trick": "Cierre positivo en correos."
+      },
+      {
+        "b1": "Das ist peinlich.",
+        "b2": "Das ist mir unangenehm.",
+        "es": "Me resulta incómodo.",
+        "trick": "Suavizar situaciones sociales."
+      },
+      {
+        "b1": "Keine Ahnung.",
+        "b2": "Dazu kann ich nichts sagen.",
+        "es": "No puedo decir nada al respecto.",
+        "trick": "Evitar vulgaridad en entrevistas o exámenes."
+      },
+      {
+        "b1": "Stimmt!",
+        "b2": "Genau das meine ich auch.",
+        "es": "Eso es justo lo que quiero decir.",
+        "trick": "Refuerzo de acuerdo en debate."
+      }
+    ]
+  }
+}

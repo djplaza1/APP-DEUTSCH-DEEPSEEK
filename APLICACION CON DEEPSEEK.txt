@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Entrenador Definitivo - Müller</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React y ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .lucide-wrapper { display: contents; }
+        @media (max-width: 640px) {
+            .tempus-panel { font-size: 0.75rem; padding: 0.5rem; }
+            .verb-tag { font-size: 0.7rem; }
+        }
+        /* Estilos para el canvas de escritura a mano */
+        .handwriting-canvas {
+            touch-action: none;
+            width: 100%;
+            height: 250px;
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            border: 2px solid #475569;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // --- COMPONENTE AISLANTE DE ICONOS ---
+        const Icon = ({ name, className }) => (
+            <span className="lucide-wrapper" dangerouslySetInnerHTML={{ __html: `<i data-lucide="${name}" class="${className || ''}"></i>` }} />
+        );
+
+        // --- BASES DE DATOS Y CONFIGURACIÓN INICIAL (sin cambios) ---
+        const DEFAULT_GUION = [
+            { speaker: 'Lukas', text: 'Hallo Elena! Heute ist ein großer Tag.', translation: '¡Hola Elena! Hoy es un gran día.', vocab: [{ de: 'der Tag', es: 'el día', diff: 0 }] },
+            { speaker: 'Lukas', text: 'Ich bin nervös, weil wir Bilder ausstellen.', translation: 'Estoy nervioso porque exponemos cuadros.', vocab: [{ de: 'ausstellen', es: 'exponer', diff: 0 }] },
+            { speaker: 'Elena', text: 'Keine Sorge. Du bist ein toller Künstler.', translation: 'No te preocupes. Eres un gran artista.', isRedemittel: true, vocab: [{ de: 'der Künstler', es: 'el artista', diff: 0 }] },
+            { speaker: 'Elena', text: 'Du wirst heute viel Anerkennung bekommen.', translation: 'Hoy recibirás mucho reconocimiento.', vocab: [{ de: 'die Anerkennung', es: 'el reconocimiento', diff: 1 }, { de: 'bekommen', es: 'recibir', diff: 0 }] },
+            { speaker: 'Lukas', text: 'Schau dir dieses Gemälde hier an.', translation: 'Mira este cuadro de aquí.', vocab: [{ de: 'das Gemälde', es: 'el cuadro', diff: 0 }] },
+            { speaker: 'Lukas', text: 'Es ist im Sommer entstanden.', translation: 'Surgió (fue creado) en verano.', vocab: [{ de: 'entstehen', es: 'surgir / crearse', diff: 1 }] },
+            { speaker: 'Lukas', text: 'Das ist super! Es gefällt mir sehr.', translation: '¡Eso es genial! Me gusta mucho.', isRedemittel: true, vocab: [{ de: 'super', es: 'genial', diff: 0 }] },
+            { speaker: 'Elena', text: 'Man sieht den Einfluss der Natur.', translation: 'Se ve la influencia de la naturaleza.', vocab: [{ de: 'der Einfluss', es: 'la influencia', diff: 1 }] },
+            { speaker: 'Herr Weber', text: 'Guten Tag. Wer ist der Maler?', translation: 'Buenas tardes. ¿Quién es el pintor?', vocab: [{ de: 'der Maler', es: 'el pintor', diff: 0 }] },
+            { speaker: 'Lukas', text: 'Ich bin es. Ist das eine Skulptur?', translation: 'Soy yo. ¿Es eso una escultura?', vocab: [{ de: 'die Skulptur', es: 'la escultura', diff: 0 }] },
+            { speaker: 'Herr Weber', text: 'Das Bild erinnert mich an meine Lebensgeschichte.', translation: 'El cuadro me recuerda a la historia de mi vida.', vocab: [{ de: 'die Lebensgeschichte', es: 'la historia de vida', diff: 0 }] },
+            { speaker: 'Herr Weber', text: 'Ich bin 1945 geboren worden.', translation: 'Yo nací en 1945.', vocab: [{ de: 'geboren werden', es: 'nacer', diff: 1 }] },
+            { speaker: 'Herr Weber', text: 'Damals gab es viel Zerstörung.', translation: 'En aquel entonces había mucha destrucción.', vocab: [{ de: 'die Zerstörung', es: 'la destrucción', diff: 1 }] },
+            { speaker: 'Herr Weber', text: 'Meine Familie musste schnell fliehen.', translation: 'Mi familia tuvo que huir rápido.', vocab: [{ de: 'fliehen', es: 'huir', diff: 1 }] },
+            { speaker: 'Elena', text: 'Sie mussten oft gegen Hunger kämpfen.', translation: 'Tuvieron que luchar a menudo contra el hambre.', vocab: [{ de: 'kämpfen gegen', es: 'luchar contra', diff: 1 }] },
+            { speaker: 'Herr Weber', text: 'Ja. Ich setze mich für Menschenrechte ein.', translation: 'Sí. Yo me comprometo (intercedo) por los derechos humanos.', vocab: [{ de: 'sich einsetzen für', es: 'interceder por', diff: 1 }, { de: 'das Menschenrecht', es: 'el derecho humano', diff: 0 }] },
+            { speaker: 'Herr Weber', text: 'Wir müssen jedes Vorurteil bekämpfen.', translation: 'Tenemos que combatir cada prejuicio.', vocab: [{ de: 'das Vorurteil', es: 'el prejuicio', diff: 1 }] },
+            { speaker: 'Lukas', text: 'Da hast du völlig recht!', translation: '¡Ahí tienes toda la razón!', isRedemittel: true, vocab: [{ de: 'recht haben', es: 'tener razón', diff: 1 }] },
+            { speaker: 'Lukas', text: 'Es gibt ein Gewitter. Da war ein Blitz!', translation: 'Hay una tormenta. ¡Allí hubo un rayo!', vocab: [{ de: 'das Gewitter', es: 'la tormenta eléctrica', diff: 0 }, { de: 'der Blitz', es: 'el rayo', diff: 1 }] },
+            { speaker: 'Lukas', text: 'Elena! Es gab einen Diebstahl in der Galerie!', translation: '¡Elena! ¡Hubo un robo en la galería!', vocab: [{ de: 'der Diebstahl', es: 'el robo', diff: 1 }] },
+            { speaker: 'Lukas', text: 'Die Polizei muss den Dieb verhaften.', translation: 'La policía debe detener al ladrón.', vocab: [{ de: 'verhaften', es: 'detener', diff: 1 }] }
+        ];
+        window.__DEFAULT_GUION__ = DEFAULT_GUION;
+
+        const TEMPUS_DICT = {
+            "ausstellen": "Prät: stellte aus | Perf: hat ausgestellt",
+            "bekommen": "Prät: bekam | Perf: hat bekommen",
+            "entstehen": "Prät: entstand | Perf: ist entstanden",
+            "entstanden": "Prät: entstand | Perf: ist entstanden",
+            "sehen": "Prät: sah | Perf: hat gesehen",
+            "sieht": "Prät: sah | Perf: hat gesehen",
+            "geboren": "Prät: wurde geboren | Perf: ist geboren worden",
+            "fliehen": "Prät: floh | Perf: ist geflohen",
+            "kämpfen": "Prät: kämpfte | Perf: hat gekämpft",
+            "anerkennen": "Prät: erkannte an | Perf: hat anerkannt",
+            "stehlen": "Prät: stahl | Perf: hat gestohlen",
+            "gestohlen": "Prät: stahl | Perf: hat gestohlen",
+            "verhaften": "Prät: verhaftete | Perf: hat verhaftet",
+            "sterben": "Prät: starb | Perf: ist gestorben",
+            "gestorben": "Prät: starb | Perf: ist gestorben",
+            "einsetzen": "Prät: setzte ein | Perf: hat eingesetzt",
+            "essen": "Prät: aß | Perf: hat gegessen",
+            "trinken": "Prät: trank | Perf: hat getrunken",
+            "fahren": "Prät: fuhr | Perf: ist gefahren",
+            "gehen": "Prät: ging | Perf: ist gegangen",
+            "kommen": "Prät: kam | Perf: ist gekommen",
+            "sprechen": "Prät: sprach | Perf: hat gesprochen",
+            "nehmen": "Prät: nahm | Perf: hat genommen",
+            "geben": "Prät: gab | Perf: hat gegeben",
+            "helfen": "Prät: half | Perf: hat geholfen",
+            "laufen": "Prät: lief | Perf: ist gelaufen",
+            "schlafen": "Prät: schlief | Perf: hat geschlafen",
+            "treffen": "Prät: traf | Perf: hat getroffen",
+            "finden": "Prät: fand | Perf: hat gefunden",
+            "bleiben": "Prät: blieb | Perf: ist geblieben",
+            "tragen": "Prät: trug | Perf: hat getragen",
+            "waschen": "Prät: wusch | Perf: hat gewaschen",
+            "verlieren": "Prät: verlor | Perf: hat verloren",
+            "schreiben": "Prät: schrieb | Perf: hat geschrieben",
+            "lesen": "Prät: las | Perf: hat gelesen",
+            "wissen": "Prät: wusste | Perf: hat gewusst",
+            "denken": "Prät: dachte | Perf: hat gedacht",
+            "bringen": "Prät: brachte | Perf: hat gebracht",
+            "kennen": "Prät: kannte | Perf: hat gekannt",
+            "nennen": "Prät: nannte | Perf: hat genannt"
+        };
+
+        const B1_DATABASE = {
+            vocabulario: [
+                { b1: "Das ist billig.", b2: "Das ist günstig.", es: "Eso es barato / a buen precio.", trick: "'Günstig' suena mucho mejor y más positivo que 'billig' (que a veces significa de mala calidad)." },
+                { b1: "Ich habe viel Arbeit.", b2: "Ich bin sehr beschäftigt.", es: "Estoy muy ocupado.", trick: "Usar adjetivos en lugar de 'tener cosas'." },
+                { b1: "Das ist schlecht.", b2: "Das ist schlimm.", es: "Eso es grave / malo.", trick: "'Schlimm' se usa para situaciones, 'schlecht' para calidad o comida." },
+                { b1: "Ich treffe meine Freunde.", b2: "Ich verabrede mich mit meinen Freunden.", es: "Me cito con mis amigos.", trick: "'sich verabreden' implica planear un encuentro, nivel B1 puro." },
+                { b1: "Ich mache die Tür zu.", b2: "Ich schließe die Tür.", es: "Cierro la puerta.", trick: "Evita verbos con 'machen', usa el verbo específico (schließen)." }
+            ],
+            verbos: [
+                { b1: "Ich interessiere mich für Kunst.", b2: "Ich habe Interesse an Kunst.", es: "Tengo interés en el arte.", trick: "Cambiar verbo reflexivo por sustantivo (Interesse an + Dat)." },
+                { b1: "Ich freue mich über das Geschenk.", b2: "Ich bin froh über das Geschenk.", es: "Me alegro / estoy contento por el regalo.", trick: "Variar entre alegrarse (verbo) y estar contento (adjetivo)." },
+                { b1: "Ich nehme an dem Kurs teil.", b2: "Ich mache bei dem Kurs mit.", es: "Participo en el curso.", trick: "Ambos son B1, pero 'teilnehmen an' es más formal que 'mitmachen bei'." }
+            ],
+            preposiciones: [
+                { b1: "Ich träume von einem Haus (Dat).", b2: "Ich denke an das Haus (Akk).", es: "Sueño con / Pienso en la casa.", trick: "Memorizar que 'träumen' va con von(Dativ) y 'denken' con an(Akkusativ)." },
+                { b1: "Er ärgert sich über den Chef (Akk).", b2: "Er ist wütend auf den Chef (Akk).", es: "Él se enfada con / está furioso con el jefe.", trick: "Conocer los adjetivos con preposición." }
+            ],
+            conectores: [
+                { b1: "Ich bin krank. Deshalb komme ich nicht.", b2: "Ich komme nicht, weil ich krank bin.", es: "No voy porque estoy enfermo.", trick: "Dominar el cambio entre conector de posición 1 (deshalb) y subordinante (weil)." },
+                { b1: "Es regnet, trotzdem gehe ich spazieren.", b2: "Obwohl es regnet, gehe ich spazieren.", es: "Aunque llueve, voy a pasear.", trick: "Trotzdem (Hauptsatz) vs Obwohl (Nebensatz)." }
+            ],
+            redemittel: [
+                { b1: "Wie geht's?", b2: "Wie läuft's bei dir?", es: "¿Cómo te va?", trick: "Alemán de la calle (Alltagsdeutsch)." },
+                { b1: "Ich glaube ja.", b2: "Davon gehe ich aus.", es: "Parto de esa base (Supongo que sí).", trick: "Muy profesional para el B1." },
+                { b1: "Das ist mir egal.", b2: "Das macht mir nichts aus.", es: "No me importa / No me molesta.", trick: "Más educado que 'egal'." }
+            ]
+        };
+
+        const B2_DATABASE = {
+            vocabulario: [
+                { b1: "Das ist ein großes Problem.", b2: "Das ist eine große Herausforderung.", es: "Eso es un gran desafío.", trick: "Evita 'Problem', usa 'Herausforderung' (desafío/reto) en entornos formales." },
+                { b1: "Ich mache das nicht.", b2: "Ich weigere mich, das zu tun.", es: "Me niego a hacer eso.", trick: "Usar 'sich weigern' (negarse) demuestra dominio." },
+                { b1: "Das ist sehr wichtig.", b2: "Das ist von großer Bedeutung.", es: "Eso es de gran importancia.", trick: "Usa construcciones con sustantivos: 'von großer Bedeutung'." },
+                { b1: "Er hat mich angelogen.", b2: "Er hat mich getäuscht.", es: "Él me ha engañado.", trick: "'Täuschen' es mucho más elegante que 'anlügen'." },
+                { b1: "Wir müssen das ändern.", b2: "Wir müssen entsprechende Maßnahmen ergreifen.", es: "Debemos tomar las medidas correspondientes.", trick: "Típico del B2/C1. 'Maßnahmen ergreifen' = Tomar medidas." }
+            ],
+            verbos: [
+                { b1: "Ich entscheide das.", b2: "Ich treffe eine Entscheidung.", es: "Tomo una decisión.", trick: "Nomen-Verb-Verbindung. Usar sustantivo + verbo vacío (treffen, stehen)." },
+                { b1: "Ich beantworte die E-Mail.", b2: "Ich nehme Stellung zu der E-Mail.", es: "Tomo posición / Respondo a la E-mail.", trick: "'Stellung nehmen' se usa muchísimo en B2 escrito." },
+                { b1: "Ich frage ihn.", b2: "Ich stelle ihm eine Frage.", es: "Le hago una pregunta.", trick: "Otra típica Nomen-Verb-Verbindung." },
+                { b1: "Das Problem kann gelöst werden.", b2: "Das Problem ist lösbar.", es: "El problema es resoluble.", trick: "Sustituto de Passiv. Cambiar 'können + Passiv' por el sufijo '-bar'." }
+            ],
+            preposiciones: [
+                { b1: "Wegen dem Wetter (Dat).", b2: "Wegen des schlechten Wetters (Gen).", es: "A causa del mal tiempo.", trick: "En B2, 'wegen', 'trotz' y 'während' rigen Genitivo sí o sí." },
+                { b1: "Ich spreche über das Thema.", b2: "Ich beziehe mich auf das Thema.", es: "Me refiero al tema.", trick: "'sich beziehen auf (+Akk)' es clave para cartas formales." },
+                { b1: "Ich bin gegen diesen Plan.", b2: "Ich protestiere gegen diesen Plan.", es: "Protesto contra este plan.", trick: "Ambos usan 'gegen', pero 'protestieren' eleva el nivel." }
+            ],
+            conectores: [
+                { b1: "Weil es stark regnet, bleibe ich hier.", b2: "Aufgrund des starken Regens bleibe ich hier.", es: "Debido a la fuerte lluvia me quedo aquí.", trick: "Nominalstil: Cambiar conector verbal 'weil' por preposición 'aufgrund + Genitiv'." },
+                { b1: "Ich spreche Englisch und Deutsch.", b2: "Ich spreche sowohl Englisch als auch Deutsch.", es: "Hablo tanto inglés como alemán.", trick: "sowohl... als auch... (Conector doble)." },
+                { b1: "Es ist nicht billig, aber gut.", b2: "Es ist zwar nicht billig, aber dafür sehr gut.", es: "Es verdad que no es barato, pero a cambio es transformado muy bueno.", trick: "zwar... aber (si bien... pero)." }
+            ],
+            redemittel: [
+                { b1: "Das nervt mich.", b2: "Das geht mir auf die Nerven.", es: "Eso me saca de quicio.", trick: "Expresión idiomática súper natural." },
+                { b1: "Ich denke, dass...", b2: "Ich bin der Auffassung, dass...", es: "Soy de la opinión de que...", trick: "Para la parte oral del B2, usa 'Auffassung' o 'Meinung'." },
+                { b1: "Das ist mir egal.", b2: "Das spielt für mich keine Rolle.", es: "Eso no juega ningún papel para mí.", trick: "Perfecto para discusiones." }
+            ]
+        };
+
+        const GRAMMAR_PATTERNS = [
+            { regex: /(interessier[en|t|e]+\s+(?:(?:mich|dich|sich|uns|euch|sehr|wirklich)\s+)*für)/gi, tooltip: "sich interessieren für + Akk", base: "sich interessieren für" },
+            { regex: /(gegen\s+(?:.*?\s+)?kämpfen|kämpfen\s+(?:.*?\s+)?gegen)/gi, tooltip: "kämpfen gegen + Akk", base: "kämpfen gegen" },
+            { regex: /(setz[en|t|e]+\s+(?:(?:mich|dich|sich|uns|euch|heute|jetzt)\s+)*(?:.*?\s+)?für(?:.*?\s+)?ein)/gi, tooltip: "sich einsetzen für + Akk", base: "sich einsetzen für" },
+            { regex: /(erinner[en|t|e]+\s+(?:(?:mich|dich|sich|uns|euch|noch|sehr)\s+)*an)/gi, tooltip: "sich erinnern an + Akk", base: "sich erinnern an" },
+            { regex: /(wart[en|e|et]+\s+(?:.*?\s+)?auf)/gi, tooltip: "warten auf + Akk", base: "warten auf" }
+        ];
+
+        const CONN_LIST = ["weil", "dass", "obwohl", "wenn", "als", "damit", "ob", "bevor", "nachdem", "deshalb", "deswegen", "darum", "trotzdem", "dann", "danach", "außerdem", "und", "aber", "oder", "denn", "sondern"];
+        const PREP_DAT = ["aus", "bei", "mit", "nach", "seit", "von", "zu", "ab"];
+        const PREP_AKK = ["durch", "für", "gegen", "ohne", "um"];
+        const PREP_WECHSEL = ["in", "an", "auf", "neben", "hinter", "über", "unter", "vor", "zwischen"];
+
+        const levenshteinDistance = (a, b) => {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+            for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        };
+
+        // --- COMPONENTE PRINCIPAL ---
+        function App() {
+          const [activeTab, setActiveTab] = useState('historia'); 
+          const [guionData, setGuionData] = useState(DEFAULT_GUION);
+          const [activeScriptTitle, setActiveScriptTitle] = useState("Lektion 17: Kunst");
+          const [isDefaultScript, setIsDefaultScript] = useState(true);
+          const [sceneIndex, setSceneIndex] = useState(0);
+          const [mode, setMode] = useState('dialogue'); 
+          const [isPlaying, setIsPlaying] = useState(false);
+          const [voicesLoaded, setVoicesLoaded] = useState(false);
+          const [playbackRate, setPlaybackRate] = useState(1.0); 
+          const [blindMode, setBlindMode] = useState(false); 
+          const [lueckentextMode, setLueckentextMode] = useState(false);
+          const [declinaMode, setDeclinaMode] = useState(false); 
+          const [tempusMode, setTempusMode] = useState(false); 
+          const [artikelSniperMode, setArtikelSniperMode] = useState(false); 
+          const [fluesternMode, setFluesternMode] = useState(false);
+          const [noiseEnabled, setNoiseEnabled] = useState(false); // NUEVO: Ruido de fondo
+          const [roleplayChar, setRoleplayChar] = useState('none');
+          const [podcastMode, setPodcastMode] = useState(false); 
+          const [showCurrentTranslation, setShowCurrentTranslation] = useState(false); 
+          const [tempusVerbList, setTempusVerbList] = useState([]);
+          const [diktatMode, setDiktatMode] = useState(false);
+          const [diktatInput, setDiktatInput] = useState("");
+          const [showDiktatResult, setShowDiktatResult] = useState(false);
+          const [savedScripts, setSavedScripts] = useState([]);
+          const [customVocabLessons, setCustomVocabLessons] = useState([]);
+          const [vocabTitleInput, setVocabTitleInput] = useState("");
+          const [vocabTextInput, setVocabTextInput] = useState("");
+          const [userStats, setUserStats] = useState({
+              username: "Estudiante", isPremium: true,
+              xp: 0, streakDays: 1, lastPlayedDate: new Date().toISOString().split('T')[0],
+              coins: 150, hearts: 5, 
+              diktatAttempts: 0, diktatCorrect: 0,
+              pronunciationTotalScore: 0, pronunciationAttempts: 0,
+              difficultVocab: [], normalVocab: [], 
+              difficultGrammar: [], 
+              failedDiktatScenes: [],
+              activityLog: [40, 60, 45, 80, 55, 90, 75] 
+          });
+          const [vocabReviewIndex, setVocabReviewIndex] = useState(0);
+          const [showVocabTranslation, setShowVocabTranslation] = useState(false);
+          const [currentVocabList, setCurrentVocabList] = useState([]); 
+          const [bxCategory, setBxCategory] = useState('mix'); 
+          const [bxIndex, setBxIndex] = useState(0);
+          const [bxCurrentList, setBxCurrentList] = useState([]);
+          const [practiceActive, setPracticeActive] = useState(null);
+          const [practiceIndex, setPracticeIndex] = useState(0);
+          const [practiceShowTrans, setPracticeShowTrans] = useState(false);
+          const [aiLevel, setAiLevel] = useState('B1');
+          const [aiTheme, setAiTheme] = useState('Alltag');
+          const [aiCustomWords, setAiCustomWords] = useState("");
+          const [isGeneratingStory, setIsGeneratingStory] = useState(false);
+          const [isReviewing, setIsReviewing] = useState(false);
+          const [reviewIndexPointer, setReviewIndexPointer] = useState(0);
+          const [puzzleMode, setPuzzleMode] = useState(false);
+          const [puzzleWords, setPuzzleWords] = useState([]);
+          const [puzzleAnswer, setPuzzleAnswer] = useState([]);
+          const [showPuzzleResult, setShowPuzzleResult] = useState(false);
+          const [isListening, setIsListening] = useState(false);
+          const [spokenText, setSpokenText] = useState("");
+          const [pronunciationScore, setPronunciationScore] = useState(null);
+          const [grammarPolizeiMsg, setGrammarPolizeiMsg] = useState("");
+          const [pronunciationFeedback, setPronunciationFeedback] = useState([]);
+          const [newScriptTitle, setNewScriptTitle] = useState("");
+          const [scriptInput, setScriptInput] = useState(`Lukas: Hallo Elena! (¡Hola Elena!) [der Tag - el día]\nElena: Ja, ich bin froh! (¡Sí, estoy contenta!) [froh - contento]`);
+          const [showLoginModal, setShowLoginModal] = useState(false);
+          const [tempUsername, setTempUsername] = useState("");
+          const [showTutor, setShowTutor] = useState(false);
+          const [tutorMessage, setTutorMessage] = useState("");
+          const [showDeathModal, setShowDeathModal] = useState(false);
+          const [showGrammarPrompt, setShowGrammarPrompt] = useState(false);
+          const [customGrammarInput, setCustomGrammarInput] = useState("");
+          const [showHandwriting, setShowHandwriting] = useState(false); // NUEVO: Canvas escritura
+
+          const isPlayingRef = useRef(false);
+          const timeoutRef = useRef(null);
+          const recognitionRef = useRef(null);
+          const spokenTextRef = useRef("");
+          const noiseContextRef = useRef(null);
+          const noiseSourceRef = useRef(null);
+          const noiseGainRef = useRef(null);
+
+          useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+          // Cargar datos guardados
+          useEffect(() => {
+              const savedData = localStorage.getItem('mullerStats');
+              if (savedData) setUserStats(JSON.parse(savedData));
+              else setShowLoginModal(true);
+              const scripts = localStorage.getItem('mullerScripts');
+              if(scripts) setSavedScripts(JSON.parse(scripts));
+              const savedCustomVocab = localStorage.getItem('mullerCustomVocab');
+              if(savedCustomVocab) setCustomVocabLessons(JSON.parse(savedCustomVocab));
+          }, []);
+
+          useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+
+          const saveProgress = (newStatsUpdates) => {
+              const mergedStats = { ...userStats, ...newStatsUpdates, lastPlayedDate: new Date().toISOString().split('T')[0] };
+              setUserStats(mergedStats);
+              localStorage.setItem('mullerStats', JSON.stringify(mergedStats));
+          };
+
+          const handleRegister = () => {
+              if(tempUsername.trim() === "") return;
+              saveProgress({ username: tempUsername, isPremium: true });
+              setShowLoginModal(false);
+          };
+
+          const deductHeart = () => {
+              if (userStats.hearts <= 1) { saveProgress({ hearts: 0 }); stopAudio(); setShowDeathModal(true); } 
+              else { saveProgress({ hearts: userStats.hearts - 1 }); }
+          };
+
+          const buyHearts = () => {
+              if (userStats.coins >= 50) { saveProgress({ coins: userStats.coins - 50, hearts: 5 }); setShowDeathModal(false); } 
+              else { alert("No tienes suficientes Monedas (Coins). Completa ejercicios para ganar más."); }
+          };
+
+          const getLast7Days = () => {
+              const days = [];
+              const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+              for(let i=6; i>=0; i--) {
+                  const d = new Date(); d.setDate(d.getDate() - i);
+                  days.push(`${dayNames[d.getDay()]} ${d.getDate()}`);
+              }
+              return days;
+          };
+
+          useEffect(() => {
+              if (activeTab !== 'vocabulario') {
+                  const allVocab = [];
+                  guionData.forEach(scene => { if (scene.vocab) scene.vocab.forEach(v => { if (!allVocab.some(existing => existing.de === v.de)) allVocab.push(v); }); });
+                  setCurrentVocabList(allVocab); setVocabReviewIndex(0); setShowVocabTranslation(false);
+              }
+          }, [guionData, activeTab]);
+
+          useEffect(() => {
+              const dbToUse = activeTab === 'b1meister' ? B1_DATABASE : B2_DATABASE;
+              if (bxCategory === 'mix') {
+                  let mixed = [];
+                  Object.values(dbToUse).forEach(arr => mixed = mixed.concat(arr));
+                  mixed.sort(() => Math.random() - 0.5);
+                  setBxCurrentList(mixed);
+              } else { setBxCurrentList(dbToUse[bxCategory] || []); }
+              setBxIndex(0);
+          }, [bxCategory, activeTab]);
+
+          useEffect(() => {
+            const handleVoicesChanged = () => setVoicesLoaded(true);
+            window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+            if (window.speechSynthesis.getVoices().length > 0) setVoicesLoaded(true);
+            return () => window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+          }, []);
+
+          const updateTempusVerbList = (text) => {
+              if (!tempusMode || !text) { setTempusVerbList([]); return; }
+              const words = text.split(/\s+/);
+              const foundVerbs = [];
+              const processed = new Set();
+              words.forEach(word => {
+                  const cleanWord = word.toLowerCase().replace(/[.,!?;:()]/g, '');
+                  if (TEMPUS_DICT[cleanWord]) {
+                      if (!processed.has(cleanWord)) { foundVerbs.push({ infinitive: cleanWord, forms: TEMPUS_DICT[cleanWord] }); processed.add(cleanWord); }
+                  } else if (cleanWord.match(/^(?:[a-zäöüß]+)(?:en|eln|ern)$/i) && cleanWord.length > 3) {
+                      const infinitive = cleanWord;
+                      if (!processed.has(infinitive)) {
+                          const base = infinitive.slice(0, -2);
+                          const praet = base + 'te';
+                          const perf = 'hat ' + infinitive;
+                          foundVerbs.push({ infinitive, forms: `Prät: ${praet} | Perf: ${perf} (regular estimado)` });
+                          processed.add(infinitive);
+                      }
+                  }
+              });
+              setTempusVerbList(foundVerbs);
+          };
+
+          useEffect(() => {
+              const actualIdx = getActualSceneIndex();
+              const currentScene = guionData[actualIdx];
+              if (currentScene && tempusMode) updateTempusVerbList(currentScene.text);
+              else setTempusVerbList([]);
+          }, [sceneIndex, isReviewing, tempusMode, guionData]);
+
+          const getVoice = (lang, gender, isOlder = false) => {
+            const allVoices = window.speechSynthesis.getVoices();
+            const langVoices = allVoices.filter(v => v.lang.startsWith(lang));
+            if (langVoices.length === 0) return allVoices[0]; 
+            const femaleVoices = langVoices.filter(v => /female|woman|Katja|Marlene|Vicki/i.test(v.name));
+            const maleVoices = langVoices.filter(v => /male|man|Stefan|Conrad|Klaus/i.test(v.name));
+            if (gender === 'female') return femaleVoices.length > 0 ? femaleVoices[0] : langVoices[0];
+            if (gender === 'male') {
+                if (isOlder && maleVoices.length > 1) return maleVoices[1];
+                if (maleVoices.length > 0) return maleVoices[0];
+                return langVoices[langVoices.length - 1]; 
+            }
+            return langVoices[0];
+          };
+
+          const stopAudio = () => { 
+              window.speechSynthesis.cancel(); 
+              if (timeoutRef.current) clearTimeout(timeoutRef.current); 
+              setIsPlaying(false); 
+              stopNoise(); // Detener ruido si está activo
+          };
+
+          // Funciones para ruido de fondo
+          const startNoise = () => {
+              if (!noiseEnabled) return;
+              try {
+                  const AudioContext = window.AudioContext || window.webkitAudioContext;
+                  const ctx = new AudioContext();
+                  noiseContextRef.current = ctx;
+                  const bufferSize = 4096;
+                  const noiseNode = ctx.createScriptProcessor(bufferSize, 1, 1);
+                  noiseNode.onaudioprocess = (e) => {
+                      const output = e.outputBuffer.getChannelData(0);
+                      for (let i = 0; i < bufferSize; i++) {
+                          output[i] = (Math.random() * 2 - 1) * 0.15; // Ruido blanco a bajo volumen
+                      }
+                  };
+                  const gainNode = ctx.createGain();
+                  gainNode.gain.value = 0.08; // Volumen muy bajo
+                  noiseGainRef.current = gainNode;
+                  noiseNode.connect(gainNode);
+                  gainNode.connect(ctx.destination);
+                  noiseSourceRef.current = noiseNode;
+              } catch(e) { console.warn("No se pudo iniciar ruido de fondo:", e); }
+          };
+
+          const stopNoise = () => {
+              if (noiseSourceRef.current) {
+                  noiseSourceRef.current.disconnect();
+                  noiseSourceRef.current = null;
+              }
+              if (noiseContextRef.current) {
+                  noiseContextRef.current.close();
+                  noiseContextRef.current = null;
+              }
+          };
+
+          useEffect(() => {
+              if (noiseEnabled && isPlaying) startNoise();
+              else stopNoise();
+              return () => stopNoise();
+          }, [noiseEnabled, isPlaying]);
+
+          const resetModes = () => { 
+              setDiktatInput(""); setShowDiktatResult(false); 
+              setSpokenText(""); setPronunciationScore(null); setGrammarPolizeiMsg(""); setPronunciationFeedback([]);
+              setShowPuzzleResult(false); setShowCurrentTranslation(false); 
+              initPuzzle(guionData[getActualSceneIndex()]?.text || ""); 
+          };
+          
+          const getActualSceneIndex = () => isReviewing ? userStats.failedDiktatScenes[reviewIndexPointer] : sceneIndex;
+
+          const proceedToNextStage = () => {
+              if (isReviewing) {
+                  if (reviewIndexPointer < userStats.failedDiktatScenes.length - 1) { setReviewIndexPointer(p => p + 1); setMode('dialogue'); resetModes(); } 
+                  else { saveProgress({ failedDiktatScenes: [] }); setIsReviewing(false); stopAudio(); }
+              } else {
+                  if (sceneIndex < guionData.length - 1) { setSceneIndex(s => s + 1); setMode('dialogue'); resetModes(); } 
+                  else {
+                      if (userStats.failedDiktatScenes.length > 0) {
+                          alert("¡Historia terminada! Tienes fallos pendientes en Diktat. Iniciando Repaso.");
+                          setIsReviewing(true); setReviewIndexPointer(0); setMode('dialogue'); resetModes();
+                      } else { stopAudio(); alert("¡Has completado el guion!"); }
+                  }
+              }
+          };
+
+          const handleNext = () => { stopAudio(); proceedToNextStage(); };
+          const handlePrev = () => { stopAudio(); if (!isReviewing && sceneIndex > 0) { setSceneIndex(s => s - 1); setMode('dialogue'); resetModes(); } };
+          const togglePlay = () => { 
+              if (userStats.hearts <= 0) { setShowDeathModal(true); return; }
+              if (isPlaying) stopAudio(); else setIsPlaying(true); 
+          };
+
+          const initPuzzle = (text) => {
+              if (!text) return;
+              const words = text.split(/\s+/).map((w, i) => ({ id: i, text: w }));
+              setPuzzleWords(words.sort(() => Math.random() - 0.5)); setPuzzleAnswer([]);
+          };
+
+          useEffect(() => { if (puzzleMode && activeTab === 'historia') initPuzzle(guionData[getActualSceneIndex()]?.text); }, [sceneIndex, isReviewing, puzzleMode, guionData, activeTab]);
+
+          const handleSaveCustomVocab = () => {
+              if (!vocabTitleInput.trim()) { alert("Por favor, dale un título a la lección."); return; }
+              if (!vocabTextInput.trim()) { alert("Por favor, pega el vocabulario."); return; }
+              const lines = vocabTextInput.split(/\r?\n/);
+              let parsedWords = [];
+              const cleanStr = (str) => {
+                  let s = str.replace(/[\x00-\x1F\x7F-\x9F\u200B-\u200D\uFEFF]/g, ''); 
+                  s = s.replace(/[\u{1F000}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, ''); 
+                  return s.trim();
+              };
+              lines.forEach(line => {
+                  let text = line.trim().replace(/–/g, '-').replace(/—/g, '-');
+                  if (!text) return;
+                  let isDiff = false;
+                  if (text.startsWith('1')) { isDiff = true; text = text.replace(/^1[.\-):\]]*\s*/, '').trim(); }
+                  text = text.replace(/^[-*•+>]\s*/, '').trim();
+                  text = text.replace(/^\d+[.\-):\]]+\s*/, '').trim();
+                  let de = ""; let es = "";
+                  const match = text.match(/(\s+-\s+|\s+=\s+|\t|\s{2,}|={1,})/);
+                  if (match) {
+                      const sepIndex = text.indexOf(match[0]);
+                      de = cleanStr(text.substring(0, sepIndex));
+                      es = cleanStr(text.substring(sepIndex + match[0].length));
+                  } else {
+                      const hyphenMatch = text.match(/(^|\s)-(?!\w)|(?<!\w)-(\s|$)/);
+                      if (hyphenMatch) {
+                          const sepIndex = text.indexOf(hyphenMatch[0]);
+                          de = cleanStr(text.substring(0, sepIndex));
+                          es = cleanStr(text.substring(sepIndex + hyphenMatch[0].length));
+                      } else {
+                          let words = text.split(' ');
+                          let splitPoint = 1;
+                          if (words.length > 2 && /^(sich|der|die|das|ein|eine)$/i.test(words[0])) splitPoint = 2;
+                          if (words.length > splitPoint && words[splitPoint].startsWith('(')) splitPoint++;
+                          de = cleanStr(words.slice(0, splitPoint).join(' '));
+                          es = cleanStr(words.slice(splitPoint).join(' '));
+                          if (!es) es = "???";
+                      }
+                  }
+                  de = de.replace(/^1[.\-):\]]*\s*/, '').trim();
+                  es = es.replace(/^1[.\-):\]]*\s*/, '').trim();
+                  if (de) parsedWords.push({ de, es, diff: isDiff ? 1 : 0 });
+              });
+              if (parsedWords.length > 0) {
+                  const newLesson = { id: Date.now().toString() + Math.random().toString(36).substring(7), title: vocabTitleInput, words: parsedWords };
+                  const updatedLessons = [...customVocabLessons, newLesson];
+                  setCustomVocabLessons(updatedLessons);
+                  localStorage.setItem('mullerCustomVocab', JSON.stringify(updatedLessons));
+                  setVocabTitleInput(""); setVocabTextInput("");
+                  alert(`¡Genial! Se ha guardado la lección "${vocabTitleInput}" con ${parsedWords.length} palabras.`);
+              } else { alert("No pude detectar vocabulario válido. Pega texto para guardar."); }
+          };
+
+  const handleSaveScript = () => {
+    if (!newScriptTitle.trim()) { alert("Dale un título al guion primero."); return; }
+    try {
+        const lines = scriptInput.split('\n');
+        const newGuion = [];
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (!cleanLine) return;
+
+            // 1. Extraer Hablante (Nombre:)
+            const speakerMatch = cleanLine.match(/^([^:]+):/);
+            if (!speakerMatch) return;
+            const speaker = speakerMatch[1].trim();
+            let content = cleanLine.substring(speakerMatch[0].length).trim();
+
+            // 2. Extraer Redemittel [R]
+            let isRedemittel = false;
+            if (content.includes('[R]')) {
+                isRedemittel = true;
+                content = content.replace('[R]', '').trim();
+            }
+
+            // 3. Extraer Vocabulario [...]
+            let vocab = [];
+            const vocabMatch = content.match(/\[(.*?)\]/);
+            if (vocabMatch) {
+                const vocabPairs = vocabMatch[1].split(',');
+                vocabPairs.forEach(pair => {
+                    const parts = pair.split('-');
+                    if (parts.length >= 2) {
+                        const cleanDe = parts[0].trim().replace(/[🔴🔵🟢•]/g, '');
+                        vocab.push({ de: cleanDe, es: parts[1].trim(), diff: 1 });
+                    }
+                });
+                content = content.replace(vocabMatch[0], '').trim();
+            }
+
+            // 4. Extraer Traducción (...)
+            let translation = "Traducción no proporcionada";
+            const transMatch = content.match(/\(([^)]+)\)/);
+            if (transMatch) {
+                translation = transMatch[1].trim();
+                content = content.replace(transMatch[0], '').trim();
+            }
+
+            // 5. Alemán (limpio de círculos para el audio)
+            const germanText = content.replace(/[🔴🔵🟢]/g, '').trim();
+
+            if (germanText) {
+                newGuion.push({ speaker, text: germanText, translation, isRedemittel, vocab });
+            }
+        });
+
+        if (newGuion.length === 0) throw new Error("Formato no reconocido");
+
+        const scriptObj = { id: Date.now().toString(), title: newScriptTitle, data: JSON.stringify(newGuion), timestamp: Date.now() };
+        const newSaved = [...savedScripts, scriptObj].sort((a,b)=>a.title.localeCompare(b.title));
+        setSavedScripts(newSaved);
+        localStorage.setItem('mullerScripts', JSON.stringify(newSaved));
+        setGuionData(newGuion); setActiveScriptTitle(newScriptTitle); setIsDefaultScript(false); 
+        setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
+        setNewScriptTitle(""); setActiveTab('historia');
+    } catch (e) { 
+        alert("Error al procesar. Asegúrate de usar el formato: Nombre: Texto Alemán. (Traducción) [vocab-trad]"); 
+    }
+};
+
+          const loadSavedScript = (script) => {
+              setGuionData(JSON.parse(script.data)); setActiveScriptTitle(script.title); setIsDefaultScript(false);
+              setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false); setActiveTab('historia');
+          };
+
+          const handleGenerateAIStory = () => {
+              setIsGeneratingStory(true);
+              setTimeout(() => {
+                  let wordsArray = aiCustomWords.split(',').map(w => w.trim()).filter(w => w);
+                  let mockLongStory = [
+                      { speaker: 'Erzähler', text: 'Es war ein kalter Morgen in der großen Stadt.', translation: 'Era una fría mañana en la gran ciudad.' },
+                      { speaker: 'Lukas', text: 'Ich muss heute so viel erledigen. Wo fange ich an?', translation: 'Tengo tanto que hacer hoy. ¿Por dónde empiezo?' },
+                      { speaker: 'Anna', text: 'Vergiss nicht, dass wir später zusammen essen gehen.', translation: 'No olvides que luego vamos a comer juntos.' },
+                      { speaker: 'Lukas', text: 'Natürlich nicht! Ich habe den Tisch schon reserviert.', translation: '¡Por supuesto que no! Ya he reservado la mesa.' },
+                      { speaker: 'Anna', text: 'Das ist wunderbar. Ich freue mich wirklich darauf.', translation: 'Eso es maravilloso. De verdad me alegro de ello.' },
+                      { speaker: 'Erzähler', text: 'Später am Abend trafen sie sich im neuen Restaurant.', translation: 'Más tarde en la noche se encontraron en el nuevo restaurante.' },
+                      { speaker: 'Kellner', text: 'Guten Abend! Was darf ich Ihnen heute bringen?', translation: '¡Buenas tardes! ¿Qué les puedo traer hoy?' },
+                      { speaker: 'Lukas', text: 'Wir hätten gerne die Speisekarte und ein Wasser, bitte.', translation: 'Nos gustaría la carta y un agua, por favor.' },
+                      { speaker: 'Anna', text: 'Und ich hätte gerne ein Glas Rotwein.', translation: 'Y a mí me gustaría una copa de vino tinto.' },
+                      { speaker: 'Kellner', text: 'Kommt sofort! Haben Sie schon gewählt?', translation: '¡Enseguida! ¿Ya han elegido?' }
+                  ];
+                  if (wordsArray.length > 0) {
+                      wordsArray.forEach((word, index) => {
+                          let i = (index + 1) * 2; 
+                          if (i >= mockLongStory.length) i = mockLongStory.length - 1;
+                          mockLongStory.splice(i, 0, {
+                              speaker: 'Anna', text: `Übrigens, erinnerst du dich an ${word}? Das war eine interessante Erfahrung.`,
+                              translation: `Por cierto, ¿te acuerdas de ${word}? Fue una experiencia interesante.`,
+                              vocab: [{ de: word, es: 'Palabra Custom', diff: 1 }]
+                          });
+                      });
+                  }
+                  setGuionData(mockLongStory); setActiveScriptTitle(`AI Generated: ${aiLevel} - ${aiTheme}`);
+                  setIsDefaultScript(false); setSceneIndex(0); setMode('dialogue'); stopAudio(); resetModes(); setIsReviewing(false);
+                  setIsGeneratingStory(false); setActiveTab('historia'); setAiCustomWords(""); 
+              }, 3000);
+          };
+
+          const playSceneAudio = (text, speaker) => {
+              const utterance = new SpeechSynthesisUtterance(text);
+              utterance.lang = 'de-DE';
+              if (speaker === 'Lukas') { utterance.voice = getVoice('de', 'male'); utterance.pitch = 1.1; } 
+              else if (speaker === 'Elena' || speaker === 'Anna') { utterance.voice = getVoice('de', 'female'); utterance.pitch = 1.2; } 
+              else if (speaker.includes('Weber') || speaker === 'Professor' || speaker === 'Erzähler') { utterance.voice = getVoice('de', 'male', true); utterance.pitch = 0.8; } 
+              else { utterance.voice = getVoice('de', 'male'); }
+              utterance.rate = (speaker.includes('Weber') ? 0.9 : 1.0) * playbackRate;
+              if (fluesternMode) { utterance.volume = 0.3; utterance.pitch = utterance.pitch * 0.8; } 
+              else { utterance.volume = 1.0; }
+              return utterance;
+          };
+
+          useEffect(() => {
+            if (!isPlaying || !voicesLoaded || mode !== 'dialogue' || activeTab !== 'historia') return;
+            window.speechSynthesis.cancel(); 
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            const actualIdx = getActualSceneIndex();
+            const currentScene = guionData[actualIdx];
+            if ((currentScene.speaker === roleplayChar || roleplayChar === 'Todos') && mode === 'dialogue' && !podcastMode) {
+                setMode('roleplay_wait'); setIsPlaying(false); return; 
+            }
+           // Limpiamos el texto de símbolos que el motor de voz lee por error (.;)
+const audioCleanText = currentScene.text.replace(/[.;;]/g, '.'); 
+const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
+            let utterances = [sentenceUtterance];
+            if (currentScene.vocab && currentScene.vocab.length > 0 && !podcastMode && !diktatMode && !puzzleMode && !declinaMode && !artikelSniperMode) {
+                currentScene.vocab.forEach(v => {
+                    const uDe = new SpeechSynthesisUtterance(v.de);
+                    uDe.lang = 'de-DE'; uDe.voice = getVoice('de', 'female'); uDe.rate = 0.85;
+                    utterances.push(uDe);
+                    const uEs = new SpeechSynthesisUtterance(v.es);
+                    uEs.lang = 'es-ES'; uEs.voice = getVoice('es', 'male'); uEs.rate = 0.9;
+                    utterances.push(uEs);
+                });
+            }
+            if (podcastMode) {
+                const esUtter = new SpeechSynthesisUtterance(currentScene.translation || "Traducción no disponible");
+                esUtter.lang = 'es-ES'; esUtter.voice = getVoice('es', 'male'); esUtter.rate = 1.0;
+                utterances = [sentenceUtterance, esUtter];
+            }
+            utterances[utterances.length - 1].onend = () => {
+                if (!isPlayingRef.current) return;
+                if (diktatMode || puzzleMode || declinaMode || artikelSniperMode) { setIsPlaying(false); return; } 
+                if (podcastMode) timeoutRef.current = setTimeout(() => proceedToNextStage(), 1500);
+                else timeoutRef.current = setTimeout(() => proceedToNextStage(), 800);
+            };
+            utterances.forEach(u => window.speechSynthesis.speak(u));
+            return () => { window.speechSynthesis.cancel(); if (timeoutRef.current) clearTimeout(timeoutRef.current); };
+          }, [sceneIndex, mode, isPlaying, voicesLoaded, playbackRate, roleplayChar, diktatMode, puzzleMode, declinaMode, artikelSniperMode, isReviewing, fluesternMode, activeTab, podcastMode]);
+
+          const trySaveGrammarStructure = () => {
+              const text = guionData[getActualSceneIndex()].text;
+              const translation = guionData[getActualSceneIndex()].translation || "";
+              let found = false;
+              let newGrammar = [...userStats.difficultGrammar];
+              GRAMMAR_PATTERNS.forEach(p => {
+                  if (text.match(p.regex)) {
+                      if (!newGrammar.some(g => g.base === p.base)) { newGrammar.push({ base: p.base, exampleDe: text, exampleEs: translation }); found = true; }
+                  }
+              });
+              if (found) { saveProgress({ difficultGrammar: newGrammar }); alert("¡Estructura automática detectada y guardada en tu mazo!"); } 
+              else { setShowGrammarPrompt(true); }
+          };
+
+          const handleCustomGrammarSave = () => {
+              if(!customGrammarInput.trim()) return;
+              const text = guionData[getActualSceneIndex()].text;
+              const translation = guionData[getActualSceneIndex()].translation || "";
+              let newGrammar = [...userStats.difficultGrammar];
+              newGrammar.push({ base: customGrammarInput, exampleDe: text, exampleEs: translation });
+              saveProgress({ difficultGrammar: newGrammar });
+              setShowGrammarPrompt(false); setCustomGrammarInput(""); alert("¡Estructura personalizada guardada con éxito!");
+          };
+
+          const generateTutorFeedback = (text) => {
+              let feedback = [];
+              const tLower = text.toLowerCase();
+              if (tLower.match(/\b(weil|dass|obwohl|wenn|als|damit|ob|bevor|nachdem)\b/i)) feedback.push("🟣 **Nebensatz (Subordinada):** Has usado un conector subordinante. El verbo conjugado va a la última posición de la frase.");
+              if (tLower.match(/\b(deshalb|deswegen|darum|trotzdem|dann|danach|außerdem)\b/i)) feedback.push("🟠 **Hauptsatz (Inversión):** Conector en Posición 1. Inmediatamente después tiene que ir el verbo (Pos 2), y luego el sujeto.");
+              if (tLower.match(/\b(und|aber|oder|denn|sondern)\b/i)) feedback.push("🟢 **Conector ADUSO (Posición 0):** Une dos frases sin alterar el orden normal (Sujeto + Verbo).");
+              if (tLower.match(/\b(habe|hast|hat|haben|habt|bin|bist|ist|sind|seid)\b.*\b(ge[a-zäöüß]+t|ge[a-zäöüß]+en|.+[ie]rt)\b/i)) feedback.push("🕰️ **Perfekt:** Auxiliar (haben/sein) en Posición 2 y Participio al final.");
+              if (tLower.match(/\b(wurde|wurdest|wurden|wurdet|war|warst|waren|wart|hatte|hattest|hatten|hattet|gab|musste|konnte|wollte|sollte|durfte)\b/i) && !tLower.match(/\b(worden)\b/i)) feedback.push("📖 **Präteritum:** Pasado simple. Usado para verbos auxiliares, modales o narración.");
+              if (tLower.match(/\b(wurde|worden)\b/i) || (tLower.match(/\b(werden|wird|werden|werdet)\b/i) && tLower.match(/\b(ge[a-zäöüß]+t|ge[a-zäöüß]+en)\b/i))) feedback.push("🏛️ **Passiv:** 'Werden' + Participio II. Lo importante es la acción, no el sujeto.");
+              if (tLower.match(/\b(muss|musst|müssen|kann|kannst|können|darf|darfst|dürfen|soll|sollst|sollen|will|willst|wollen|möchte|möchtest|möchten)\b/i)) feedback.push("💪 **Modalverben:** Verbo modal en Pos 2, obliga al verbo principal en Infinitivo al final.");
+              if (tLower.match(/\b(an|ein|auf|zu|mit|aus|vor|nach|ab|her|hin|los|teil)\s*[.,!?]*$/i)) feedback.push("✂️ **Trennbare Verben:** El prefijo del verbo se ha separado al final de la frase.");
+              if (tLower.match(/\b(aus|bei|mit|nach|seit|von|zu|ab)\b/i)) feedback.push("🔵 **Dativo (Preposición):** Preposición que rige Dativo estricto.");
+              if (tLower.match(/\b(durch|für|gegen|ohne|um)\b/i)) feedback.push("🔴 **Acusativo (Preposición):** Preposición que rige Acusativo estricto.");
+              if (tLower.match(/\b(in|an|auf|neben|hinter|über|unter|vor|zwischen)\b/i)) feedback.push("🟡 **Wechselpräposition:** Rige Dativo (Wo?) o Acusativo (Wohin?).");
+              GRAMMAR_PATTERNS.forEach(p => { if (text.match(p.regex)) feedback.push(`🌟 **Verbo con Preposición Fija:** ${p.tooltip}.`); });
+              return feedback.join("\n\n") || "🟢 **Hauptsatz:** Estructura estándar perfecta.";
+          };
+
+          const showAITutor = () => {
+              setTutorMessage(generateTutorFeedback(guionData[getActualSceneIndex()].text));
+              setShowTutor(true);
+          };
+
+          const handleDiktatCheck = () => {
+              if (!diktatInput.trim()) { alert("Por favor, escribe lo que has escuchado primero."); return; }
+              setShowDiktatResult(true);
+              const cleanText = (t) => t.toLowerCase().replace(/[.,!?]/g, '').trim();
+              const originalText = cleanText(guionData[getActualSceneIndex()].text);
+              const typedText = cleanText(diktatInput);
+              if (originalText !== typedText) {
+                  if (!isReviewing && !userStats.failedDiktatScenes.includes(sceneIndex)) {
+                      saveProgress({ failedDiktatScenes: [...userStats.failedDiktatScenes, sceneIndex], diktatAttempts: userStats.diktatAttempts + 1 });
+                  }
+                  deductHeart();
+              } else {
+                  saveProgress({ coins: userStats.coins + 5, diktatCorrect: userStats.diktatCorrect + 1, diktatAttempts: userStats.diktatAttempts + 1 });
+              }
+          };
+
+          const handleVoiceStart = (targetText = null) => {
+              if (userStats.hearts <= 0) { setShowDeathModal(true); return; }
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              if (!SpeechRecognition) { alert("Tu navegador no soporta esta función. Usa Google Chrome."); return; }
+              if (recognitionRef.current) recognitionRef.current.stop();
+              const recognition = new SpeechRecognition();
+              recognition.lang = 'de-DE'; recognition.continuous = true; recognition.interimResults = true; recognition.maxAlternatives = 1;
+              recognitionRef.current = recognition;
+              spokenTextRef.current = "";
+              recognition.onstart = () => { setIsListening(true); setSpokenText(""); setPronunciationScore(null); setGrammarPolizeiMsg(""); setPronunciationFeedback([]); };
+              recognition.onresult = (event) => {
+                  let currentTranscript = "";
+                  for (let i = 0; i < event.results.length; i++) currentTranscript += event.results[i][0].transcript;
+                  spokenTextRef.current = currentTranscript;
+                  setSpokenText(currentTranscript);
+              };
+              recognition.onerror = (event) => { console.error("Error de micro:", event.error); setIsListening(false); };
+              recognition.onend = () => { setIsListening(false); evaluatePronunciation(targetText, spokenTextRef.current); };
+              try { recognition.start(); } catch(e){}
+          };
+
+          const handleVoiceStop = () => { if (recognitionRef.current && isListening) recognitionRef.current.stop(); };
+
+          const evaluatePronunciation = (targetText, transcript) => {
+              if (!transcript || transcript.trim() === "") return;
+              const textToCompare = targetText || guionData[getActualSceneIndex()].text;
+              const cleanOrig = textToCompare.toLowerCase().replace(/[.,!?¿¡]/g, '').trim();
+              const cleanSpoken = transcript.toLowerCase().replace(/[.,!?¿¡]/g, '').trim();
+              const distance = levenshteinDistance(cleanOrig, cleanSpoken);
+              const maxLength = Math.max(cleanOrig.length, cleanSpoken.length);
+              let score = Math.round(((maxLength - distance) / maxLength) * 100);
+              const origWords = cleanOrig.split(/\s+/);
+              const spokenWords = cleanSpoken.split(/\s+/);
+              let feedbackArr = [];
+              origWords.forEach(word => {
+                  const match = spokenWords.find(sw => levenshteinDistance(word, sw) <= (word.length <= 4 ? 0 : 1));
+                  if (match) feedbackArr.push({ word: word, correct: true });
+                  else { feedbackArr.push({ word: word, correct: false }); score -= 5; }
+              });
+              let polizeiMsg = ""; let penalty = false;
+              if (cleanOrig.includes("wegen des") && cleanSpoken.includes("wegen dem")) { score -= 20; polizeiMsg = "🚨 Grammatik-Polizei: Has external DATIVO en vez de GENITIVO. -1 ❤️"; penalty = true; }
+              const finalScore = score > 100 ? 100 : score < 0 ? 0 : score;
+              setGrammarPolizeiMsg(polizeiMsg); setPronunciationScore(finalScore); setPronunciationFeedback(feedbackArr);
+              if (penalty || finalScore < 50) deductHeart();
+              else if (finalScore >= 90) saveProgress({ coins: userStats.coins + 5 });
+          };
+
+          const playVocabAudio = () => {
+              if(currentVocabList.length === 0) return;
+              window.speechSynthesis.cancel();
+              const currentVocab = currentVocabList[vocabReviewIndex];
+              const cleanDeAudio = currentVocab.de.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZäöüßÄÖÜ]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
+              const cleanEsAudio = currentVocab.es.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZñÑáéíóúÁÉÍÓÚ]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
+              const utterDe = new SpeechSynthesisUtterance(cleanDeAudio);
+              utterDe.lang = 'de-DE'; utterDe.voice = getVoice('de', 'female'); utterDe.rate = 0.85;
+              utterDe.onend = () => {
+                  setTimeout(() => { setShowVocabTranslation(true);
+                     const utterEs = new SpeechSynthesisUtterance(cleanEsAudio);
+                     utterEs.lang = 'es-ES'; utterEs.voice = getVoice('es', 'male'); utterEs.rate = 0.9;
+                     window.speechSynthesis.speak(utterEs); }, 500); 
+              };
+              window.speechSynthesis.speak(utterDe);
+          };
+
+          const handleVocabDifficulty = (level) => {
+            const currentWord = currentVocabList[vocabReviewIndex];
+            let newDiff = [...userStats.difficultVocab];
+            let newNorm = [...userStats.normalVocab];
+            if (level === 'hard') { if (!newDiff.some(w => w.de === currentWord.de)) newDiff.push(currentWord); } 
+            else if (level === 'normal') { if (!newNorm.some(w => w.de === currentWord.de)) newNorm.push(currentWord); }
+            saveProgress({ difficultVocab: newDiff, normalVocab: newNorm });
+            if (vocabReviewIndex < currentVocabList.length - 1) { setVocabReviewIndex(prev => prev + 1); setShowVocabTranslation(false); } 
+            else { alert("¡Has completado todas las tarjetas de esta lista!"); setActiveTab('guiones'); }
+          };
+
+          const startPractice = (type) => {
+              if (type === 'diff' && (!userStats.difficultVocab || userStats.difficultVocab.length === 0)) { alert("Tu mazo de Vocabulario Difícil está vacío."); return; }
+              if (type === 'norm' && (!userStats.normalVocab || userStats.normalVocab.length === 0)) { alert("Tu mazo de Vocabulario Normal está vacío."); return; }
+              if (type === 'grammar' && (!userStats.difficultGrammar || userStats.difficultGrammar.length === 0)) { alert("Tu mazo de Gramática está vacío."); return; }
+              setPracticeActive(type); setPracticeIndex(0); setPracticeShowTrans(false);
+          };
+
+          const playPracticeAudio = (text) => {
+              window.speechSynthesis.cancel();
+              const utterDe = new SpeechSynthesisUtterance(text);
+              utterDe.lang = 'de-DE'; utterDe.voice = getVoice('de', 'male'); utterDe.rate = 0.9;
+              window.speechSynthesis.speak(utterDe);
+          };
+
+          const nextPracticeWord = () => {
+              const list = practiceActive === 'diff' ? userStats.difficultVocab : (practiceActive === 'norm' ? userStats.normalVocab : userStats.difficultGrammar);
+              if (practiceIndex < list.length - 1) { setPracticeIndex(practiceIndex + 1); setPracticeShowTrans(false); } 
+              else { alert("¡Sesión terminada! +20 XP y 5 Coins"); saveProgress({ xp: userStats.xp + 20, coins: userStats.coins + 5 }); setPracticeActive(null); }
+          };
+
+          const getArticleVisual = (word) => {
+            if (!word) return null;
+            if (word.startsWith('der ')) return <span className="text-blue-400 mr-2">🔵</span>;
+            if (word.startsWith('die ')) return <span className="text-red-400 mr-2">🔴</span>;
+            if (word.startsWith('das ')) return <span className="text-green-400 mr-2">🟢</span>;
+            return null;
+          };
+
+          const renderHighlightedText = (text, vocabList) => {
+            let htmlText = text;
+            if (artikelSniperMode) { const artRegex = /\b(der|die|das|den|dem|des)\b/gi; htmlText = htmlText.replace(artRegex, `<span class="bg-red-800/40 text-red-200 border-b border-red-500/60 px-2 mx-0.5 rounded-sm font-bold shadow-sm">[ ??? ]</span>`); }
+            if (declinaMode) { const declRegex = /\b(d|ein|kein|mein|dein|sein|ihr|unser|euer)(er|en|em|es|e|as|ie)\b/gi; htmlText = htmlText.replace(declRegex, `$1<span class="text-pink-300 font-mono bg-pink-800/30 border-b border-pink-500/60 px-1 mx-0.5 rounded shadow-sm">[ _ ]</span>`); }
+            if (vocabList && vocabList.length > 0) {
+                const sortedVocab = [...vocabList].sort((a, b) => b.de.length - a.de.length);
+                sortedVocab.forEach(v => {
+                   let searchWord = v.de.replace(/^(der|die|das|sich)\s/i, '').trim();
+                   const safeWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                   const regex = new RegExp(`(?![^<]*>)(^|[^a-zäöüßA-ZÄÖÜẞ])(${safeWord})([^a-zäöüßA-ZÄÖÜẞ]|$)`, 'gi');
+                   if (lueckentextMode) htmlText = htmlText.replace(regex, `$1<span class="bg-gray-800 text-transparent border-b border-yellow-500/70 rounded px-3 mx-1 select-none" title="${v.es}">[ ??? ]</span>$3`);
+                   else htmlText = htmlText.replace(regex, `$1<span class="bg-amber-500/20 text-amber-100 border-b border-amber-400/60 px-1 mx-0.5 rounded-sm font-bold shadow-sm" title="Traducción: ${v.es}">$2</span>$3`);
+                });
+            }
+            GRAMMAR_PATTERNS.forEach(p => { htmlText = htmlText.replace(p.regex, `<span class="bg-cyan-800/40 text-cyan-200 border-b border-cyan-400/60 px-1 mx-0.5 rounded-sm shadow-sm" title="${p.tooltip}">$1</span>`); });
+            if (tempusMode) {
+                Object.keys(TEMPUS_DICT).forEach(verb => {
+                    const safeVerb = verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(?![^<]*>)\\b(${safeVerb})\\b`, 'gi');
+                    htmlText = htmlText.replace(regex, `$1 <span class="text-blue-200 text-[10px] md:text-xs font-mono bg-blue-800/50 border border-blue-500/50 px-1 rounded mx-1 whitespace-nowrap align-middle shadow-sm">(${TEMPUS_DICT[verb]})</span>`);
+                });
+            }
+            const connRegex = new RegExp(`(?![^<]*>)\\b(${CONN_LIST.join('|')})\\b`, 'gi');
+            htmlText = htmlText.replace(connRegex, `<span class="text-purple-300 font-bold underline decoration-purple-500/70 decoration-2 underline-offset-4" title="Conector">$1</span>`);
+            const datRegex = new RegExp(`(?![^<]*>)\\b(${PREP_DAT.join('|')})\\b`, 'gi');
+            htmlText = htmlText.replace(datRegex, `<span class="text-blue-300 font-bold underline decoration-blue-500/70 decoration-2 underline-offset-4" title="Preposición Dativo (Estático)">$1</span>`);
+            const akkRegex = new RegExp(`(?![^<]*>)\\b(${PREP_AKK.join('|')})\\b`, 'gi');
+            htmlText = htmlText.replace(akkRegex, `<span class="text-red-300 font-bold underline decoration-red-500/70 decoration-2 underline-offset-4" title="Preposición Acusativo (Movimiento)">$1</span>`);
+            const wechRegex = new RegExp(`(?![^<]*>)\\b(${PREP_WECHSEL.join('|')})\\b`, 'gi');
+            htmlText = htmlText.replace(wechRegex, `<span class="text-yellow-500/90 font-bold underline decoration-yellow-600/70 decoration-2 underline-offset-4" title="Wechselpräposition (Mixta)">$1</span>`);
+            return <div className="leading-loose inline" dangerouslySetInnerHTML={{ __html: htmlText }} />;
+          };
+
+          const renderDiktatDiff = (original, typed) => {
+              const cleanWord = (w) => w.toLowerCase().replace(/[.,!?]/g, '').trim();
+              const origWords = original.split(/\s+/).filter(w=>w);
+              const typedWords = typed.split(/\s+/).filter(w=>w);
+              return (
+                  <div className="flex flex-wrap gap-2 text-2xl md:text-3xl font-medium justify-center bg-gray-900 p-4 md:p-6 rounded-xl border border-gray-700 leading-loose w-full">
+                      {origWords.map((word, i) => {
+                          const tWord = typedWords[i] || "";
+                          const isCorrect = cleanWord(word) === cleanWord(tWord);
+                          if (isCorrect) return <span key={i} className="text-green-400">{word}</span>;
+                          else return (
+                              <div key={i} className="flex flex-col items-center mx-1">
+                                  <span className="text-red-400 line-through decoration-red-500 text-base md:text-xl opacity-70">{tWord || "___"}</span>
+                                  <span className="text-green-300 border-b border-green-500 font-bold bg-green-900/30 px-1 rounded text-sm md:text-base">{word}</span>
+                              </div>
+                          );
+                      })}
+                  </div>
+              );
+          };
+
+          const exportToAnki = (type) => {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            if (type === 'vocab_diff') {
+                if (!userStats.difficultVocab || userStats.difficultVocab.length === 0) { alert("Vacío."); return; }
+                userStats.difficultVocab.forEach((v) => { csvContent += `"${v.de}","${v.es}<br><small>TELC B1</small>","Dificil"\r\n`; });
+            } else if (type === 'vocab_norm') {
+                if (!userStats.normalVocab || userStats.normalVocab.length === 0) { alert("Vacío."); return; }
+                userStats.normalVocab.forEach((v) => { csvContent += `"${v.de}","${v.es}<br><small>TELC B1</small>","Repaso"\r\n`; });
+            } else {
+                if (!userStats.difficultGrammar || userStats.difficultGrammar.length === 0) { alert("Vacío."); return; }
+                userStats.difficultGrammar.forEach((g) => { csvContent += `"${g.base} (Verbo+Prep)","${g.exampleDe}<br><small>${g.exampleEs}</small>","Dificil"\r\n`; });
+            }
+            const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); 
+            link.setAttribute("download", `Anki_${type}_B1.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+          };
+
+          const exportScriptPDF = () => {
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) { alert("Permite las ventanas emergentes para generar el PDF."); return; }
+            let htmlContent = `
+                <html>
+                <head>
+                    <title>Guion: ${activeScriptTitle}</title>
+                    <style>
+                        body { font-family: 'Segoe UI', sans-serif; color: #1e293b; padding: 30px; line-height: 1.6; max-width: 900px; margin: 0 auto; }
+                        h1 { color: #dc2626; text-align: center; border-bottom: 3px solid #dc2626; padding-bottom: 10px; }
+                        h2 { color: #1e3a8a; border-bottom: 2px solid #93c5fd; padding-bottom: 5px; margin-top: 40px;}
+                        .scene { margin-bottom: 25px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px; }
+                        .speaker { font-weight: 900; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;}
+                        .text-de { font-size: 20px; font-weight: bold; margin: 8px 0; color: #0f172a; }
+                        .text-es { font-size: 16px; font-style: italic; color: #64748b; margin-bottom: 8px; }
+                        .vocab-box { font-size: 13px; color: #b45309; background: #fef3c7; padding: 6px 10px; border-radius: 4px; display: inline-block; font-weight: bold; border: 1px solid #fbbf24;}
+                        .hl-vocab { background-color: #fef08a; border-bottom: 2px solid #eab308; padding: 0 4px; border-radius: 2px; }
+                        .hl-conn { color: #7e22ce; text-decoration: underline; text-decoration-color: #a855f7; text-decoration-thickness: 2px; }
+                        .hl-dat { color: #1d4ed8; text-decoration: underline; text-decoration-color: #3b82f6; text-decoration-thickness: 2px; }
+                        .hl-akk { color: #b91c1c; text-decoration: underline; text-decoration-color: #ef4444; text-decoration-thickness: 2px; }
+                        .hl-wech { color: #d97706; text-decoration: underline; text-decoration-color: #f59e0b; text-decoration-thickness: 2px; }
+                        .hl-verbprep { background-color: #cffafe; border-bottom: 2px solid #06b6d4; padding: 0 4px; border-radius: 2px; color: #0891b2; }
+                        .tempus-tag { font-size: 11px; color: #4338ca; font-family: monospace; background: #e0e7ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #a5b4fc; margin-left: 5px; font-weight: normal; }
+                        .grammar-summary { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 20px; }
+                        .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #64748b; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📜 ${activeScriptTitle}</h1>
+                    <p style="text-align:center; color:#64748b; margin-bottom: 40px;">Entrenador Definitivo - Profesor Müller</p>
+            `;
+            let uniqueGrammarRules = new Set();
+            guionData.forEach(scene => {
+                let deText = scene.text;
+                const feedback = generateTutorFeedback(deText);
+                if (feedback && !feedback.includes("Estructura estándar perfecta")) {
+                    feedback.split('\n\n').forEach(f => uniqueGrammarRules.add(f));
+                }
+                if (scene.vocab) {
+                    const sortedVocab = [...scene.vocab].sort((a, b) => b.de.length - a.de.length);
+                    sortedVocab.forEach(v => {
+                        let searchWord = v.de.replace(/^(der|die|das|sich)\s/i, '').trim();
+                        const safeWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regex = new RegExp(`(?![^<]*>)(^|[^a-zäöüßA-ZÄÖÜẞ])(${safeWord})([^a-zäöüßA-ZÄÖÜẞ]|$)`, 'gi');
+                        deText = deText.replace(regex, `$1<span class="hl-vocab">$2</span>$3`);
+                    });
+                }
+                GRAMMAR_PATTERNS.forEach(p => { deText = deText.replace(p.regex, `<span class="hl-verbprep">$1</span>`); });
+                Object.keys(TEMPUS_DICT).forEach(verb => {
+                    const safeVerb = verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`(?![^<]*>)\\b(${safeVerb})\\b`, 'gi');
+                    deText = deText.replace(regex, `$1 <span class="tempus-tag">(${TEMPUS_DICT[verb]})</span>`);
+                });
+                const connRegex = new RegExp(`(?![^<]*>)\\b(${CONN_LIST.join('|')})\\b`, 'gi');
+                deText = deText.replace(connRegex, `<span class="hl-conn">$1</span>`);
+                const datRegex = new RegExp(`(?![^<]*>)\\b(${PREP_DAT.join('|')})\\b`, 'gi');
+                deText = deText.replace(datRegex, `<span class="hl-dat">$1</span>`);
+                const akkRegex = new RegExp(`(?![^<]*>)\\b(${PREP_AKK.join('|')})\\b`, 'gi');
+                deText = deText.replace(akkRegex, `<span class="hl-akk">$1</span>`);
+                const wechRegex = new RegExp(`(?![^<]*>)\\b(${PREP_WECHSEL.join('|')})\\b`, 'gi');
+                deText = deText.replace(wechRegex, `<span class="hl-wech">$1</span>`);
+                htmlContent += `
+                    <div class="scene">
+                        <div class="speaker">${scene.speaker}</div>
+                        <div class="text-de">${deText}</div>
+                        <div class="text-es">Traducción: "${scene.translation || ''}"</div>
+                        ${scene.vocab && scene.vocab.length > 0 ? `<div class="vocab-box">📖 Vocabulario: ${scene.vocab.map(v => `${v.de} = ${v.es}`).join(' | ')}</div>` : ''}
+                    </div>
+                `;
+            });
+            if (uniqueGrammarRules.size > 0) {
+                htmlContent += `<div class="grammar-summary"><h2>🧠 Análisis Gramatical del Guion</h2><ul>`;
+                uniqueGrammarRules.forEach(rule => { let cleanRule = rule.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); htmlContent += `<li>${cleanRule}</li>`; });
+                htmlContent += `</ul></div>`;
+            }
+            htmlContent += `<div class="footer">¡Viel Erfolg beim Deutschlernen!</div><script>window.onload = function() { window.print(); }<\/script></body></html>`;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+          };
+
+          const exportProgressPDF = () => {
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) { alert("Por favor, permite las ventanas emergentes (pop-ups) en tu navegador para generar el PDF."); return; }
+            const htmlContent = `
+                <html><head><title>Mi Resumen de Alemán - Profesor Müller</title><style>body { font-family: 'Segoe UI', sans-serif; color: #1e293b; padding: 40px; line-height: 1.6; } h1 { color: #2563eb; text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; } h2 { color: #0f172a; margin-top: 40px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; } th, td { border: 1px solid #94a3b8; padding: 12px; } th { background-color: #f1f5f9; } .diff { color: #dc2626; font-weight: bold; } .norm { color: #2563eb; } .grammar-base { color: #0891b2; }</style></head><body>
+                <h1>📚 Resumen de Estudio - B1/B2</h1>
+                <div><h2>🔴 Vocabulario Difícil</h2>${userStats.difficultVocab?.length ? `<table><tr><th>Alemán</th><th>Español</th></tr>${userStats.difficultVocab.map(v => `<tr><td class="diff">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
+                <div><h2>🔵 Vocabulario Normal</h2>${userStats.normalVocab?.length ? `<table><tr><th>Alemán</th><th>Español</th></tr>${userStats.normalVocab.map(v => `<tr><td class="norm">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
+                <div><h2>🧠 Reglas Gramaticales</h2>${userStats.difficultGrammar?.length ? `<table><tr><th>Regla</th><th>Ejemplo</th><th>Traducción</th></tr>${userStats.difficultGrammar.map(g => `<tr><td class="grammar-base">${g.base}</td><td><i>"${g.exampleDe}"</i></td><td>${g.exampleEs}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
+                <script>window.onload = function() { window.print(); }<\/script></body></html>
+            `;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+          };
+
+          // COLORES DE FONDO SUAVIZADOS (Corrección)
+          const getBgColor = () => {
+              if (activeTab === 'progreso') return 'bg-indigo-950';
+              if (activeTab === 'guiones') return 'bg-slate-900';
+              if (activeTab === 'vocabulario') return 'bg-amber-950/70'; // Suavizado
+              if (activeTab === 'b1meister' || activeTab === 'b2ausblick') return 'bg-slate-900'; // Suavizado
+              if (activeTab === 'storybuilder') return 'bg-indigo-950'; // Suavizado
+              if (fluesternMode) return 'bg-zinc-900 filter contrast-125 sepia-50'; 
+              if (isReviewing || practiceActive) return 'bg-gray-900'; // Suavizado
+              const speaker = guionData[getActualSceneIndex()]?.speaker;
+              if (speaker === 'Lukas') return 'bg-slate-900';
+              if (speaker === 'Elena' || speaker === 'Anna') return 'bg-slate-800'; // Suavizado
+              if (speaker?.includes('Weber') || speaker === 'Professor') return 'bg-emerald-950';
+              return 'bg-gray-900'; 
+          };
+
+          const currentPracticeList = practiceActive === 'diff' ? userStats.difficultVocab : (practiceActive === 'norm' ? userStats.normalVocab : userStats.difficultGrammar);
+          const currentPracticeItem = currentPracticeList ? currentPracticeList[practiceIndex] : null;
+
+          // Componente de escritura a mano (canvas)
+          const HandwritingPad = ({ onClose }) => {
+              const canvasRef = useRef(null);
+              const [isDrawing, setIsDrawing] = useState(false);
+              const [ctx, setCtx] = useState(null);
+              useEffect(() => {
+                  const canvas = canvasRef.current;
+                  if (canvas) {
+                      const context = canvas.getContext('2d');
+                      context.lineCap = 'round';
+                      context.lineJoin = 'round';
+                      context.strokeStyle = '#ffffff';
+                      context.lineWidth = 4;
+                      setCtx(context);
+                      const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+                      resize();
+                      window.addEventListener('resize', resize);
+                      return () => window.removeEventListener('resize', resize);
+                  }
+              }, []);
+              const startDrawing = (e) => { e.preventDefault(); setIsDrawing(true); const { offsetX, offsetY } = getCoordinates(e); ctx.beginPath(); ctx.moveTo(offsetX, offsetY); };
+              const draw = (e) => { e.preventDefault(); if (!isDrawing) return; const { offsetX, offsetY } = getCoordinates(e); ctx.lineTo(offsetX, offsetY); ctx.stroke(); };
+              const stopDrawing = () => { setIsDrawing(false); };
+              const getCoordinates = (e) => {
+                  const canvas = canvasRef.current;
+                  const rect = canvas.getBoundingClientRect();
+                  let clientX, clientY;
+                  if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+                  else { clientX = e.clientX; clientY = e.clientY; }
+                  return { offsetX: clientX - rect.left, offsetY: clientY - rect.top };
+              };
+              const clearCanvas = () => { ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height); };
+              const saveDrawing = () => {
+                  const canvas = canvasRef.current;
+                  const image = canvas.toDataURL('image/png');
+                  const link = document.createElement('a');
+                  link.download = `handwriting_${Date.now()}.png`;
+                  link.href = image;
+                  link.click();
+              };
+              return (
+                  <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+                      <div className="bg-gray-800 rounded-2xl p-4 max-w-2xl w-full">
+                          <h3 className="text-xl font-bold mb-2">✍️ Escritura a mano</h3>
+                          <canvas ref={canvasRef} className="handwriting-canvas" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={stopDrawing} />
+                          <div className="flex gap-3 mt-4">
+                              <button onClick={clearCanvas} className="bg-gray-600 px-4 py-2 rounded-lg">Borrar</button>
+                              <button onClick={saveDrawing} className="bg-green-600 px-4 py-2 rounded-lg">Guardar dibujo</button>
+                              <button onClick={onClose} className="bg-red-600 px-4 py-2 rounded-lg">Cerrar</button>
+                          </div>
+                      </div>
+                  </div>
+              );
+          };
+
+          return (
+            <div className={`flex flex-col min-h-screen md:h-screen md:max-h-[850px] w-full text-white font-sans md:rounded-xl overflow-hidden shadow-2xl relative transition-colors duration-500 ${getBgColor()}`}>
+              
+              {/* SUPERIOR NAV BAR */}
+              <div className="w-full bg-black/80 backdrop-blur-md border-b border-white/10 p-2 md:p-3 flex flex-col md:flex-row gap-2 md:gap-3 justify-between items-center z-20">
+                  <div className="flex gap-1 md:gap-2 bg-black/50 p-1 rounded-xl w-full md:w-auto overflow-x-auto hide-scrollbar">
+                      <button onClick={()=>{setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'historia' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="play" className="w-3 h-3 md:w-4 md:h-4" /> Historia</button>
+                      <button onClick={()=>{setActiveTab('vocabulario'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'vocabulario' ? 'bg-amber-600 text-white' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="book-open" className="w-3 h-3 md:w-4 md:h-4" /> Vocab</button>
+                      <button onClick={()=>{setActiveTab('b1meister'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'b1meister' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)]' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="target" className="w-3 h-3 md:w-4 md:h-4" /> B1</button>
+                      <button onClick={()=>{setActiveTab('b2ausblick'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'b2ausblick' ? 'bg-sky-600 text-white shadow-[0_0_15px_rgba(2,132,199,0.8)]' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="layers" className="w-3 h-3 md:w-4 md:h-4" /> B2</button>
+                      <button onClick={()=>{setActiveTab('progreso'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'progreso' ? 'bg-yellow-600 text-white' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="bar-chart" className="w-3 h-3 md:w-4 md:h-4" /> Progreso</button>
+                      <button onClick={()=>{setActiveTab('guiones'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'guiones' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="file-text" className="w-3 h-3 md:w-4 md:h-4" /> Biblioteca</button>
+                      <button onClick={()=>{setActiveTab('storybuilder'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 rounded-lg font-bold text-xs transition ${activeTab === 'storybuilder' ? 'bg-fuchsia-600 text-white' : 'text-gray-400 hover:text-white whitespace-nowrap'}`}><Icon name="sparkles" className="w-3 h-3 md:w-4 md:h-4" /> IA</button>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 md:gap-3 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 justify-end">
+                      <div className="flex items-center gap-2 md:gap-3 bg-black/60 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-white/20 whitespace-nowrap">
+                          {userStats.username && (
+                              <span className="flex items-center gap-1 font-bold text-amber-500 text-xs uppercase mr-1 md:mr-2 border-r border-white/20 pr-2 md:pr-3">
+                                  {userStats.isPremium ? <Icon name="crown" className="w-3 h-3 md:w-4 md:h-4" /> : <Icon name="user-circle" className="w-3 h-3 md:w-4 md:h-4" />} <span className="hidden xs:inline">{userStats.username}</span>
+                              </span>
+                          )}
+                          <span className="flex items-center gap-1 font-black text-red-500 text-xs md:text-sm"><Icon name="heart" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {userStats.hearts}</span>
+                          <span className="flex items-center gap-1 font-black text-yellow-400 text-xs md:text-sm"><Icon name="coins" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {userStats.coins}</span>
+                      </div>
+                      <button onClick={()=>{setPodcastMode(!podcastMode); setBlindMode(false); setDiktatMode(false); setPuzzleMode(false);}} className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-bold transition border border-white/20 whitespace-nowrap ${podcastMode ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.8)]' : 'bg-black/50 text-gray-300 hover:bg-white/10'}`} title="Auto-Play Podcast">
+                           <Icon name="car" className="w-3 h-3 md:w-4 md:h-4" /> <span className="hidden sm:inline">Podcast</span>
+                      </button>
+                  </div>
+              </div>
+
+              {/* MODAL LOGIN */}
+              {showLoginModal && (
+                  <div className="absolute inset-0 z-50 bg-black/95 flex flex-col justify-center items-center p-4 md:p-8 animate-in zoom-in duration-300">
+                      <div className="bg-slate-900 border border-amber-500 p-6 md:p-8 rounded-2xl max-w-md w-full shadow-[0_0_40px_rgba(245,158,11,0.3)] text-center">
+                          <Icon name="crown" className="w-12 h-12 md:w-16 md:h-16 text-amber-500 mx-auto mb-4" />
+                          <h1 className="text-2xl md:text-3xl font-black text-white mb-2">Cuenta VIP</h1>
+                          <input type="text" placeholder="Ej: SuperKlaus" className="w-full bg-black/50 border border-gray-600 p-3 md:p-4 rounded-xl text-white font-bold text-center mb-6 outline-none focus:border-amber-500 text-sm md:text-base" value={tempUsername} onChange={(e)=>setTempUsername(e.target.value)} />
+                          <button onClick={handleRegister} className="w-full bg-amber-600 hover:bg-amber-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-lg md:text-xl shadow-xl transition">Empezar a Estudiar</button>
+                      </div>
+                  </div>
+              )}
+
+              {/* MODAL MUERTE */}
+              {showDeathModal && (
+                  <div className="absolute inset-0 z-50 bg-black/95 flex flex-col justify-center items-center p-4 md:p-8 animate-in zoom-in duration-300">
+                      <Icon name="heart" className="w-20 h-20 md:w-24 md:h-24 text-red-600 mb-4 md:mb-6 drop-shadow-[0_0_30px_rgba(220,38,38,0.8)]" />
+                      <h1 className="text-3xl md:text-5xl font-black text-white mb-4 text-center">¡Te has quedado sin vidas!</h1>
+                      <div className="flex gap-4">
+                          <button onClick={buyHearts} className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 md:px-8 py-3 md:py-4 rounded-xl font-black text-base md:text-xl shadow-xl flex items-center gap-2"><Icon name="coins" className="w-5 h-5 md:w-6 md:h-6" /> Comprar 5 ❤️ (50 Coins)</button>
+                      </div>
+                  </div>
+              )}
+
+              {/* CONTENIDO PRINCIPAL */}
+              <div className="flex-1 overflow-y-auto relative flex flex-col hide-scrollbar">
+                  
+                  {/* STORY BUILDER (sin cambios) */}
+                  {activeTab === 'storybuilder' && (
+                      <div className="p-4 md:p-8 max-w-3xl mx-auto w-full animate-in fade-in duration-500 flex flex-col justify-center h-full">
+                          <h1 className="text-2xl md:text-4xl font-black mb-2 flex items-center gap-2 md:gap-3 text-fuchsia-400"><Icon name="sparkles" className="w-6 h-6 md:w-10 md:h-10" /> AI Story Builder</h1>
+                          <p className="text-fuchsia-200 mb-6 md:mb-8 text-base md:text-lg">Crea historias a medida generadas por IA utilizando el nivel y vocabulario exacto que quieres repasar.</p>
+                          {!isGeneratingStory ? (
+                              <div className="bg-fuchsia-900/40 p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-fuchsia-500/50 shadow-2xl flex flex-col gap-4 md:gap-6">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                      <div>
+                                          <label className="text-fuchsia-300 font-bold mb-2 block uppercase tracking-widest text-xs md:text-sm">Nivel del Idioma:</label>
+                                          <div className="flex gap-2 flex-wrap">
+                                              {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(lvl => (
+                                                  <button key={lvl} onClick={()=>setAiLevel(lvl)} className={`px-2 md:px-4 py-1 md:py-2 rounded-xl font-black text-xs md:text-sm transition ${aiLevel === lvl ? 'bg-fuchsia-500 text-white shadow-lg scale-105' : 'bg-black/50 text-gray-400 hover:bg-fuchsia-900/50'}`}>{lvl}</button>
+                                              ))}
+                                          </div>
+                                      </div>
+                                      <div>
+                                          <label className="text-fuchsia-300 font-bold mb-2 block uppercase tracking-widest text-xs md:text-sm">Temática:</label>
+                                          <select className="w-full bg-black/50 border border-fuchsia-800 p-2 md:p-3 rounded-xl text-white outline-none focus:border-fuchsia-400 text-sm md:text-base" value={aiTheme} onChange={(e)=>setAiTheme(e.target.value)}>
+                                              <option value="Alltag">Vida Cotidiana (Alltag)</option>
+                                              <option value="Krimi">Policíaca (Krimi)</option>
+                                              <option value="Beruf">Trabajo / Entrevista (Beruf)</option>
+                                              <option value="Reise">Viaje y Vacaciones (Reise)</option>
+                                              <option value="Abenteuer">Aventura (Abenteuer)</option>
+                                              <option value="SciFi">Ciencia Ficción (SciFi)</option>
+                                              <option value="Romantik">Romance (Romantik)</option>
+                                              <option value="Horror">Terror (Horror)</option>
+                                              <option value="Geschichte">Histórico (Geschichte)</option>
+                                              <option value="Komödie">Comedia (Komödie)</option>
+                                          </select>
+                                      </div>
+                                  </div>
+                                  <div>
+                                      <label className="text-fuchsia-300 font-bold mb-2 block uppercase tracking-widest text-xs md:text-sm flex items-center justify-between">
+                                          <span>Palabras Clave (Opcional)</span>
+                                          <span className="text-[10px] md:text-xs font-normal text-fuchsia-400/70 bg-fuchsia-950 px-2 py-0.5 rounded">Separadas por comas</span>
+                                      </label>
+                                      <textarea className="w-full h-20 md:h-24 bg-black/50 border border-fuchsia-800 p-3 md:p-4 rounded-xl text-white outline-none focus:border-fuchsia-400 resize-none font-mono text-xs md:text-sm" placeholder="Ej: der Apfel, wandern, gefährlich, sich erinnern an..." value={aiCustomWords} onChange={(e)=>setAiCustomWords(e.target.value)} />
+                                  </div>
+                                  <button onClick={handleGenerateAIStory} className="mt-2 w-full bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white px-6 md:px-8 py-3 md:py-5 rounded-xl md:rounded-2xl font-black text-lg md:text-2xl shadow-[0_0_30px_rgba(217,70,239,0.4)] flex items-center justify-center gap-2 md:gap-3 transition transform hover:scale-105"><Icon name="brain" className="w-5 h-5 md:w-7 md:h-7" /> Generar Historia Mágica</button>
+                              </div>
+                          ) : (
+                              <div className="flex flex-col items-center justify-center h-48 md:h-64 gap-4 md:gap-6 animate-pulse">
+                                  <Icon name="brain" className="w-12 h-12 md:w-20 md:h-20 text-fuchsia-500" />
+                                  <h2 className="text-lg md:text-2xl font-bold text-fuchsia-300 text-center">La IA del Profesor Müller está escribiendo un guion...</h2>
+                              </div>
+                          )}
+                      </div>
+                  )}
+
+                  {/* ENTRENAMIENTO DASHBOARD (sin cambios) */}
+                  {practiceActive && currentPracticeItem && (
+                      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 animate-in zoom-in">
+                         <button onClick={() => setPracticeActive(null)} className="absolute top-4 left-4 md:top-8 md:left-8 text-gray-400 hover:text-white flex items-center gap-2 font-bold text-sm md:text-base"><Icon name="skip-back" className="w-4 h-4 md:w-5 md:h-5" /> Volver</button>
+                         <h2 className="text-2xl md:text-3xl font-black text-amber-500 mb-6 md:mb-8 uppercase tracking-widest"><Icon name="brain" className="w-6 h-6 md:w-8 md:h-8 inline mr-2" /> Entrenamiento Rápido</h2>
+                         <div className="w-full max-w-2xl bg-black/40 p-6 md:p-12 rounded-2xl md:rounded-3xl border border-white/10 shadow-2xl flex flex-col items-center">
+                             <button onClick={() => playPracticeAudio(practiceActive === 'grammar' ? currentPracticeItem.base : currentPracticeItem.de)} className="bg-white/10 p-3 md:p-4 rounded-full mb-4 md:mb-6 hover:bg-white/20 transition"><Icon name="volume-2" className="w-6 h-6 md:w-8 md:h-8" /></button>
+                             {practiceActive === 'grammar' ? (
+                                 <h1 className="text-3xl md:text-5xl font-black text-cyan-400 text-center mb-6 md:mb-8">{currentPracticeItem.base}</h1>
+                             ) : (
+                                 <h1 className="text-4xl md:text-7xl font-black text-white text-center mb-6 md:mb-8 flex items-center justify-center flex-wrap">{getArticleVisual(currentPracticeItem.de)}{currentPracticeItem.de}</h1>
+                             )}
+                             {!practiceShowTrans ? (
+                                 <button onClick={() => setPracticeShowTrans(true)} className="bg-blue-600 text-white px-8 md:px-10 py-3 md:py-4 rounded-xl font-bold text-xl md:text-2xl shadow-xl hover:bg-blue-500 transition">Revelar</button>
+                             ) : (
+                                 <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom-4">
+                                     {practiceActive === 'grammar' ? (
+                                         <div className="bg-black/60 p-4 md:p-6 rounded-xl md:rounded-2xl w-full mb-6 md:mb-8 text-center border border-cyan-800/50">
+                                             <p className="text-lg md:text-2xl text-white mb-2 italic">"{currentPracticeItem.exampleDe}"</p>
+                                             <p className="text-base md:text-xl text-cyan-200">({currentPracticeItem.exampleEs})</p>
+                                         </div>
+                                     ) : (
+                                         <h2 className="text-2xl md:text-4xl font-bold text-gray-300 text-center mb-6 md:mb-8 bg-black/60 px-4 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl w-full">{currentPracticeItem.es}</h2>
+                                     )}
+                                     <button onClick={nextPracticeWord} className="bg-green-600 w-full py-3 md:py-4 rounded-xl font-bold text-xl md:text-2xl flex items-center justify-center gap-2 shadow-xl hover:bg-green-500">Siguiente <Icon name="arrow-right" className="w-5 h-5 md:w-6 md:h-6" /></button>
+                                 </div>
+                             )}
+                         </div>
+                         <p className="mt-4 md:mt-6 text-gray-500 font-bold text-sm md:text-base">Tarjeta {practiceIndex + 1} de {currentPracticeList.length}</p>
+                      </div>
+                  )}
+
+                  {/* B1 / B2 (sin cambios) */}
+                  {(activeTab === 'b1meister' || activeTab === 'b2ausblick') && !practiceActive && (
+                      <div className="p-4 md:p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500 flex flex-col h-full">
+                          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 border-b border-sky-900/50 pb-4 md:pb-6 gap-4">
+                              <div>
+                                  <h1 className={`text-2xl md:text-4xl font-black flex items-center gap-2 md:gap-3 ${activeTab === 'b1meister' ? 'text-emerald-400' : 'text-sky-400'}`}>
+                                      {activeTab === 'b1meister' ? <Icon name="target" className="w-8 h-8 md:w-10 md:h-10" /> : <Icon name="layers" className="w-8 h-8 md:w-10 md:h-10" />} 
+                                      {activeTab === 'b1meister' ? 'B1 Fundamentos' : 'B2 Meisterklasse'}
+                                  </h1>
+                                  <p className="text-gray-300 text-xs md:text-sm mt-1">{activeTab === 'b1meister' ? 'Domina las bases absolutas.' : 'Estructuras avanzadas de nativos.'}</p>
+                              </div>
+                              <div className="flex gap-1 md:gap-2 flex-wrap bg-black/40 p-1 md:p-2 rounded-xl border border-white/10">
+                                  <button onClick={()=>setBxCategory('vocabulario')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition ${bxCategory === 'vocabulario' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}>Vocabulario</button>
+                                  <button onClick={()=>setBxCategory('verbos')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition ${bxCategory === 'verbos' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}>Verbos</button>
+                                  <button onClick={()=>setBxCategory('preposiciones')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition ${bxCategory === 'preposiciones' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}>Prep.</button>
+                                  <button onClick={()=>setBxCategory('conectores')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition ${bxCategory === 'conectores' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}>Conectores</button>
+                                  <button onClick={()=>setBxCategory('redemittel')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-bold transition ${bxCategory === 'redemittel' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white'}`}>Redemittel</button>
+                                  <button onClick={()=>setBxCategory('mix')} className={`px-2 md:px-3 py-1 md:py-2 rounded-lg text-[10px] md:text-xs font-black bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center gap-1 shadow-lg border border-white/20 ${bxCategory === 'mix' ? 'ring-1 md:ring-2 ring-white' : 'opacity-70 hover:opacity-100'}`}><Icon name="shuffle" className="w-3 h-3 md:w-4 md:h-4" /> MIX</button>
+                              </div>
+                          </div>
+                          <div className="flex-1 flex flex-col items-center justify-center relative w-full max-w-3xl mx-auto">
+                              {bxCurrentList.length > 0 ? (
+                                  <>
+                                      <div className={`absolute top-0 right-0 px-2 md:px-4 py-0.5 md:py-1 rounded-full font-bold border uppercase text-[10px] md:text-xs tracking-widest ${activeTab === 'b1meister' ? 'bg-emerald-900/50 text-emerald-300 border-emerald-500/30' : 'bg-sky-900/50 text-sky-300 border-sky-500/30'}`}>
+                                          {bxCategory === 'mix' ? 'Modo Mix (Aleatorio)' : bxCategory}
+                                      </div>
+                                      <div className={`w-full bg-slate-900/90 p-4 md:p-10 rounded-2xl md:rounded-3xl border-2 shadow-2xl mt-6 md:mt-8 ${activeTab === 'b1meister' ? 'border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.2)]' : 'border-sky-500/50 shadow-[0_0_40px_rgba(14,165,233,0.3)]'}`}>
+                                          <p className="text-gray-400 font-bold mb-2 uppercase tracking-widest text-[10px] md:text-sm"><Icon name="languages" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{activeTab === 'b1meister' ? 'Básico / Común:' : 'Nivel B1:'}</p>
+                                          <p className="text-base md:text-2xl text-white/60 mb-4 md:mb-8 decoration-red-500/50 decoration-2">"{bxCurrentList[bxIndex]?.b1}"</p>
+                                          <p className={`font-black mb-2 uppercase tracking-widest text-[10px] md:text-sm ${activeTab === 'b1meister' ? 'text-emerald-400' : 'text-sky-400'}`}><Icon name="trophy" className="w-3 h-3 md:w-4 md:h-4 inline mr-2" />{activeTab === 'b1meister' ? 'Mejor / Nivel B1 Real:' : 'Nivel B2/C1:'}</p>
+                                          <p className="text-xl md:text-5xl font-black text-white mb-3 md:mb-4 leading-tight">"{bxCurrentList[bxIndex]?.b2}"</p>
+                                          <p className="text-base md:text-xl text-gray-300 mb-6 md:mb-8 font-medium">({bxCurrentList[bxIndex]?.es})</p>
+                                          <div className="bg-black/40 p-3 md:p-4 rounded-xl border border-white/10 flex gap-2 md:gap-3">
+                                              <Icon name="brain" className="w-5 h-5 md:w-6 md:h-6 text-amber-400 flex-shrink-0 mt-0.5 md:mt-1" />
+                                              <p className="text-xs md:text-sm text-gray-200 leading-relaxed"><strong className="text-amber-400 uppercase tracking-wide">La Lógica del Profesor:</strong> <br/> {bxCurrentList[bxIndex]?.trick}</p>
+                                          </div>
+                                      </div>
+                                      <div className="flex gap-3 md:gap-4 mt-6 md:mt-8 w-full max-w-sm justify-between">
+                                          <button onClick={() => setBxIndex(i => i > 0 ? i - 1 : bxCurrentList.length - 1)} className="bg-gray-800 hover:bg-gray-700 text-white p-3 md:p-4 rounded-full transition"><Icon name="skip-back" className="w-5 h-5 md:w-6 md:h-6" /></button>
+                                          <button onClick={() => { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(bxCurrentList[bxIndex].b2); u.lang = 'de-DE'; window.speechSynthesis.speak(u); }} className={`text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-bold shadow-lg flex items-center gap-2 flex-1 justify-center text-sm md:text-base ${activeTab === 'b1meister' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-sky-600 hover:bg-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.5)]'}`}><Icon name="volume-2" className="w-5 h-5 md:w-6 md:h-6" /> Escuchar</button>
+                                          <button onClick={() => setBxIndex(i => i < bxCurrentList.length - 1 ? i + 1 : 0)} className="bg-gray-800 hover:bg-gray-700 text-white p-3 md:p-4 rounded-full transition"><Icon name="skip-forward" className="w-5 h-5 md:w-6 md:h-6" /></button>
+                                      </div>
+                                      <p className="text-gray-500 font-bold mt-4 text-xs md:text-sm">Tarjeta {bxIndex + 1} / {bxCurrentList.length}</p>
+                                  </>
+                              ) : (
+                                  <div className="text-gray-500 font-bold text-base md:text-xl">Categoría sin datos (Selecciona otra).</div>
+                              )}
+                          </div>
+                      </div>
+                  )}
+
+                  {/* PROGRESO (con botones de sincronización añadidos en barra) */}
+                  {activeTab === 'progreso' && !practiceActive && (
+                      <div className="p-4 md:p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500">
+                          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
+                              <h1 className="text-2xl md:text-4xl font-black flex items-center gap-2 md:gap-3 text-yellow-500"><Icon name="award" className="w-8 h-8 md:w-10 md:h-10" /> Dashboard Profesional B1</h1>
+                              <div className="flex gap-2">
+                                  <button onClick={exportProgressPDF} className="bg-gray-800 hover:bg-gray-700 text-white px-4 md:px-5 py-2 md:py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition border border-gray-600 text-xs md:text-sm"><Icon name="file-down" className="w-4 h-4 md:w-5 md:h-5" /> Imprimir Resumen</button>
+                              </div>
+                          </div>
+                          <div className="bg-gray-800/80 p-4 md:p-6 rounded-2xl border border-gray-700 shadow-xl mb-6 md:mb-8">
+                              <h2 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 flex items-center gap-2"><Icon name="trending-up" className="w-5 h-5 md:w-6 md:h-6 text-green-400" /> Actividad Semanal</h2>
+                              <div className="flex items-end justify-between gap-1 md:gap-2 h-[120px] md:h-[200px] mt-4 pt-4 border-t border-gray-700 relative">
+                                  {userStats.activityLog && userStats.activityLog.map((val, i) => (
+                                      <div key={i} className="flex flex-col items-center flex-1 group h-full justify-end">
+                                          <div className="w-full bg-blue-500 rounded-t-md transition-all duration-500 group-hover:bg-blue-400 relative shadow-[0_0_10px_rgba(59,130,246,0.5)]" style={{height: `${Math.max(val, 5)}%`}}>
+                                              <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] md:text-xs font-bold text-blue-200 opacity-0 group-hover:opacity-100 transition whitespace-nowrap">{val}XP</span>
+                                          </div>
+                                          <span className="text-[8px] md:text-[10px] text-gray-400 mt-1 md:mt-2 font-mono uppercase tracking-tighter whitespace-nowrap hidden md:block">{getLast7Days()[i]}</span>
+                                      </div>
+                                  ))}
+                              </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                              <div className="bg-gray-900 p-4 md:p-6 rounded-2xl border border-red-900/50 flex flex-col relative group">
+                                  <h2 className="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center gap-2 text-red-500"><Icon name="target" className="w-5 h-5 md:w-6 md:h-6" /> Vocab. Difícil</h2>
+                                  <ul className="space-y-1 md:space-y-2 flex-1 overflow-y-auto pr-2 mb-3 md:mb-4 max-h-32 md:max-h-40">
+                                      {!userStats.difficultVocab || userStats.difficultVocab.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">Vacío.</p> : 
+                                       userStats.difficultVocab.map((v, i) => <li key={i} className="bg-black/40 p-1 md:p-2 rounded border border-red-900/30 text-xs md:text-sm flex justify-between"><span className="text-red-400 font-bold text-xs md:text-sm">{v.de}</span><span className="text-gray-400 text-right w-1/2 truncate text-xs md:text-sm">{v.es}</span></li>)
+                                      }
+                                  </ul>
+                                  <div className="flex gap-2">
+                                      <button onClick={() => startPractice('diff')} className="flex-1 bg-red-600 hover:bg-red-500 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm shadow-lg transition">Practicar Ahora</button>
+                                      <button onClick={() => exportToAnki('vocab_diff')} className="bg-red-900 hover:bg-red-800 p-1.5 md:p-2 rounded-lg transition" title="Exportar Anki"><Icon name="download" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                  </div>
+                              </div>
+                              <div className="bg-gray-900 p-4 md:p-6 rounded-2xl border border-blue-900/50 flex flex-col">
+                                  <h2 className="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center gap-2 text-blue-400"><Icon name="book-open" className="w-5 h-5 md:w-6 md:h-6" /> Vocab. Normal</h2>
+                                  <ul className="space-y-1 md:space-y-2 flex-1 overflow-y-auto pr-2 mb-3 md:mb-4 max-h-32 md:max-h-40">
+                                      {!userStats.normalVocab || userStats.normalVocab.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">Vacío.</p> : 
+                                       userStats.normalVocab.map((v, i) => <li key={i} className="bg-black/40 p-1 md:p-2 rounded border border-blue-900/30 text-xs md:text-sm flex justify-between"><span className="text-blue-300 font-bold text-xs md:text-sm">{v.de}</span><span className="text-gray-400 text-right w-1/2 truncate text-xs md:text-sm">{v.es}</span></li>)
+                                      }
+                                  </ul>
+                                  <div className="flex gap-2">
+                                      <button onClick={() => startPractice('norm')} className="flex-1 bg-blue-600 hover:bg-blue-500 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm shadow-lg transition">Practicar Ahora</button>
+                                      <button onClick={() => exportToAnki('vocab_norm')} className="bg-blue-900 hover:bg-blue-800 p-1.5 md:p-2 rounded-lg transition" title="Exportar Anki"><Icon name="download" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                  </div>
+                              </div>
+                              <div className="bg-gray-900 p-4 md:p-6 rounded-2xl border border-cyan-900/50 flex flex-col">
+                                  <h2 className="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center gap-2 text-cyan-400"><Icon name="brain" className="w-5 h-5 md:w-6 md:h-6" /> Gramática</h2>
+                                  <ul className="space-y-1 md:space-y-2 flex-1 overflow-y-auto pr-2 mb-3 md:mb-4 max-h-32 md:max-h-40">
+                                      {!userStats.difficultGrammar || userStats.difficultGrammar.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">Vacío.</p> : 
+                                       userStats.difficultGrammar.map((g, i) => <li key={i} className="bg-black/40 p-1 md:p-2 rounded border border-cyan-900/30 text-xs flex flex-col"><span className="text-cyan-400 font-bold text-xs md:text-sm mb-0.5 md:mb-1">{g.base}</span><span className="text-gray-400 truncate text-[10px] md:text-xs">"{g.exampleDe}"</span></li>)
+                                      }
+                                  </ul>
+                                  <div className="flex gap-2">
+                                      <button onClick={() => startPractice('grammar')} className="flex-1 bg-cyan-600 hover:bg-cyan-500 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm shadow-lg transition">Practicar Ahora</button>
+                                      <button onClick={() => exportToAnki('grammar')} className="bg-cyan-900 hover:bg-cyan-800 p-1.5 md:p-2 rounded-lg transition" title="Exportar Anki"><Icon name="download" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* BIBLIOTECA (con checkboxes para mezcla) */}
+                  {activeTab === 'guiones' && !practiceActive && (
+                      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row gap-6 md:gap-8 h-full animate-in fade-in">
+                          <div className="flex-[2] bg-gray-800/50 p-4 md:p-6 rounded-2xl border border-gray-700 flex flex-col max-h-full overflow-y-auto hide-scrollbar">
+                              <div className="bg-purple-900/30 border border-purple-500/50 p-4 md:p-5 rounded-xl mb-4 md:mb-6">
+                                  <h3 className="text-purple-300 font-bold flex items-center gap-2 mb-2 text-sm md:text-base"><Icon name="sparkles" className="w-4 h-4 md:w-5 md:h-5" /> Instrucciones para la IA (ChatGPT/Gemini)</h3>
+                                  <p className="text-xs md:text-sm text-gray-300 mb-3">Copia este prompt en tu IA favorita para que te genere diálogos perfectos y compatibles con el Entrenador Müller.</p>
+                                  <div className="bg-black/60 p-2 md:p-3 rounded-lg flex items-start gap-2 border border-purple-800/50 relative group">
+       <p className="text-[10px] md:text-xs font-mono text-purple-200 select-all pr-6 md:pr-8">
+    "Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.<br/><br/>Formato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]"
+</p>
+<button 
+    className="absolute top-1 right-1 text-gray-400 hover:text-white bg-gray-800 p-1 rounded-md opacity-0 group-hover:opacity-100 transition" 
+    onClick={() => navigator.clipboard.writeText(`Eres un profesor de alemán experto en TELC B1. Genera un diálogo EXTENSO (sin límite de líneas) sobre [TEMA]. IMPORTANTE: Si usas un Redemittel clave para el examen o una palabra de vocabulario esencial, escribe la palabra 'Nützlich' justo después de esa frase en alemán. No uses círculos de colores ni símbolos raros.\n\nFormato: Nombre: Frase en alemán. Nützlich. (Traducción) [palabra - traducción] [R]`)}
+>
+    <Icon name="copy" className="w-3 h-3 md:w-4 md:h-4" />
+</button>
+                                  </div>
+                              </div>
+                              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-purple-400"><Icon name="edit-3" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Guion Copiado</h2>
+                              <input type="text" placeholder="Ej: Lektion 17: Die Reise..." className="w-full bg-black/50 border border-gray-600 p-2 md:p-3 rounded-lg text-white mb-3 md:mb-4 outline-none focus:border-purple-500 text-sm md:text-base" value={newScriptTitle} onChange={(e) => setNewScriptTitle(e.target.value)} />
+                              <textarea className="w-full flex-1 min-h-[120px] md:min-h-[150px] bg-black/50 border border-gray-600 p-3 md:p-4 rounded-lg text-white font-mono text-xs md:text-sm mb-3 md:mb-4 outline-none focus:border-purple-500 resize-none" placeholder="Pega aquí el resultado de la IA..." value={scriptInput} onChange={(e) => setScriptInput(e.target.value)} />
+                              <button onClick={handleSaveScript} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 md:py-4 rounded-xl flex justify-center items-center gap-2 shadow-lg text-sm md:text-base"><Icon name="save" className="w-4 h-4 md:w-5 md:h-5" /> Guardar y Estudiar</button>
+                          </div>
+                          <div className="w-full md:w-1/3 flex flex-col gap-4 max-h-[600px] md:max-h-full">
+                              <div className="bg-gray-900 p-4 md:p-5 rounded-2xl border border-gray-800 flex flex-col shrink-0 h-1/3 min-h-[180px] md:min-h-[200px]">
+                                  <h2 className="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center gap-2 text-gray-200"><Icon name="file-text" className="w-5 h-5 md:w-6 md:h-6" /> Tus Guiones</h2>
+                                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
+                                      {savedScripts.length === 0 ? <p className="text-gray-500 text-xs md:text-sm">No hay guiones guardados.</p> : null}
+                                      {savedScripts.map(script => (
+                                          <div key={script.id} className="bg-black/40 p-3 md:p-4 rounded-lg border border-gray-700 hover:border-purple-500 cursor-pointer transition flex justify-between items-center group">
+                                              <div onClick={() => loadSavedScript(script)} className="flex-1">
+                                                  <p className="font-bold text-white group-hover:text-purple-400 truncate text-sm md:text-base">{script.title}</p>
+                                                  <p className="text-[10px] md:text-xs text-gray-500 mt-1">Click para cargar</p>
+                                              </div>
+                                              <button onClick={(e) => { e.stopPropagation(); const newScripts = savedScripts.filter(s => s.id !== script.id); setSavedScripts(newScripts); localStorage.setItem('mullerScripts', JSON.stringify(newScripts)); }} className="text-gray-500 hover:text-red-500 p-1 md:p-2"><Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </div>
+                              <div className="bg-amber-900/20 p-4 md:p-5 rounded-2xl border border-amber-800/50 flex flex-col flex-1 min-h-0">
+                                  <h2 className="text-lg md:text-xl font-bold text-amber-400 flex items-center gap-2 mb-3"><Icon name="library" className="w-5 h-5 md:w-6 md:h-6" /> Añadir Vocabulario</h2>
+                                  <div className="bg-black/40 p-2 md:p-3 rounded-xl border border-amber-900/50 mb-3 md:mb-4 flex flex-col gap-2 shrink-0">
+                                      <div className="flex gap-2 items-center">
+                                          <input type="text" placeholder="Título (Ej: Lektion 12)" className="w-2/3 bg-black/50 border border-amber-800 p-1.5 md:p-2 rounded-lg text-white text-xs md:text-sm outline-none focus:border-amber-500" value={vocabTitleInput} onChange={(e) => setVocabTitleInput(e.target.value)} />
+                                          <button onClick={handleSaveCustomVocab} className="w-1/3 bg-amber-600 hover:bg-amber-500 text-white py-1.5 md:py-2 rounded-lg font-bold text-xs transition shadow-lg flex justify-center items-center gap-1"><Icon name="save" className="w-3 h-3 md:w-4 md:h-4" /> Guardar</button>
+                                      </div>
+                                      <textarea className="w-full h-12 md:h-14 bg-black/50 border border-amber-800 p-2 rounded-lg text-white font-mono text-[10px] md:text-xs outline-none focus:border-amber-500 resize-none" placeholder="Pega aquí tu lista...&#10;der Apfel - la manzana" value={vocabTextInput} onChange={(e) => setVocabTextInput(e.target.value)} />
+                                  </div>
+                                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
+                                      {customVocabLessons.length === 0 ? <p className="text-gray-500 text-xs italic">Tus lecciones guardadas aparecerán aquí.</p> : null}
+                                      {customVocabLessons.map(lesson => (
+                                          <div key={lesson.id} className="bg-black/40 p-2 md:p-3 rounded-lg border border-amber-900/50 hover:border-amber-500 transition flex flex-col gap-2 md:gap-3 group">
+                                              <div className="flex-1">
+                                                  <p className="font-bold text-amber-100 text-xs md:text-sm truncate">{lesson.title}</p>
+                                                  <p className="text-[10px] text-amber-600 mt-0.5">{lesson.words.length} palabras</p>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                  <button onClick={(e) => { e.stopPropagation(); let practiceList = [...lesson.words]; practiceList.sort(() => Math.random() - 0.5); let diffWords = lesson.words.filter(w => w.diff === 1); if(diffWords.length > 0) { let extraShuffled = [...diffWords].sort(() => Math.random() - 0.5); practiceList = [...practiceList, ...extraShuffled]; } setCurrentVocabList(practiceList); setActiveScriptTitle(lesson.title); setVocabReviewIndex(0); setShowVocabTranslation(false); setActiveTab('vocabulario'); }} className="bg-amber-600 hover:bg-amber-500 text-white px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-bold shadow-lg flex-1 flex justify-center items-center gap-1 md:gap-2 transition"><Icon name="play" className="w-3 h-3 md:w-4 md:h-4" /> Practicar</button>
+                                                  <button onClick={(e) => { e.stopPropagation(); const newLessons = customVocabLessons.filter(l => l.id !== lesson.id); setCustomVocabLessons(newLessons); localStorage.setItem('mullerCustomVocab', JSON.stringify(newLessons)); }} className="text-gray-500 hover:text-red-500 bg-gray-900 p-1 rounded-lg border border-gray-700 transition"><Icon name="trash-2" className="w-3 h-3 md:w-4 md:h-4" /></button>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                                  {/* Botón de práctica avanzada (mezcla seleccionada) */}
+                                  <button onClick={() => { 
+                                      if (customVocabLessons.length === 0) alert("No hay lecciones guardadas.");
+                                      else {
+                                          // Abrir modal de selección de lecciones (componente separado)
+                                          const selected = prompt("Selecciona los números de lección separados por comas:\n" + customVocabLessons.map((l,i) => `${i+1}. ${l.title}`).join('\n'));
+                                          if (selected) {
+                                              const indices = selected.split(',').map(s => parseInt(s.trim())-1).filter(i => i>=0 && i<customVocabLessons.length);
+                                              let words = [];
+                                              indices.forEach(idx => words.push(...customVocabLessons[idx].words));
+                                              words.sort(() => Math.random() - 0.5);
+                                              const diffWords = words.filter(w => w.diff === 1);
+                                              const final = [...words, ...diffWords];
+                                              setCurrentVocabList(final);
+                                              setActiveScriptTitle("Mezcla personalizada");
+                                              setVocabReviewIndex(0);
+                                              setShowVocabTranslation(false);
+                                              setActiveTab('vocabulario');
+                                          }
+                                      }
+                                  }} className="mt-3 bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                                      <Icon name="shuffle" className="w-4 h-4" /> Practicar mezcla seleccionada
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
+
+                  {/* VOCABULARIO (con botón de escritura a mano) */}
+                  {activeTab === 'vocabulario' && !practiceActive && (
+                      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 animate-in fade-in">
+                          <h1 className="absolute top-4 md:top-8 text-lg md:text-2xl font-black text-amber-900/40 uppercase tracking-widest hidden md:block">Active Recall - {activeScriptTitle}</h1>
+                          {currentVocabList.length === 0 ? (
+                              <div className="text-center text-amber-900/60 font-bold text-base md:text-2xl">Este guion no tiene vocabulario configurado.</div>
+                          ) : (
+                              <div className="max-w-2xl w-full flex flex-col items-center gap-6 md:gap-10">
+                                  <button onClick={playVocabAudio} className="bg-white/20 hover:bg-white/30 text-amber-950 p-3 md:p-4 rounded-full transition shadow-lg mb-2 md:mb-4"><Icon name="volume-2" className="w-8 h-8 md:w-10 md:h-10" /></button>
+                                  <h1 className="text-4xl md:text-8xl font-black text-slate-900 text-center drop-shadow-md flex items-center justify-center flex-wrap gap-1">{getArticleVisual(currentVocabList[vocabReviewIndex].de)}{currentVocabList[vocabReviewIndex].de}</h1>
+                                  {!showVocabTranslation ? (
+                                      <div className="flex gap-4">
+                                          <button onClick={() => setShowVocabTranslation(true)} className="mt-6 md:mt-8 bg-slate-900 hover:bg-slate-800 text-white px-8 md:px-10 py-3 md:py-5 rounded-2xl font-bold text-2xl md:text-3xl shadow-[0_10px_20px_rgba(0,0,0,0.3)] transition transform hover:scale-105 border-b-4 border-slate-700">Revelar 👀</button>
+                                          <button onClick={() => setShowHandwriting(true)} className="mt-6 md:mt-8 bg-indigo-600 hover:bg-indigo-500 text-white px-6 md:px-8 py-3 md:py-5 rounded-2xl font-bold text-xl md:text-2xl shadow-lg transition transform hover:scale-105 border-b-4 border-indigo-800 flex items-center gap-2"><Icon name="edit" className="w-6 h-6" /> Escribir a mano</button>
+                                      </div>
+                                  ) : (
+                                      <div className="flex flex-col items-center gap-6 md:gap-8 w-full animate-in slide-in-from-bottom-8">
+                                          <h2 className="text-2xl md:text-5xl font-bold text-slate-800 text-center bg-white/60 px-4 md:px-10 py-3 md:py-6 rounded-2xl md:rounded-3xl shadow-inner border border-white/40 w-full">{currentVocabList[vocabReviewIndex].es}</h2>
+                                          <div className="flex flex-col md:flex-row gap-3 md:gap-4 w-full">
+                                              <button onClick={() => handleVocabDifficulty('easy')} className="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg transition">Fácil (Descartar)</button>
+                                              <button onClick={() => handleVocabDifficulty('normal')} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg transition">Normal</button>
+                                              <button onClick={() => handleVocabDifficulty('hard')} className="flex-1 bg-red-600 hover:bg-red-500 text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg border-2 border-red-400 transition">Difícil</button>
+                                          </div>
+                                      </div>
+                                  )}
+                                  <p className="text-amber-900/60 font-bold mt-4 md:mt-8 bg-white/20 px-4 md:px-6 py-1.5 md:py-2 rounded-full border border-amber-900/20 text-xs md:text-sm">Palabra {vocabReviewIndex + 1} de {currentVocabList.length}</p>
+                              </div>
+                          )}
+                          {showHandwriting && <HandwritingPad onClose={() => setShowHandwriting(false)} />}
+                      </div>
+                  )}
+
+                  {/* HISTORIA (Main Engine) con botón Ruido */}
+                  {activeTab === 'historia' && !practiceActive && (
+                     <div className="flex-1 flex flex-col relative w-full h-full justify-center items-center p-3 md:p-8">
+                        {mode !== 'quiz' && mode !== 'interview' && !podcastMode && (
+                            <div className="absolute top-2 right-2 flex flex-wrap items-center gap-1 md:gap-2 bg-black/60 p-1 rounded-xl border border-white/10 backdrop-blur-md z-10 max-w-[95%] justify-end">
+                                <button onClick={() => setFluesternMode(!fluesternMode)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${fluesternMode ? 'bg-zinc-600 text-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Modo Flüstern"><Icon name="ear" className="w-3 h-3 md:w-4 md:h-4" /> Flüstern</button>
+                                <button onClick={() => setNoiseEnabled(!noiseEnabled)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${noiseEnabled ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Ruido de fondo (examen)"><Icon name="volume-2" className="w-3 h-3 md:w-4 md:h-4" /> Ruido</button>
+                                <button onClick={() => {setDiktatMode(!diktatMode); setBlindMode(false); setLueckentextMode(false); setPuzzleMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${diktatMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit" className="w-3 h-3 md:w-4 md:h-4" /> Diktat</button>
+                                <button onClick={() => {setLueckentextMode(!lueckentextMode); setDiktatMode(false); setPuzzleMode(false); setArtikelSniperMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${lueckentextMode ? 'bg-amber-500 text-black' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit-3" className="w-3 h-3 md:w-4 md:h-4" /> Huecos</button>
+                                <button onClick={() => {setArtikelSniperMode(!artikelSniperMode); setDiktatMode(false); setLueckentextMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${artikelSniperMode ? 'bg-red-800 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="target" className="w-3 h-3 md:w-4 md:h-4" /> Artículos</button>
+                                <button onClick={() => {setDeclinaMode(!declinaMode); setDiktatMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${declinaMode ? 'bg-pink-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="wand-2" className="w-3 h-3 md:w-4 md:h-4" /> Declinar</button>
+                                <button onClick={() => {setTempusMode(!tempusMode);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${tempusMode ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="clock" className="w-3 h-3 md:w-4 md:h-4" /> Tempus</button>
+                                <button onClick={() => {setPuzzleMode(!puzzleMode); setDiktatMode(false); setBlindMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${puzzleMode ? 'bg-indigo-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau</button>
+                                <button onClick={() => {setBlindMode(!blindMode); setDiktatMode(false); setPuzzleMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${blindMode ? 'bg-blue-400 text-black' : 'text-gray-300 hover:bg-white/10'}`}>{blindMode ? <Icon name="eye-off" className="w-3 h-3 md:w-4 md:h-4" /> : <Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" />} Oído</button>
+                                <div className="flex items-center gap-0.5 md:gap-1 pl-1 md:pl-2 border-l border-white/20">
+                                    <Icon name="mic-off" className={`w-3 h-3 md:w-4 md:h-4 ${roleplayChar !== 'none' ? 'text-red-400' : 'text-gray-400'}`} />
+                                    <select className="bg-transparent text-[10px] md:text-xs text-white font-bold outline-none cursor-pointer" value={roleplayChar} onChange={(e) => setRoleplayChar(e.target.value)}>
+                                        <option value="none" className="text-black">No mutear</option>
+                                        <option value="Todos" className="text-black font-bold">Mutear TODOS</option>
+                                        <option value="Lukas" className="text-black">Lukas</option>
+                                        <option value="Elena" className="text-black">Elena</option>
+                                        <option value="Herr Weber" className="text-black">Weber</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        {podcastMode && (
+                            <div className="absolute top-2 right-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 px-2 md:px-4 py-1 md:py-2 rounded-full font-bold flex items-center gap-1 md:gap-2 animate-pulse z-10 text-xs md:text-sm">
+                                <Icon name="car" className="w-3 h-3 md:w-5 md:h-5" /> Modo Podcast Activo
+                            </div>
+                        )}
+
+                        {mode === 'interview' ? (
+                            <div className="max-w-4xl w-full flex flex-col items-center justify-center animate-in zoom-in duration-500 p-4">
+                                <div className="bg-emerald-900 text-emerald-200 border border-emerald-500 px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 mb-4 md:mb-8 text-xs md:text-sm"><Icon name="message-square" className="w-4 h-4 md:w-5 md:h-5" /> Mündliche Prüfung Teil 2</div>
+                                <h2 className="text-base md:text-3xl text-gray-300 font-bold mb-3 md:mb-4 uppercase tracking-widest text-center">Herr Weber fragt:</h2>
+                                <h1 className="text-xl md:text-6xl font-medium text-white text-center italic mb-6 md:mb-12 border-l-4 md:border-l-8 border-emerald-500 pl-3 md:pl-8 py-2 md:py-4 bg-emerald-950/30 text-sm md:text-base">"Sagen Sie mal, was denken Sie über Kunst?"</h1>
+                                <div className="flex flex-col items-center gap-3 md:gap-4 w-full bg-black/40 p-4 md:p-8 rounded-2xl border border-white/10 shadow-2xl">
+                                    <button onMouseDown={() => handleVoiceStart("Ich denke dass Kunst sehr wichtig ist")} onMouseUp={handleVoiceStop} onMouseLeave={handleVoiceStop} onTouchStart={(e) => { handleVoiceStart("Ich denke dass Kunst sehr wichtig ist"); }} onTouchEnd={(e) => { handleVoiceStop(); }} className={`rounded-full p-6 md:p-8 text-white transition transform hover:scale-110 shadow-xl select-none ${isListening ? 'bg-red-500 animate-pulse' : 'bg-emerald-600 hover:bg-emerald-500'}`}><Icon name="mic" className="w-12 h-12 md:w-16 md:h-16" /></button>
+                                    <p className="text-gray-400 font-bold mt-2 text-center text-xs md:text-sm">Mantén pulsado para responder</p>
+                                    {spokenText && (
+                                        <div className="text-center w-full mt-4 md:mt-6">
+                                            <p className="text-yellow-300 font-medium text-base md:text-2xl mb-3 md:mb-4">"{spokenText}"</p>
+                                            {pronunciationFeedback.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 md:gap-2 justify-center my-3 md:my-4 bg-black/50 p-2 md:p-4 rounded-xl border border-white/10">
+                                                    {pronunciationFeedback.map((item, idx) => (
+                                                        <span key={idx} className={`text-xs md:text-lg font-bold px-1 md:px-2 py-0.5 md:py-1 rounded ${item.correct ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-red-900/50 text-red-400 border border-red-500/30 line-through decoration-red-500'}`}>{item.word}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <button onClick={() => window.location.reload()} className="mt-3 md:mt-4 bg-white text-black px-6 md:px-8 py-2 md:py-4 rounded-xl font-black text-base md:text-xl hover:bg-gray-200 transition shadow-xl w-full md:w-auto">Terminar Examen</button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : mode === 'roleplay_wait' ? (
+                            <div className="max-w-4xl w-full flex flex-col items-center justify-center gap-4 md:gap-6 animate-in zoom-in duration-300 p-4">
+                                <div className="bg-red-600 text-white px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 text-xs md:text-sm"><Icon name="mic-off" className="w-4 h-4 md:w-5 md:h-5" /> {roleplayChar === 'Todos' ? "Modo Lectura" : "Tu turno (Roleplay)"}</div>
+                                <h1 className="text-xl md:text-5xl font-medium text-white text-center leading-tight">
+                                    {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
+                                    {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
+                                </h1>
+                                {!showCurrentTranslation ? (
+                                    <button onClick={() => setShowCurrentTranslation(true)} className="text-gray-500 hover:text-white transition text-xs md:text-sm font-bold flex items-center gap-1 mt-2 border border-gray-700 rounded-full px-2 md:px-3 py-0.5 md:py-1"><Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" /> Ver Traducción</button>
+                                ) : (
+                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 mt-2 text-base md:text-xl animate-in slide-in-from-top-2 text-center">"{guionData[getActualSceneIndex()].translation}"</div>
+                                )}
+                                <div className="flex flex-col items-center gap-3 md:gap-4 w-full mt-3 md:mt-4 bg-black/40 p-4 md:p-6 rounded-xl border border-white/10">
+                                    <div className="flex gap-4 md:gap-8 justify-center items-center">
+                                        <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(playSceneAudio(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].speaker)); }} className="flex flex-col items-center text-gray-400 hover:text-white transition">
+                                            <div className="bg-gray-800 p-2 md:p-4 rounded-full mb-1 md:mb-2"><Icon name="volume-2" className="w-5 h-5 md:w-8 md:h-8" /></div><span className="text-[10px] md:text-sm font-bold">1. Escuchar</span>
+                                        </button>
+                                        <button onMouseDown={() => handleVoiceStart()} onMouseUp={handleVoiceStop} onMouseLeave={handleVoiceStop} onTouchStart={(e) => { handleVoiceStart(); }} onTouchEnd={(e) => { handleVoiceStop(); }} className={`flex flex-col items-center transition transform select-none ${isListening ? 'text-red-400 scale-110' : 'text-blue-400 hover:text-blue-300'}`}>
+                                            <div className={`p-2 md:p-4 rounded-full mb-1 md:mb-2 shadow-xl ${isListening ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.8)]' : 'bg-blue-600 text-white'}`}><Icon name="mic" className="w-5 h-5 md:w-8 md:h-8" /></div><span className="text-[10px] md:text-sm font-bold">2. Mantener</span>
+                                        </button>
+                                    </div>
+                                    {spokenText && (
+                                        <div className="text-center w-full mt-4 md:mt-6">
+                                            <p className="text-yellow-300 font-mono text-base md:text-xl mb-2">"{spokenText}"</p>
+                                            {pronunciationFeedback.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 md:gap-2 justify-center my-3 md:my-4 bg-black/50 p-2 md:p-4 rounded-xl border border-white/10">
+                                                    {pronunciationFeedback.map((item, idx) => (
+                                                        <span key={idx} className={`text-xs md:text-lg font-bold px-1 md:px-2 py-0.5 md:py-1 rounded ${item.correct ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-red-900/50 text-red-400 border border-red-500/30 line-through decoration-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>{item.word}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {grammarPolizeiMsg && <p className="text-red-400 font-bold mb-3 md:mb-4 bg-red-900/30 p-1 md:p-2 rounded text-xs md:text-sm">{grammarPolizeiMsg}</p>}
+                                            {pronunciationScore !== null && (
+                                                <div className="flex items-center justify-center gap-2 md:gap-3">
+                                                    <div className="w-full bg-gray-800 rounded-full h-2 md:h-4 max-w-md"><div className={`h-2 md:h-4 rounded-full transition-all duration-1000 ${pronunciationScore >= 90 ? 'bg-green-500' : pronunciationScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{width: `${pronunciationScore}%`}}></div></div>
+                                                    <span className="font-bold text-sm md:text-xl">{pronunciationScore}%</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <button onClick={handleNext} className="bg-white text-black px-6 md:px-8 py-2 md:py-3 rounded-xl font-black text-base md:text-lg hover:bg-gray-200 transition shadow-xl mt-2 w-full md:w-auto">Continuar ➔</button>
+                            </div>
+                        ) : mode === 'dialogue' && puzzleMode ? (
+                            <div className="max-w-4xl w-full flex flex-col gap-4 md:gap-6 animate-in fade-in relative mt-6 md:mt-8 items-center p-4">
+                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold text-white/70 bg-indigo-900/50 border border-indigo-500/50 px-3 md:px-5 py-1 md:py-2 rounded-full flex items-center gap-2"><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau Puzzle: {guionData[getActualSceneIndex()].speaker}</span>
+                                {!showPuzzleResult ? (
+                                    <div className="flex flex-col items-center gap-4 md:gap-8 w-full mt-2 md:mt-4">
+                                        <div className="min-h-[80px] md:min-h-[100px] w-full bg-black/40 border-2 border-dashed border-indigo-500/50 rounded-xl p-2 md:p-4 flex flex-wrap gap-1 md:gap-2 items-center justify-center">
+                                            {puzzleAnswer.map(pw => <button key={pw.id} onClick={() => { setPuzzleAnswer(puzzleAnswer.filter(w => w.id !== pw.id)); setPuzzleWords([...puzzleWords, pw]); }} className="bg-indigo-600 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg font-bold text-sm md:text-xl">{pw.text}</button>)}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 md:gap-3 justify-center w-full bg-black/20 p-3 md:p-6 rounded-xl">
+                                            {puzzleWords.map(pw => <button key={pw.id} onClick={() => { setPuzzleWords(puzzleWords.filter(w => w.id !== pw.id)); setPuzzleAnswer([...puzzleAnswer, pw]); }} className="bg-gray-800 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg font-bold text-sm md:text-xl">{pw.text}</button>)}
+                                        </div>
+                                        <div className="flex gap-3 md:gap-4 w-full md:w-auto justify-center">
+                                            <button onClick={() => { setIsPlaying(true); togglePlay(); setIsPlaying(true); }} className="bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm"><Icon name="volume-2" className="w-3 h-3 md:w-5 md:h-5" /> Pista</button>
+                                            <button onClick={()=>setShowPuzzleResult(true)} disabled={puzzleWords.length > 0} className={`px-4 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm ${puzzleWords.length === 0 ? 'bg-green-600' : 'bg-gray-800'}`}><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Comprobar</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
+                                        <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
+                                        <button onClick={handleNext} className="bg-indigo-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold mt-2 md:mt-4 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base">Siguiente ➔</button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : mode === 'dialogue' && diktatMode ? (
+                            <div className="max-w-4xl w-full flex flex-col gap-4 md:gap-6 animate-in fade-in relative mt-6 md:mt-8 items-center p-4">
+                                {isReviewing && <div className="absolute -top-8 md:-top-12 text-red-500 font-black animate-pulse text-xs md:text-xl">⚠️ REPASO OBLIGATORIO (SRS)</div>}
+                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold bg-black/30 px-3 md:px-5 py-1 md:py-2 rounded-full border border-white/10">{guionData[getActualSceneIndex()].speaker} spricht...</span>
+                                {!showDiktatResult ? (
+                                    <>
+                                        <p className="text-base md:text-xl text-blue-200 font-bold mb-1 md:mb-2">✍️ Escribe lo que oyes:</p>
+                                        <textarea className="w-full h-24 md:h-32 bg-black/50 border-2 border-blue-500/50 rounded-xl p-3 md:p-4 text-base md:text-2xl text-white outline-none" value={diktatInput} onChange={(e) => setDiktatInput(e.target.value)} autoFocus />
+                                        <div className="flex gap-3 md:gap-4 w-full md:w-auto justify-center">
+                                            <button onClick={() => { setIsPlaying(true); togglePlay(); setIsPlaying(true); }} className="bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold flex items-center gap-2 flex-1 md:flex-none justify-center text-xs md:text-sm"><Icon name="volume-2" className="w-3 h-3 md:w-5 md:h-5" /> Audio</button>
+                                            <button onClick={handleDiktatCheck} className="bg-green-600 text-white px-6 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-2 flex-1 md:flex-none justify-center text-xs md:text-sm"><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Corregir</button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
+                                        {renderDiktatDiff(guionData[getActualSceneIndex()].text, diktatInput)}
+                                        <button onClick={handleNext} className="bg-blue-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold mt-2 md:mt-4 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base">Siguiente ➔</button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : mode === 'dialogue' && (
+                            <div className="max-w-4xl w-full flex flex-col gap-3 md:gap-6 animate-in fade-in relative mt-4 md:mt-8 p-3 md:p-0">
+                                {isReviewing && <div className="absolute -top-8 md:-top-12 left-1/2 -translate-x-1/2 text-red-500 font-black animate-pulse text-xs md:text-xl w-full text-center">⚠️ REPASO OBLIGATORIO (SRS)</div>}
+                                <span className="uppercase tracking-widest text-[10px] md:text-sm font-bold bg-black/30 px-2 md:px-4 py-0.5 md:py-1.5 rounded-full self-start border border-white/10">{guionData[getActualSceneIndex()].speaker}</span>
+                                
+                                <h1 className={`text-2xl md:text-5xl font-medium text-white shadow-sm transition-all duration-300 leading-tight ${blindMode ? 'blur-md hover:blur-none cursor-pointer' : ''}`}>
+                                    {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
+                                    {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
+                                </h1>
+
+                                {tempusMode && tempusVerbList.length > 0 && (
+                                    <div className="tempus-panel mt-3 md:mt-4 p-2 md:p-3 bg-blue-950/60 border border-blue-500/40 rounded-xl w-full">
+                                        <p className="text-blue-300 font-bold text-xs md:text-sm mb-1 md:mb-2 flex items-center gap-2"><Icon name="clock" className="w-3 h-3 md:w-4 md:h-4" /> Tempus - Formas verbales:</p>
+                                        <div className="flex flex-wrap gap-2 md:gap-3">
+                                            {tempusVerbList.map((verb, idx) => (
+                                                <div key={idx} className="bg-black/50 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-blue-400/50">
+                                                    <span className="font-bold text-blue-200 text-xs md:text-sm">{verb.infinitive}</span>
+                                                    <span className="text-blue-300 text-[10px] md:text-xs ml-1 md:ml-2">→ {verb.forms}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                <div className="flex gap-2 md:gap-4 items-center">
+                                    <span className="text-[8px] md:text-xs font-mono text-gray-500 flex flex-wrap gap-1 md:gap-2">
+                                        <span className="text-purple-300 underline decoration-purple-500/70">Conector</span>
+                                        <span className="text-blue-300 underline decoration-blue-500/70">Dativo</span>
+                                        <span className="text-red-300 underline decoration-red-500/70">Acusativo</span>
+                                        <span className="text-yellow-500/90 underline decoration-yellow-600/70">Mixta</span>
+                                    </span>
+                                </div>
+
+                                {!showCurrentTranslation ? (
+                                    <button onClick={() => setShowCurrentTranslation(true)} className="text-gray-500 hover:text-white transition text-[10px] md:text-sm font-bold flex items-center gap-1 w-max border border-gray-700 rounded-full px-2 md:px-3 py-0.5 md:py-1 mt-1 md:mt-2"><Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" /> Ver Traducción</button>
+                                ) : (
+                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 w-max max-w-full text-base md:text-xl animate-in slide-in-from-top-2">"{guionData[getActualSceneIndex()].translation}"</div>
+                                )}
+
+                                {(declinaMode || artikelSniperMode) && !isPlaying && (
+                                    <div className="absolute -bottom-8 md:-bottom-12 left-1/2 -translate-x-1/2 text-pink-400 font-bold animate-pulse text-xs md:text-lg w-full text-center">Piensa la respuesta y pulsa Play o ➔ para continuar.</div>
+                                )}
+                                
+                                {!isPlaying && !podcastMode && (
+                                    <div className="absolute right-0 top-0 md:-right-16 md:top-1/2 md:-translate-y-1/2 flex flex-col gap-2 md:gap-4">
+                                        <button onClick={showAITutor} className="bg-blue-600 text-white p-1.5 md:p-3 rounded-full border border-blue-400 shadow-lg flex items-center justify-center group" title="Tutor IA">
+                                            <Icon name="help-circle" className="w-4 h-4 md:w-6 md:h-6" />
+                                        </button>
+                                        <button onClick={trySaveGrammarStructure} className="bg-cyan-600 text-white p-1.5 md:p-3 rounded-full border border-cyan-400 shadow-lg flex items-center justify-center group" title="Guardar Gramática">
+                                            <Icon name="save" className="w-4 h-4 md:w-6 md:h-6" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {showTutor && (
+                                    <div className="absolute inset-0 z-50 bg-black/95 p-4 md:p-8 flex flex-col justify-center items-center rounded-2xl">
+                                        <div className="bg-slate-900 border-2 border-blue-500 p-4 md:p-8 rounded-2xl max-w-2xl w-full shadow-[0_0_30px_rgba(59,130,246,0.5)] overflow-y-auto max-h-[80vh]">
+                                            <div className="flex justify-between items-center mb-4 md:mb-6">
+                                                <h2 className="text-xl md:text-3xl font-black text-blue-400 flex items-center gap-2 md:gap-3"><Icon name="brain" className="w-6 h-6 md:w-8 md:h-8" /> Tutor IA</h2>
+                                                <button onClick={() => setShowTutor(false)} className="text-gray-400 hover:text-white"><Icon name="x" className="w-6 h-6 md:w-8 md:h-8" /></button>
+                                            </div>
+                                            <div className="text-base md:text-xl text-white space-y-3 md:space-y-6 leading-relaxed whitespace-pre-wrap font-medium">
+                                                {tutorMessage}
+                                            </div>
+                                            <button onClick={() => setShowTutor(false)} className="mt-6 md:mt-8 w-full bg-blue-600 hover:bg-blue-500 py-2 md:py-4 rounded-xl font-bold text-base md:text-xl">Entstanden (Entendido)</button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {showGrammarPrompt && (
+                                    <div className="absolute inset-0 z-50 bg-black/90 p-4 flex flex-col justify-center items-center rounded-2xl animate-in zoom-in">
+                                        <div className="bg-cyan-950 border-2 border-cyan-500 p-4 md:p-8 rounded-2xl max-w-lg w-full shadow-[0_0_30px_rgba(6,182,212,0.4)]">
+                                            <h2 className="text-lg md:text-2xl font-black text-cyan-400 flex items-center gap-2 md:gap-3 mb-3 md:mb-4"><Icon name="save" className="w-5 h-5 md:w-6 md:h-6" /> Guardar Manual</h2>
+                                            <p className="text-cyan-100 mb-4 md:mb-6 text-xs md:text-sm">No he detectado ninguna regla automática en esta frase. ¿Qué gramática quieres guardar en tus Flashcards?</p>
+                                            <p className="text-gray-400 italic mb-2 text-[10px] md:text-xs">Frase actual: "{guionData[getActualSceneIndex()].text}"</p>
+                                            <input type="text" placeholder="Ej: Nebensatz con weil" className="w-full bg-black/50 border border-cyan-800 p-2 md:p-3 rounded-lg text-white outline-none focus:border-cyan-400 mb-4 md:mb-6 text-xs md:text-sm" value={customGrammarInput} onChange={(e)=>setCustomGrammarInput(e.target.value)} autoFocus />
+                                            <div className="flex gap-3 md:gap-4">
+                                                <button onClick={()=>setShowGrammarPrompt(false)} className="flex-1 bg-gray-800 hover:bg-gray-700 py-2 md:py-3 rounded-xl font-bold text-xs md:text-base">Cancelar</button>
+                                                <button onClick={handleCustomGrammarSave} className="flex-1 bg-cyan-600 hover:bg-cyan-500 py-2 md:py-3 rounded-xl font-bold shadow-lg text-xs md:text-base">Guardar ➔</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                     </div>
+                  )}
+              </div>
+
+              {/* REPRODUCTOR CONTROLES INFERIORES */}
+              {activeTab === 'historia' && mode !== 'quiz' && mode !== 'interview' && !practiceActive && (
+                  <div className="bg-gray-950 p-3 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4 border-t border-gray-800 z-20">
+                      <div className="flex flex-col text-xs md:text-sm text-gray-400 w-full sm:w-auto text-center sm:text-left">
+                        <span className="font-bold text-white text-sm md:text-base truncate sm:max-w-[200px]">{activeScriptTitle}</span>
+                        <span>Szene {isReviewing ? reviewIndexPointer + 1 : sceneIndex + 1} von {isReviewing ? userStats.failedDiktatScenes.length : guionData.length} {isReviewing && "(Repaso)"}</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-4 md:gap-6 w-full sm:w-auto">
+                        <button onClick={handlePrev} className={`p-2 md:p-3 bg-gray-900 rounded-full transition text-white border border-gray-700 shadow-md ${isReviewing || podcastMode ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'}`} disabled={podcastMode}><Icon name="skip-back" className="w-4 h-4 md:w-6 md:h-6" /></button>
+                        <button onClick={togglePlay} className={`p-3 md:p-6 rounded-full flex items-center justify-center transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(0,0,0,0.5)] ${isPlaying ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'}`}>
+                            {isPlaying ? <Icon name="square" className="w-5 h-5 md:w-8 md:h-8 fill-current" /> : <Icon name="play" className="w-5 h-5 md:w-8 md:h-8 ml-0.5 md:ml-1 fill-current" />}
+                        </button>
+                        <button onClick={handleNext} className={`p-2 md:p-3 bg-gray-900 rounded-full transition text-white border border-gray-700 shadow-md ${podcastMode ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'}`} disabled={podcastMode}><Icon name="skip-forward" className="w-4 h-4 md:w-6 md:h-6" /></button>
+                      </div>
+                      <button onClick={exportScriptPDF} className="hidden sm:flex bg-red-700 hover:bg-red-600 border border-red-500 px-3 md:px-4 py-1.5 md:py-2 rounded-xl text-white font-bold items-center gap-2 shadow-lg transition text-xs md:text-sm"><Icon name="file-down" className="w-3 h-3 md:w-4 md:h-4" /> PDF Guion</button>
+                      <div className="flex items-center justify-center gap-2 md:gap-3 bg-black/50 px-2 md:px-4 py-1 md:py-2 rounded-xl border border-gray-800 w-full sm:w-auto">
+                          <Icon name="sliders" className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                          <input type="range" min="0.50" max="1.50" step="0.01" value={playbackRate} onChange={(e) => setPlaybackRate(parseFloat(e.target.value))} className="w-20 md:w-32 accent-blue-500 cursor-pointer"/>
+                          <span className="text-white font-mono font-bold text-xs md:text-sm w-10 md:w-12 text-right">x{playbackRate.toFixed(2)}</span>
+                      </div>
+                  </div>
+              )}
+            </div>
+          );
+        }
+
+        // ========== COMPONENTES FLOTANTES (Sincronización y Permiso Micrófono) ==========
+        function FloatingButtons() {
+            const requestMicPermission = async () => {
+                try {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    alert('✅ Permiso de micrófono concedido. Ya puedes usar el reconocimiento de voz.');
+                } catch (err) {
+                    alert('❌ No se pudo obtener permiso del micrófono. Asegúrate de que tu navegador tenga acceso.');
+                }
+            };
+
+            const exportData = () => {
+                const dataToExport = {
+                    userStats: JSON.parse(localStorage.getItem('mullerStats') || '{}'),
+                    savedScripts: JSON.parse(localStorage.getItem('mullerScripts') || '[]'),
+                    customVocabLessons: JSON.parse(localStorage.getItem('mullerCustomVocab') || '[]'),
+                    version: '2.0',
+                    exportDate: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `muller_progreso_${new Date().toISOString().slice(0,19)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.userStats) localStorage.setItem('mullerStats', JSON.stringify(data.userStats));
+                        if (data.savedScripts) localStorage.setItem('mullerScripts', JSON.stringify(data.savedScripts));
+                        if (data.customVocabLessons) localStorage.setItem('mullerCustomVocab', JSON.stringify(data.customVocabLessons));
+                        alert('✅ Datos importados correctamente. Recarga la página para ver los cambios.');
+                        window.location.reload();
+                    } catch(err) { alert('❌ Archivo inválido'); }
+                };
+                reader.readAsText(file);
+            };
+
+            return (
+                <>
+                    <button onClick={requestMicPermission} className="fixed bottom-20 right-4 z-50 bg-green-600 hover:bg-green-500 text-white p-3 rounded-full shadow-xl" title="Solicitar permiso de micrófono">
+                        <Icon name="mic" className="w-6 h-6" />
+                    </button>
+                    <div className="fixed bottom-36 right-4 z-50 flex flex-col gap-2">
+                        <button onClick={exportData} className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full shadow-xl" title="Exportar progreso">
+                            <Icon name="download" className="w-6 h-6" />
+                        </button>
+                        <label className="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-full shadow-xl cursor-pointer" title="Importar progreso">
+                            <Icon name="upload" className="w-6 h-6" />
+                            <input type="file" accept=".json" onChange={importData} className="hidden" />
+                        </label>
+                    </div>
+                </>
+            );
+        }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <>
+                <App />
+                <FloatingButtons />
+                <AdvancedPracticePanelFinal />
+            </>
+        );
+// ========== MÓDULO COMPLETO Y DEFINITIVO (4 PESTAÑAS + AUDIOLIBRO REAL) ==========
+// No modifica nada del código original, solo añade funcionalidad.
+
+// -------------------- DATOS DE RESPALDO --------------------
+const DEFAULT_PLURALS = [
+    { singular: "der Tisch", plural: "die Tische", regla: "+e" },
+    { singular: "die Lampe", plural: "die Lampen", regla: "+n" },
+    { singular: "das Buch", plural: "die Bücher", regla: "¨+er" }
+];
+const DEFAULT_VERBPREP = [
+    { verbo: "warten", preposicion: "auf", ejemplo: "Ich warte auf den Bus." },
+    { verbo: "sich interessieren", preposicion: "für", ejemplo: "Ich interessiere mich für Kunst." },
+    { verbo: "denken", preposicion: "an", ejemplo: "Ich denke an dich." }
+];
+const DEFAULT_PREPOSITIONS = [
+    { preposicion: "aus", caso: "Dativ", ejemplo: "Ich komme aus Spanien." },
+    { preposicion: "für", caso: "Akkusativ", ejemplo: "Das Geschenk ist für dich." },
+    { preposicion: "in", caso: "Wechsel", ejemplo: "Ich bin in der Stadt (Dativ) / Ich gehe in die Stadt (Akkusativ)." }
+];
+
+// -------------------- EXTRACTORES (guardan en localStorage) --------------------
+function extractPluralsFromGuion(guionData, scriptTitle) {
+    if (!guionData || !Array.isArray(guionData)) return;
+    let existing = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
+    guionData.forEach(scene => {
+        const text = scene.text;
+        const matches = text.match(/\bdie\s+([A-ZÄÖÜ][a-zäöüß]+(?:e|er|en|n|s)?)\b/g) || [];
+        matches.forEach(m => {
+            const plural = m.replace('die ', '');
+            let singular = plural.replace(/[äöü]/g, c => ({'ä':'a','ö':'o','ü':'u'}[c]));
+            singular = singular.replace(/(e|er|n|en|s)$/, '');
+            if (singular && !existing.find(p => p.plural === plural)) {
+                existing.push({ singular, plural, example: text, scriptTitle, regla: 'extraído' });
+            }
+        });
+    });
+    localStorage.setItem('muller_extracted_plurals', JSON.stringify(existing));
+}
+
+function extractVerbPrepsFromGuion(guionData, scriptTitle) {
+    let existing = JSON.parse(localStorage.getItem('muller_extracted_verbprep') || '[]');
+    const patterns = DEFAULT_VERBPREP.map(v => ({ verbo: v.verbo, prep: v.preposicion }));
+    guionData.forEach(scene => {
+        const text = scene.text;
+        patterns.forEach(p => {
+            if (text.includes(p.verbo) && text.includes(p.prep)) {
+                if (!existing.find(v => v.verbo === p.verbo)) {
+                    existing.push({ ...p, ejemplo: text, scriptTitle });
+                }
+            }
+        });
+    });
+    localStorage.setItem('muller_extracted_verbprep', JSON.stringify(existing));
+}
+
+function extractPrepositionsFromGuion(guionData, scriptTitle) {
+    let existing = JSON.parse(localStorage.getItem('muller_extracted_prepositions') || '[]');
+    guionData.forEach(scene => {
+        const text = scene.text;
+        DEFAULT_PREPOSITIONS.forEach(p => {
+            if (text.includes(p.preposicion)) {
+                if (!existing.find(pr => pr.preposicion === p.preposicion)) {
+                    existing.push({ ...p, example: text, scriptTitle });
+                }
+            }
+        });
+    });
+    localStorage.setItem('muller_extracted_prepositions', JSON.stringify(existing));
+}
+
+function extractArticlesFromGuionFinal(guionData, scriptTitle) {
+    if (!guionData || !Array.isArray(guionData)) return;
+    const corrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
+    let existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
+    const regex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÄÖÜ][a-zäöüß]+)\s+(ist|sind|hat|haben|kann|muss|will|möchte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiß|sieht|hört|fährt|läuft|bringt|nimmt|gibt|hilft|trifft|schläft|wäscht|trägt|verliert|schreibt|liest|kennt|nennt)\b/gi;
+    guionData.forEach(scene => {
+        const text = scene.text || '';
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            const articleRaw = match[1].toLowerCase();
+            const noun = match[2];
+            let finalArticle = corrections[noun];
+            if (!finalArticle) {
+                const found = existing.find(item => item.word === noun);
+                if (found) finalArticle = found.article;
+            }
+            if (!finalArticle) {
+                if (noun.toLowerCase().endsWith('ung') || noun.toLowerCase().endsWith('heit') || noun.toLowerCase().endsWith('keit')) finalArticle = 'die';
+                else if (noun.toLowerCase().endsWith('chen') || noun.toLowerCase().endsWith('lein')) finalArticle = 'das';
+                else if (noun.toLowerCase().endsWith('er') || noun.toLowerCase().endsWith('ling')) finalArticle = 'der';
+                else finalArticle = articleRaw === 'ein' ? 'der' : articleRaw === 'eine' ? 'die' : articleRaw;
+            }
+            if (finalArticle && noun.length > 1 && !existing.find(item => item.word === noun)) {
+                existing.push({
+                    word: noun, article: finalArticle,
+                    examples: [text], translation: scene.translation || '',
+                    scriptTitle, dateAdded: new Date().toISOString(),
+                    inferred: !corrections[noun]
+                });
+            }
+        }
+    });
+    localStorage.setItem('muller_extracted_articles', JSON.stringify(existing));
+}
+
+
+
+// ============================================================================
+// 📁 SISTEMA DE ENTRENAMIENTO AVANZADO - LOGICA MÜLLER (SRS + MEMORIA)
+// ============================================================================
+
+function ArticlePracticeFinal({ onBack }) {
+    const [mode, setMode] = React.useState(null);
+    const [queue, setQueue] = React.useState([]);
+    const [feedback, setFeedback] = React.useState(null);
+    const [loading, setLoading] = React.useState(false);
+    
+    // 🧠 Persistencia de palabras dominadas (Cerebro de Oro)
+    const [masteredArticles, setMasteredArticles] = React.useState(() => {
+        const saved = localStorage.getItem('muller_mastered_articles');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const loadData = (selectedMode) => {
+        setMode(selectedMode);
+        setLoading(true);
+        
+        const processData = (data) => {
+            let filtered = data;
+            if (selectedMode !== 'MIXTO' && selectedMode !== 'historia') {
+                filtered = data.filter(item => item.level === selectedMode);
+            }
+            // Müller-Filter: Eliminamos lo que ya te sabes para siempre
+            const finalQueue = filtered.filter(item => !masteredArticles.includes(item.de));
+            
+            if (finalQueue.length === 0) {
+                alert(`¡Increíble! Ya dominas todo el mazo ${selectedMode}. 🏆`);
+                setMode(null);
+            } else {
+                setQueue(finalQueue.sort(() => Math.random() - 0.5));
+            }
+            setLoading(false);
+        };
+
+        if (selectedMode === 'historia') {
+            const allVocab = window.__DEFAULT_GUION__?.flatMap(s => s.vocab || []) || [];
+            const nouns = allVocab.filter(v => /^(der|die|das)\s/i.test(v.de));
+            const uniqueNouns = [...new Map(nouns.map(item => [item.de, item])).values()];
+            processData(uniqueNouns);
+        } else {
+            const GIST_URL = "https://gist.githubusercontent.com/djplaza1/a53fde18c901a7f2d86977174b5b9a72/raw/articulos.json?nocache=" + new Date().getTime();
+            fetch(GIST_URL).then(res => res.json()).then(processData).catch(() => {
+                alert("Error de conexión con la base de datos Müller.");
+                setMode(null);
+                setLoading(false);
+            });
+        }
+    };
+
+    // 🌟 Acción: "Ya me la sé" (Descartar para siempre)
+    const handleMastered = () => {
+        const currentWord = queue[0].de;
+        const newMastered = [...masteredArticles, currentWord];
+        setMasteredArticles(newMastered);
+        localStorage.setItem('muller_mastered_articles', JSON.stringify(newMastered));
+        setQueue(prev => prev.slice(1));
+        setFeedback(null);
+    };
+
+    // 🔄 Acción: Siguiente / Reintento
+    const handleNextWord = () => {
+        if (feedback.type === 'success') {
+            setQueue(prev => prev.slice(1)); // Si acertó, se va de la sesión
+        } else {
+            // PELIGRO: Si falló, al final de la cola (Spaced Retrieval)
+            setQueue(prev => [...prev.slice(1), prev[0]]);
+        }
+        setFeedback(null);
+    };
+
+    const check = (guess) => {
+        if (queue.length === 0) return;
+        const current = queue[0];
+        const correct = current.de.split(' ')[0].toLowerCase();
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(current.de);
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
+
+        if (guess === correct) {
+            setFeedback({ type: 'success', text: `¡Richtig! 🟢 ${current.de}` });
+        } else {
+            setFeedback({ type: 'error', text: `⚠️ FALSCH! Era: ${current.de}` });
+        }
+    };
+
+    if (!mode) return (
+        <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
+            <h2 className="text-3xl font-bold mb-2 text-blue-300">Artículos Müller</h2>
+            <p className="text-gray-400 mb-8 font-bold">⭐ {masteredArticles.length} palabras en tu "Memoria de Oro"</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
+                <button onClick={() => loadData('historia')} className="col-span-2 md:col-span-3 bg-purple-900 border-2 border-purple-500 p-6 rounded-xl font-bold text-xl hover:bg-purple-800 transition">📖 Historia Actual</button>
+                {['A1', 'A2', 'B1', 'B2', 'C1', 'MIXTO'].map(lvl => (
+                    <button key={lvl} onClick={() => loadData(lvl)} className="bg-slate-800 border-b-4 border-blue-500 p-6 rounded-xl font-bold text-lg hover:bg-slate-700 transition">{lvl}</button>
+                ))}
+            </div>
+        </div>
+    );
+
+    if (loading) return <div className="text-white text-2xl font-bold animate-pulse p-20">📡 Buscando tarjetas...</div>;
+    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
+
+    const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
+
+    return (
+        <div className="flex flex-col items-center justify-center p-4 h-full">
+            <div className="bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full border border-slate-700">
+                <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
+                <p className="text-gray-400 mb-8 text-xl italic">{queue[0].es}</p>
+                
+                {!feedback ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        <button onClick={() => check('der')} className="bg-blue-600 py-6 rounded-xl font-bold text-xl transition">🔵 DER</button>
+                        <button onClick={() => check('die')} className="bg-red-600 py-6 rounded-xl font-bold text-xl transition">🔴 DIE</button>
+                        <button onClick={() => check('das')} className="bg-green-600 py-6 rounded-xl font-bold text-xl transition">🟢 DAS</button>
+                    </div>
+                ) : (
+                    <div className="animate-in zoom-in">
+                        <div className={`p-6 rounded-xl font-black text-2xl mb-6 ${feedback.type === 'error' ? 'bg-red-900 border-2 border-red-500 text-red-100' : 'bg-green-900 border-2 border-green-500 text-green-100'}`}>
+                            {feedback.text}
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <button onClick={handleMastered} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 transition">🌟 ¡Ya me la sé para siempre!</button>
+                            <button onClick={handleNextWord} className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition">
+                                {feedback.type === 'error' ? 'Reintentar luego ➔' : 'Siguiente ➔'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+                <p className="text-gray-500 text-xs mt-6">Restantes en esta sesión: {queue.length}</p>
+            </div>
+        </div>
+    );
+}
+
+function CloudPracticeFinal({ onBack, type }) {
+    const [queue, setQueue] = React.useState([]);
+    const [feedback, setFeedback] = React.useState(null);
+    const [loading, setLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        const URL_VERBOS = "https://gist.githubusercontent.com/djplaza1/142845d2f0fb5a0b2b86e28fbf308809/raw/verbos_con_preposiciones.json";
+        const URL_PREPOSICIONES = "https://gist.githubusercontent.com/djplaza1/4f44a8b19a8aa2d451e183859e3f764f/raw/preposiciones.json";
+        const GIST_URL = type === 'verbos' ? URL_VERBOS : URL_PREPOSICIONES;
+        
+        setLoading(true);
+        fetch(GIST_URL + "?nocache=" + new Date().getTime())
+            .then(res => res.json())
+            .then(data => {
+                setQueue(data.sort(() => Math.random() - 0.5));
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [type]);
+
+    const getMullerTip = (item) => {
+        if (item.trick || item.tipp) return item.trick || item.tipp;
+        const prep = item.answer.toLowerCase();
+        const tips = {
+            'für': "¡Cuidado! 'Für' rige siempre 🔴 Acusativo.",
+            'mit': "'Mit' rige siempre 🔵 Dativo.",
+            'auf': "Superficie horizontal. Con verbos suele ser 🔴 Acusativo."
+        };
+        return tips[prep] || `Repasa el caso de esta preposición.`;
+    };
+
+    const check = (guess) => {
+        if (queue.length === 0) return;
+        const currentItem = queue[0];
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(currentItem.de.replace('___', currentItem.answer));
+        utterance.lang = 'de-DE';
+        window.speechSynthesis.speak(utterance);
+
+        if (guess === currentItem.answer) {
+            setFeedback({ type: 'success', text: `¡Richtig! Es '${currentItem.answer}'` });
+        } else {
+            setFeedback({ type: 'error', text: `⚠️ FALSCH: Era '${currentItem.answer}'` });
+        }
+    };
+
+    const handleContinue = () => {
+        if (feedback.type === 'success') {
+            setQueue(prev => prev.slice(1));
+        } else {
+            setQueue(prev => [...prev.slice(1), prev[0]]); // Los errores vuelven al final
+        }
+        setFeedback(null);
+    };
+
+    if (loading) return <div className="text-white text-center p-20 animate-pulse">📡 Conectando con Müller Cloud...</div>;
+    if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
+
+    const current = queue[0];
+    const options = type === 'verbos' 
+        ? ['für', 'auf', 'an', 'von', 'über', 'mit', 'um', 'zu', 'vor', 'nach', 'in', 'bei', 'aus', 'durch', 'ohne', 'gegen']
+        : ['an', 'auf', 'in', 'aus', 'bei', 'mit', 'nach', 'seit', 'von', 'zu', 'durch', 'für', 'um', 'vor', 'über', 'unter', 'neben', 'zwischen', 'hinter', 'gegen', 'ohne'];
+
+    return (
+        <div className="flex flex-col items-center justify-center p-4 h-full w-full">
+            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-gray-300">⬅ Volver</button>
+            <div className="bg-slate-800 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-4xl w-full border border-slate-700">
+                <p className="text-blue-400 font-bold mb-2 uppercase tracking-widest">{current.prepCase || '🟡 Wechsel'}</p>
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
+                <p className="text-gray-400 mb-8 text-xl italic">{current.es}</p>
+                
+                {!feedback ? (
+                    <div className="flex flex-wrap justify-center gap-2 max-h-[250px] overflow-y-auto p-2">
+                        {options.map(p => (
+                            <button key={p} onClick={() => check(p)} className="bg-gray-700 hover:bg-amber-600 py-2 px-3 rounded-lg font-bold text-sm text-white transition min-w-[70px]">
+                                {p}
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="animate-in zoom-in">
+                        <div className={`p-4 rounded-xl font-bold text-xl mb-4 ${feedback.type === 'error' ? 'bg-red-900 border-red-500 border' : 'bg-green-900 border-green-500 border'}`}>
+                            {feedback.text}
+                        </div>
+                        <div className="bg-black/40 p-4 rounded-xl border border-amber-500/30 text-left mb-6">
+                            <p className="text-amber-400 font-bold text-sm uppercase mb-1">💡 Müller-Tipp:</p>
+                            <p className="text-gray-200 text-sm italic">{getMullerTip(current)}</p>
+                        </div>
+                        <button onClick={handleContinue} className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-xl transition">CONTINUAR ➔</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function AdvancedPracticePanelFinal() {
+    const [show, setShow] = React.useState(false);
+    const [activeMode, setActiveMode] = React.useState('menu');
+
+    React.useEffect(() => {
+        const open = () => { setShow(true); setActiveMode('menu'); };
+        const close = () => setShow(false);
+        window.addEventListener('toggleAdvancedModal', open);
+        window.addEventListener('closeAdvancedModal', close);
+        return () => { window.removeEventListener('toggleAdvancedModal', open); window.removeEventListener('closeAdvancedModal', close); };
+    }, []);
+
+    if (!show) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-950/95 backdrop-blur-md z-[100] flex flex-col p-4 md:p-10 text-white overflow-y-auto">
+            <div className="flex justify-between items-center mb-10 border-b border-purple-900/50 pb-4">
+                <div className="flex items-center gap-3">
+                    <span className="bg-purple-600 p-2 rounded-lg"><i data-lucide="graduation-cap" className="w-6 h-6"></i></span>
+                    <h2 className="text-2xl md:text-3xl font-bold text-purple-100">Área de Entrenamiento Müller</h2>
+                </div>
+                <button onClick={() => setShow(false)} className="bg-red-600/20 text-red-400 border border-red-900/50 px-4 py-2 rounded-lg font-bold hover:bg-red-600 hover:text-white transition">X Cerrar</button>
+            </div>
+
+            {activeMode === 'menu' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+                    <button onClick={() => setActiveMode('articulos')} className="bg-slate-900 border border-blue-800/50 p-8 rounded-2xl hover:bg-blue-900/30 transition shadow-lg group flex flex-col items-center text-center">
+                        <div className="text-5xl mb-4 group-hover:scale-110 transition">📘</div>
+                        <h3 className="text-2xl font-bold text-blue-400 mb-2">Artículos (Der/Die/Das)</h3>
+                        <p className="text-sm text-gray-400">Extraído en Nominativo estricto. Usa teclado (1, 2, 3).</p>
+                    </button>
+
+                    <button onClick={() => setActiveMode('verbos_prep')} className="bg-slate-900 border border-green-800/50 p-8 rounded-2xl hover:bg-green-900/30 transition shadow-lg group flex flex-col items-center text-center">
+                        <div className="text-5xl mb-4 group-hover:scale-110 transition">📗</div>
+                        <h3 className="text-2xl font-bold text-green-400 mb-2">Verbos + Prep (Nube)</h3>
+                        <p className="text-sm text-gray-400">Conectado a tu GitHub. Sistema de repetición de fallos.</p>
+                    </button>
+
+                <button onClick={() => setActiveMode('preposiciones')} className="bg-slate-900 border border-amber-800/50 p-8 rounded-2xl hover:bg-amber-900/30 transition shadow-lg group flex flex-col items-center text-center">
+            <div className="text-5xl mb-4 group-hover:scale-110 transition">📙</div>
+            <h3 className="text-2xl font-bold text-amber-400 mb-2">Preposiciones</h3>
+            <p className="text-sm text-gray-400">Base de datos en tiempo real (GitHub). Casos y ejemplos B1/B2.</p>
+        </button>
+    </div>
+)}
+
+            {activeMode === 'articulos' && <ArticlePracticeFinal onBack={() => setActiveMode('menu')} />}
+            {activeMode === 'verbos_prep' && <CloudPracticeFinal onBack={() => setActiveMode('menu')} type="verbos" />}
+            {activeMode === 'preposiciones' && <CloudPracticeFinal onBack={() => setActiveMode('menu')} type="preposiciones" />}
+        </div>
+    );
+}
+
+// ============================================================================
+
+// ============================================================================
+// -------------------- INYECCIÓN DE BOTONES (morado y naranja) --------------------
+setTimeout(() => {
+    const injectButtons = () => {
+        const bar = document.querySelector('.bg-gray-950.p-3.md\\:p-6.flex.flex-col.sm\\:flex-row');
+        if (!bar) return false;
+        if (document.getElementById('injected-advanced-btn')) return true;
+        const container = document.createElement('div');
+        container.className = 'flex items-center gap-2 mr-3';
+        container.id = 'injected-advanced-btn';
+        
+        // Botón morado (entrenamiento avanzado)
+        const btn1 = document.createElement('button');
+        btn1.className = 'bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-full shadow-md transition';
+        btn1.innerHTML = '<i data-lucide="graduation-cap" class="w-5 h-5"></i>';
+        btn1.title = 'Entrenamiento Avanzado';
+        btn1.onclick = () => window.dispatchEvent(new Event('toggleAdvancedModal'));
+        
+        // Botón naranja (audiolibro real)
+        const btn2 = document.createElement('button');
+        btn2.className = 'bg-amber-600 hover:bg-amber-500 text-white p-2 rounded-full shadow-md transition';
+        btn2.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
+        btn2.title = 'Modo Audiolibro (reproduce toda la historia)';
+        btn2.id = 'audiobook-real-btn';
+        
+        container.appendChild(btn1);
+        container.appendChild(btn2);
+        bar.insertBefore(container, bar.firstChild);
+        if (window.lucide) window.lucide.createIcons();
+        return true;
+    };
+    const tryInject = () => { if (!injectButtons()) setTimeout(tryInject, 500); };
+    tryInject();
+}, 500);
+
+// -------------------- IMPLEMENTACIÓN DEL MODO AUDIOLIBRO (REAL) --------------------
+(function() {
+    let isPlaying = false;
+    let currentIdx = 0;
+    let guionCache = null;
+    let timeoutId = null;
+    let btnRef = null;
+
+    function getCurrentGuion() {
+        // Prioridad: guion activo en la interfaz (si se puede obtener)
+        // Si no, el último guardado o el por defecto
+        const scripts = JSON.parse(localStorage.getItem('mullerScripts') || '[]');
+        if (scripts.length > 0) {
+            const last = scripts[scripts.length - 1];
+            try { return JSON.parse(last.data); } catch(e) {}
+        }
+        return window.__DEFAULT_GUION__ || [];
+    }
+
+    function stopAudioBook() {
+        if (timeoutId) clearTimeout(timeoutId);
+        window.speechSynthesis.cancel();
+        isPlaying = false;
+        if (btnRef) {
+            btnRef.style.backgroundColor = '#d97706';
+            btnRef.innerHTML = '<i data-lucide="headphones" class="w-5 h-5"></i>';
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+
+    function playScene(index) {
+        if (!guionCache || index >= guionCache.length) {
+            stopAudioBook();
+            alert('📖 Audiolibro finalizado');
+            return;
+        }
+        const scene = guionCache[index];
+        const utterance = new SpeechSynthesisUtterance(scene.text);
+        utterance.lang = 'de-DE';
+        utterance.rate = 0.9;
+        utterance.onend = () => {
+            timeoutId = setTimeout(() => {
+                playScene(index + 1);
+            }, 800);
+        };
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+        currentIdx = index;
+    }
+
+    function startAudioBook() {
+        guionCache = getCurrentGuion();
+        if (!guionCache || guionCache.length === 0) {
+            alert('No hay ningún guion cargado.');
+            return;
+        }
+        stopAudioBook();
+        isPlaying = true;
+        playScene(0);
+        if (btnRef) {
+            btnRef.style.backgroundColor = '#ef4444';
+            btnRef.innerHTML = '<i data-lucide="square" class="w-5 h-5"></i>';
+            if (window.lucide) window.lucide.createIcons();
+        }
+    }
+
+    // Esperar a que el botón naranja exista y asignarle la función
+    const waitForOrangeBtn = setInterval(() => {
+        const orangeBtn = document.querySelector('.bg-amber-600.hover\\:bg-amber-500.text-white.p-2.rounded-full');
+        if (orangeBtn && !orangeBtn.hasAttribute('data-audiobook-ready')) {
+            orangeBtn.setAttribute('data-audiobook-ready', 'true');
+            btnRef = orangeBtn;
+            orangeBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (isPlaying) stopAudioBook();
+                else startAudioBook();
+            };
+            clearInterval(waitForOrangeBtn);
+        }
+    }, 500);
+})();
+    </script>
+</body>
+</html>

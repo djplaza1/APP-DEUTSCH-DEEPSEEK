@@ -1,0 +1,16 @@
+        const MULLER_BOT_PLAYERS = [
+            { id: 'bot_elena', name: 'Elena Vogt', tag: 'München', lvl: 'B2' },
+            { id: 'bot_jonas', name: 'Jonas Keller', tag: 'Hamburg', lvl: 'B1' },
+            { id: 'bot_fatima', name: 'Fatima Al-Sayed', tag: 'Köln', lvl: 'B2' },
+            { id: 'bot_lukas', name: 'Lukas Brandt', tag: 'Berlin', lvl: 'B1' },
+            { id: 'bot_sophie', name: 'Sophie Nguyen', tag: 'Frankfurt', lvl: 'B2' },
+            { id: 'bot_marco', name: 'Marco Rossi', tag: 'Stuttgart', lvl: 'B1' },
+            { id: 'bot_nina', name: 'Nina Hoffmann', tag: 'Leipzig', lvl: 'B2' },
+            { id: 'bot_ken', name: 'Ken Yamamoto', tag: 'Dresden', lvl: 'B1' },
+            { id: 'bot_laura', name: 'Laura García', tag: 'Madrid', lvl: 'B2' },
+            { id: 'bot_timo', name: 'Timo Schulz', tag: 'Bremen', lvl: 'B1' },
+            { id: 'bot_aylin', name: 'Aylin Demir', tag: 'Düsseldorf', lvl: 'B2' },
+            { id: 'bot_felix', name: 'Felix Werner', tag: 'Nürnberg', lvl: 'B1' },
+            { id: 'bot_mira', name: 'Mira Popov', tag: 'Wien', lvl: 'B2' },
+            { id: 'bot_oscar', name: 'Óscar Prieto', tag: 'Barcelona', lvl: 'B1' },
+        ];
