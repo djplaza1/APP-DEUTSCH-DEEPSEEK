@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>PROFESOR PLAZA MÜLLER</title>
+    <meta name="theme-color" content="#581c87" />
+    <meta name="description" content="PROFESOR PLAZA MÜLLER: historia, vocabulario, B1/B2 y progreso." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PROFESOR PLAZA MÜLLER" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React y ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- OCR/PDF se cargan bajo demanda para acelerar arranque -->
+    
+    <!-- Lucide Icons (versión fija: API estable para data-lucide + createIcons) -->
+    <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+    <!-- Supabase JS (plan gratuito): expone self.supabase.createClient -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+    <script type="text/babel" src="src/core/constants.jsx"></script>
+    <script type="text/babel" src="src/core/config.jsx"></script>
+    <script type="text/babel" src="src/core/helpers.jsx"></script>
+    <script type="text/babel" src="src/core/translate.jsx"></script>
+    <script type="text/babel" src="src/core/auth.jsx"></script>
+    <script type="text/babel" src="src/core/exercise-help.jsx"></script>
+    <script type="text/babel" src="src/core/storage.jsx"></script>
+    <script type="text/babel" src="src/core/cloud-core.jsx"></script>
+    <script type="text/babel" src="src/core/speech-utils.jsx"></script>
+    <script type="text/babel" src="src/core/tts-voice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-constants.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-logic.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/article-practice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/cloud-practice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/telc-mixed-exam.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/advanced-practice-panel.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-extractors.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/bot-players.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/league-core.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/comunidad-panel.jsx"></script>
+    <script type="text/babel" src="src/features/pdf/pdf-core.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/telc-core.jsx"></script>
+    <script type="text/babel" src="src/features/telc/telc-levels.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/writing-drills.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/dictation-lines.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/telc-tasks.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/escritura-panel.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/copy-drills.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/writing-prompts.jsx"></script>
+    <script type="text/babel" src="src/features/lectura/reading-core.jsx"></script>
+    <script type="text/babel" src="src/features/lectura/lectura-panel.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-core.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-panel.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-data.jsx"></script>
+    <script type="text/babel" src="src/features/vocab-lexikon/vocab-srs.jsx"></script>
+    <script type="text/babel" src="src/features/vocab-lexikon/bx-core.jsx"></script>
+    <script type="text/babel" src="src/features/biblioteca/biblioteca-helpers.jsx"></script>
+    <script type="text/babel" src="src/features/historia/default-guion.jsx"></script>
+    <script type="text/babel" src="src/features/historia/tempus-dict.jsx"></script>
+    <script type="text/babel" src="src/features/historia/oral-b1-questions.jsx"></script>
+    <script type="text/babel" src="src/features/historia/historia-helpers.jsx"></script>
+    <script type="text/babel" src="src/features/historia/historia-panel.jsx"></script>
+    <script type="text/babel" src="src/features/historia/audiobook.jsx"></script>
+    <script type="text/babel" src="src/features/historiaspro/story-utils.jsx"></script>
+    <script type="text/babel" src="src/legacy/distance.jsx"></script>
+    <script type="text/babel" src="src/ui/icon.jsx"></script>
+    <script type="text/babel" src="src/ui/error-boundary.jsx"></script>
+    <script type="text/babel" src="src/ui/inicio-panel.jsx"></script>
+    <script type="text/babel" src="src/ui/onboarding-modal.jsx"></script>
+    <script type="text/babel" src="src/ui/profile-settings-modal.jsx"></script>
+    <script type="text/babel" src="src/ui/tablet-writing-canvas.jsx"></script>
+    <script type="text/babel" src="src/ui/handwriting-pad.jsx"></script>
+    <script type="text/babel" src="src/hooks/TelcExamHud.jsx"></script>
+
+    <style>
+        html {
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        /* Escala base: la fija también el script mullerApplyRootFont (px en <html>) para que funcione igual en pestaña web y PWA */
+        @media (max-width: 1024px) {
+            html { font-size: 100%; }
+        }
+        @media (max-width: 640px) {
+            html { font-size: 95%; }
+        }
+        body { margin: 0; background-color: #000; overflow: hidden; font-family: 'Outfit', system-ui, -apple-system, sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .lucide-wrapper { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; }
+        .lucide-wrapper i[data-lucide] { display: inline-flex; align-items: center; justify-content: center; }
+        .lucide-wrapper svg, i[data-lucide] svg {
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vector-effect: non-scaling-stroke;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.45));
+            stroke: currentColor;
+            color: inherit;
+            fill: none;
+        }
+        .lucide-wrapper svg[fill="none"], i[data-lucide] svg[fill="none"] { fill: none; }
+        .lucide-wrapper svg.fill-current, i[data-lucide].fill-current svg,
+        .lucide-wrapper .fill-current svg { fill: currentColor; stroke: none; }
+        button.muller-icon-nav .lucide-wrapper,
+        button.muller-icon-nav i[data-lucide] { color: #fff; }
+        /* Mic “mantén pulsado” en Shadowing: anillo claro + trazo más grueso para que el icono no se pierda sobre el verde */
+        button.muller-mic-hold-btn {
+            position: relative;
+            background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 52%),
+                linear-gradient(155deg, #0f766e 0%, #047857 55%, #065f46 100%);
+        }
+        button.muller-mic-hold-btn::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 9999px;
+            border: 2px solid rgba(255,255,255,0.45);
+            pointer-events: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+        button.muller-mic-hold-btn .lucide-wrapper svg,
+        button.muller-mic-hold-btn i[data-lucide] svg {
+            stroke-width: 2.5;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.65));
+        }
+        i[data-lucide] svg[fill="currentColor"],
+        i[data-lucide].fill-current svg { filter: none; }
+        .nav-tab-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 0.5rem;
+            background: linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        @media (min-width: 768px) {
+            .nav-tab-icon { width: 2rem; height: 2rem; border-radius: 0.6rem; }
+        }
+        .float-icon-glow {
+            box-shadow: 0 4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+        .muller-glass-card {
+            background: linear-gradient(160deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 100%);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 10px 26px rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+        }
+        .muller-top-nav button .lucide-wrapper,
+        .muller-top-nav button i[data-lucide] {
+            padding: 0.28rem;
+            border-radius: 0.45rem;
+            background: linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .muller-nav-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            justify-content: flex-start;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .muller-nav-row::-webkit-scrollbar { display: none; }
+        .muller-nav-row button {
+            flex: 0 0 var(--muller-nav-tab-w);
+            min-width: var(--muller-nav-tab-w);
+            justify-content: center;
+        }
+        @media (max-width: 1024px) {
+            .muller-top-nav {
+                position: sticky;
+                top: 0;
+                z-index: 80;
+            }
+            .muller-nav-row button {
+                min-height: 2.35rem !important;
+                padding-top: 0.55rem !important;
+                padding-bottom: 0.55rem !important;
+            }
+        }
+        .muller-skeleton {
+            background: linear-gradient(90deg, rgba(148,163,184,0.18) 25%, rgba(148,163,184,0.34) 37%, rgba(148,163,184,0.18) 63%);
+            background-size: 400% 100%;
+            animation: mullerShimmer 1.2s ease infinite;
+        }
+        @keyframes mullerShimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: 0 0; }
+        }
+        .muller-reduce-motion *,
+        .muller-reduce-motion *::before,
+        .muller-reduce-motion *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+        @media (max-width: 640px) {
+            .tempus-panel { font-size: 0.75rem; padding: 0.5rem; }
+            .verb-tag { font-size: 0.7rem; }
+        }
+        .reading-word-token {
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(125, 211, 252, 0.45);
+            border-radius: 0.22rem;
+            padding: 0 0.12rem;
+            transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+        }
+        .reading-word-token:hover {
+            background: rgba(14, 116, 144, 0.35);
+            color: #f0f9ff;
+            border-color: rgba(186, 230, 253, 0.8);
+        }
+        .reading-word-token.is-active {
+            background: rgba(14, 165, 233, 0.3);
+            color: #ffffff;
+            border-color: rgba(186, 230, 253, 0.95);
+        }
+        .reading-premium-mode .muller-reading-surface {
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.92) 0%, rgba(7, 16, 35, 0.86) 100%);
+            border-color: rgba(56, 189, 248, 0.38);
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .reading-premium-mode .muller-reading-header,
+        .reading-premium-mode .muller-reading-muted {
+            opacity: 0.94;
+        }
+        .reading-premium-mode .reading-word-token {
+            border-bottom-color: rgba(186, 230, 253, 0.78);
+            background: rgba(2, 132, 199, 0.08);
+        }
+        .reading-premium-mode .reading-word-token:hover {
+            background: rgba(2, 132, 199, 0.3);
+            color: #f8fcff;
+        }
+        .reading-premium-mode .reading-word-token.is-active {
+            background: rgba(14, 165, 233, 0.42);
+        }
+        /* Estilos para el canvas de escritura a mano */
+        .handwriting-canvas {
+            touch-action: none;
+            width: 100%;
+            height: 250px;
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            border: 2px solid #475569;
+            cursor: crosshair;
+        }
+        .writing-pad-wrap {
+            touch-action: none;
+            background-color: #0c1222;
+            background-image: linear-gradient(transparent 35px, rgba(148, 163, 184, 0.09) 36px);
+            background-size: 100% 36px;
+            border-radius: 0.75rem;
+            border: 2px solid rgba(71, 85, 105, 0.6);
+            overflow: hidden;
+        }
+        .writing-lab-canvas {
+            touch-action: none;
+            display: block;
+            width: 100%;
+            cursor: crosshair;
+            background: transparent;
+        }
+        /* Temas UI: se aplican en el contenedor raíz de la app */
+        .muller-theme-light {
+            --muller-surface: #f1f5f9;
+            --muller-ink: #0f172a;
+            --muller-muted: #475569;
+        }
+        .muller-theme-light .muller-theme-bg {
+            background-color: var(--muller-surface) !important;
+            color: var(--muller-ink);
+        }
+        .muller-theme-hc {
+            --muller-hc-bg: #000000;
+            --muller-hc-fg: #ffff00;
+            --muller-hc-border: #ffffff;
+        }
+        .muller-theme-hc .muller-theme-bg,
+        .muller-theme-hc.bg-gray-900,
+        .muller-theme-hc.bg-slate-900,
+        .muller-theme-hc.bg-zinc-900 {
+            background-color: var(--muller-hc-bg) !important;
+            color: var(--muller-hc-fg) !important;
+            border-color: var(--muller-hc-border) !important;
+        }
+        .muller-theme-hc .text-white { color: var(--muller-hc-fg) !important; 
+        .muller-theme-hc .text-gray-400 { color: #e5e5e5 !important; }
+        .muller-pwa-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 120;
+            padding: 0.75rem 1rem;
+            padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(90deg, #0f172a, #1e3a5f);
+            border-top: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        :root {
+            --muller-mobile-header-h: 10rem;
+            --muller-mobile-bottom-nav-h: 5rem;
+            --muller-nav-tab-w: 10.25rem;
+        }
+        @media (min-width: 768px) {
+            :root {
+                --muller-mobile-header-h: 8.5rem;
+                --muller-mobile-bottom-nav-h: 5rem;
+                --muller-nav-tab-w: 11rem;
+            }
+        }
+        @media (min-width: 1025px) {
+            :root {
+                --muller-mobile-header-h: 8rem;
+                --muller-mobile-bottom-nav-h: 5rem;
+                --muller-nav-tab-w: 11.5rem;
+            }
+        }
+        .muller-main-fill {
+            height: 100svh;
+            min-height: 100svh;
+        }
+        .muller-mobile-bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 95;
+            display: flex;
+            gap: 0.4rem;
+            overflow-x: auto;
+            padding: 0.5rem 0.6rem max(0.5rem, env(safe-area-inset-bottom, 0px));
+            border-top: 1px solid rgba(255,255,255,0.14);
+            background: linear-gradient(180deg, rgba(2,6,23,0.92), rgba(2,6,23,0.98));
+            backdrop-filter: blur(12px);
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .muller-mobile-bottom-nav::-webkit-scrollbar { display: none; }
+        .muller-mobile-bottom-nav button {
+            flex: 0 0 var(--muller-nav-tab-w);
+            min-width: var(--muller-nav-tab-w);
+            border-radius: 0.85rem;
+            padding: 0.45rem 0.55rem;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.05);
+            color: #d1d5db;
+            font-size: 0.68rem;
+            font-weight: 800;
+            line-height: 1.1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.15rem;
+            white-space: nowrap;
+        }
+        .muller-mobile-bottom-nav button.is-active {
+            background: rgba(88, 28, 135, 0.7);
+            color: #ffffff;
+            border-color: rgba(255,255,255,0.22);
+            box-shadow: 0 0 14px rgba(168,85,247,0.35);
+        }
+        .muller-mobile-bottom-nav button .lucide-wrapper,
+        .muller-mobile-bottom-nav button i[data-lucide] {
+            padding: 0.1rem;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+        /* Tema claro: el scroll principal tiene fondo claro pero muchos bloques siguen con text-white → forzamos tinta oscura salvo botones/badges con fondo de color */
+        .muller-theme-light .muller-app-main {
+            color: #0f172a;
+        }
+        .muller-theme-light .muller-app-main .text-white {
+            color: #0f172a !important;
+        }
+        /* Botones y chips con fondo sólido o gradiente: mantener texto blanco */
+        .muller-theme-light .muller-app-main .text-white[class*="bg-"]:not([class*="bg-black/"]):not([class*="bg-white/"]):not([class~="bg-transparent"]),
+        .muller-theme-light .muller-app-main [class*="from-"][class*="to-"].text-white,
+        .muller-theme-light .muller-app-main a.text-white[class*="bg-"]:not([class*="bg-black/"]) {
+            color: #ffffff !important;
+        }
+        .muller-theme-light .muller-app-main .text-gray-300,
+        .muller-theme-light .muller-app-main .text-gray-400 {
+            color: #475569 !important;
+        }
+        .muller-theme-light .muller-app-main .text-gray-500 {
+            color: #64748b !important;
+        }
+        .muller-theme-light .muller-app-main .border-white\/10,
+        .muller-theme-light .muller-app-main .border-white\/20 {
+            border-color: rgba(15, 23, 42, 0.12) !important;
+        }
+        .muller-theme-light .muller-app-main [class*="bg-black/30"],
+        .muller-theme-light .muller-app-main [class*="bg-black/35"],
+        .muller-theme-light .muller-app-main [class*="bg-black/40"],
+        .muller-theme-light .muller-app-main [class*="bg-black/45"],
+        .muller-theme-light .muller-app-main [class*="bg-black/50"] {
+            background-color: rgba(241, 245, 249, 0.96) !important;
+        }
+
+        /* Barra de reproducción historia: fija en móvil para no solaparse con tabs */
+        @media (max-width: 1024px) {
+            .muller-historia-player-bar {
+                position: fixed;
+                bottom: var(--muller-mobile-bottom-nav-h);
+                left: 0;
+                right: 0;
+                z-index: 90;
+                border-top: 1px solid rgba(255,255,255,0.1);
+            }
+            /* Espacio extra cuando la barra historia está visible */
+            .muller-main-historia-pb {
+                padding-bottom: calc(var(--muller-mobile-bottom-nav-h) + 7rem) !important;
+            }
+        }
+        @media (max-width: 640px) {
+            .muller-nav-row { gap: 0.32rem; }
+        }
+        .muller-preboot {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 20% 10%, rgba(88,28,135,0.35), rgba(0,0,0,0.94) 45%);
+            color: #e2e8f0;
+            transition: opacity 220ms ease;
+        }
+        .muller-preboot.is-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .muller-preboot-card {
+            width: min(92vw, 540px);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 16px;
+            background: rgba(2,6,23,0.72);
+            padding: 18px 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+            text-align: center;
+        }
+        .muller-preboot-title {
+            margin: 0;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            line-height: 1.15;
+            font-size: clamp(1.15rem, 4.7vw, 2.05rem);
+            color: #f8fafc;
+            text-shadow: 0 2px 14px rgba(245, 158, 11, 0.35);
+        }
+        .muller-preboot-spin {
+            width: 22px;
+            height: 22px;
+            margin: 0 auto 10px;
+            border-radius: 9999px;
+            border: 2px solid rgba(255,255,255,0.25);
+            border-top-color: #f59e0b;
+            animation: mullerPrebootSpin 0.9s linear infinite;
+        }
+        @keyframes mullerPrebootSpin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="muller-preboot" class="muller-preboot" role="status" aria-live="polite">
+        <div class="muller-preboot-card">
+            <div class="muller-preboot-spin"></div>
+            <p class="muller-preboot-title">CARGANDO PROFESOR PLAZA MÜLLER</p>
+            <p style="margin:8px 0 0;font-size:12px;color:#cbd5e1;">
+                La app tiene bastante contenido (OCR, PDF, rutas y bancos B1-B2) y se está inicializando.
+            </p>
+        </div>
+    </div>
+    <div id="root"></div>
+
+    <script src="src/app-inline.jsx" type="text/babel"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.getRegistrations()
+                    .then(function (regs) {
+                        return Promise.all(regs.map(function (reg) { return reg.unregister(); }));
+                    })
+                    .catch(function () {})
+                    .finally(function () {
+                        navigator.serviceWorker.register('./sw.js').catch(function () {});
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

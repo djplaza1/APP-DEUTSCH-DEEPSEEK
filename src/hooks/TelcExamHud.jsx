@@ -1,4 +1,13 @@
-﻿function TelcExamHud({ examCtx, onUseTranslationHint, answered, translationVisible }) {
+﻿function useTelcExamClock(examCtx) {
+    const [, setTick] = React.useState(0);
+    React.useEffect(() => {
+        if (!examCtx) return undefined;
+        const id = setInterval(() => setTick((t) => t + 1), 1000);
+        return () => clearInterval(id);
+    }, [examCtx]);
+}
+
+function TelcExamHud({ examCtx, onUseTranslationHint, answered, translationVisible }) {
     useTelcExamClock(examCtx);
     if (!examCtx) return null;
     const now = Date.now();
