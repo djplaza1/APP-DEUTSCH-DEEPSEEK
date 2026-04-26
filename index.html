@@ -430,16 +430,14 @@
             visibility: hidden;
         }
 
-        /* ---- BANDA ALEMANA ARRIBA ---- */
+        /* ---- BANDA ALEMANA ARRIBA: flex:1 para ocupar todo el espacio restante ---- */
         .muller-preboot-de {
-            flex: 1 1 42%;
+            flex: 1;
             width: 100%;
-            min-height: 70px;
-            max-height: 30vh;
+            min-height: 60px;
             position: relative;
             z-index: 1;
             margin: 0;
-            /* Negro (0-33.3%), Rojo (33.3-66.6%), Oro (66.6-100%) */
             background: linear-gradient(
                 180deg,
                 #000000 0%, #000000 33.3%,
@@ -447,16 +445,14 @@
                 #ffce00 66.6%, #ffce00 100%
             );
             box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-            /* Pequeña línea clara en la parte superior para que el negro se distinga sobre fondo oscuro */
             border-top: 1px solid rgba(255,255,255,0.08);
         }
 
-        /* ---- BANDA ESPAÑOLA ABAJO ---- */
+        /* ---- BANDA ESPAÑOLA ABAJO: flex:1 para ocupar todo el espacio restante ---- */
         .muller-preboot-es {
-            flex: 1 1 42%;
+            flex: 1;
             width: 100%;
-            min-height: 70px;
-            max-height: 30vh;
+            min-height: 60px;
             position: relative;
             z-index: 1;
             margin: 0;
@@ -469,14 +465,16 @@
             box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
         }
 
-        /* ---- ZONA CENTRAL: BLANCA, MUY ESTRECHA (16%), LOGO GIGANTE CASI TOCANDO BANDERAS ---- */
+        /* ---- ZONA CENTRAL: BLANCA, 18% VH OCUPA ANCHO COMPLETO ---- */
         .muller-preboot-mid {
-            flex: 0 1 16%;
-            min-height: clamp(60px, 16vh, 160px);
+            flex: 0 0 18vh;
+            height: 18vh;
+            min-height: 64px;
+            max-height: 170px;
             display: flex;
             flex-direction: row;
-            align-items: stretch;
-            justify-content: center;
+            align-items: center;
+            justify-content: flex-start;
             width: 100%;
             max-width: 100vw;
             position: relative;
@@ -487,7 +485,7 @@
             box-sizing: border-box;
         }
 
-        /* Lado izquierdo: rellena toda la altura, padding mínimo */
+        /* Lado izquierdo: altura completa */
         .muller-preboot-mid-left {
             flex: 0 0 auto;
             height: 100%;
@@ -495,13 +493,13 @@
             align-items: center;
             justify-content: center;
             background: #ffffff;
-            padding: clamp(2px, 0.3vh, 6px);
+            padding: 0;
             box-sizing: border-box;
             position: relative;
             overflow: visible;
         }
 
-        /* Logo: círculo perfecto SIN marcos, llena toda la altura disponible (casi toca las banderas) */
+        /* Logo: círculo PERFECTO cuadrado, altura = padre menos 4px, aspect-ratio:1 asegura cuadrado */
         .muller-preboot-logo-btn {
             -webkit-tap-highlight-color: transparent;
             display: block;
@@ -517,11 +515,15 @@
             position: relative;
             z-index: 3;
             outline: none;
-            height: 100%;
+            height: calc(100% - 4px);
             aspect-ratio: 1 / 1;
-            min-width: 55px;
-            min-height: 55px;
+            min-width: 62px;
+            min-height: 62px;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
         .muller-preboot-logo-btn:hover {
             transform: scale(1.02);
@@ -534,7 +536,7 @@
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 50%;
             background: transparent !important;
             border: 0;
@@ -545,20 +547,20 @@
         /* Lado derecho: fondo blanco, título con marco negro redondeado */
         .muller-preboot-mid-right {
             flex: 0 1 auto;
-            max-width: 50%;
+            max-width: 55%;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             justify-content: center;
             background: #ffffff;
-            padding: clamp(0.5rem, 1.5vw, 1rem);
+            padding: clamp(0.25rem, 1vw, 0.75rem);
             box-sizing: border-box;
         }
         /* Marco negro redondeado alrededor del título y CTA */
         .muller-preboot-title-frame {
             border: 3px solid #000000;
             border-radius: 1.2rem;
-            padding: clamp(0.5rem, 1.5vw, 1.2rem) clamp(0.8rem, 2vw, 1.8rem);
+            padding: clamp(0.3rem, 1vw, 0.8rem) clamp(0.5rem, 1.5vw, 1.2rem);
             display: inline-block;
             background: #ffffff;
             transition: box-shadow 0.4s ease, border-color 0.4s ease;
@@ -567,7 +569,7 @@
         /* Título enorme, negro, sin espaciado extra */
         .muller-preboot-title {
             font-family: 'Outfit', system-ui, sans-serif;
-            font-size: clamp(1.8rem, 7vw, 3.8rem);
+            font-size: clamp(1.2rem, 6vw, 3rem);
             font-weight: 800;
             line-height: 1.05;
             color: #000000;
@@ -585,12 +587,12 @@
             flex-direction: row;
             align-items: center;
             justify-content: flex-start;
-            gap: 0.25rem;
+            gap: 0.2rem;
             opacity: 0;
-            transform: translateY(-6px);
+            transform: translateY(-4px);
             transition: opacity 0.5s ease, transform 0.5s ease;
             pointer-events: none;
-            margin-top: clamp(0.1rem, 0.5vw, 0.3rem);
+            margin-top: 0;
         }
         .muller-preboot-hint--visible {
             opacity: 1;
@@ -598,18 +600,18 @@
         }
         .muller-preboot-hint-arrow {
             display: inline-block;
-            font-size: clamp(1.4rem, 4vw, 2.5rem);
+            font-size: clamp(1rem, 3vw, 1.8rem);
             line-height: 1;
             color: #b45309;
             animation: prebootArrowBounce 1s ease-in-out infinite;
         }
         @keyframes prebootArrowBounce {
             0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(-6px); }
+            50% { transform: translateX(-5px); }
         }
         .muller-preboot-hint-text {
             font-family: 'Outfit', system-ui, sans-serif;
-            font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+            font-size: clamp(0.75rem, 2vw, 1.1rem);
             font-weight: 800;
             letter-spacing: 0.06em;
             text-align: left;
@@ -622,17 +624,9 @@
         }
 
         /* ---- ANIMACIONES tras 3 segundos ---- */
-        /* Logo: destello dorado circular alrededor del botón redondo */
+        /* Logo parpadea IGUAL que el marco (misma animación golden-frame-blink) */
         .muller-preboot-logo-btn.preboot-logo-blink {
-            animation: golden-circle-blink 0.8s ease-in-out infinite;
-        }
-        @keyframes golden-circle-blink {
-            0%, 100% {
-                box-shadow: 0 0 10px 4px rgba(212, 175, 55, 0.3);
-            }
-            50% {
-                box-shadow: 0 0 30px 12px gold, 0 0 60px 20px rgba(212, 175, 55, 0.4);
-            }
+            animation: golden-frame-blink 0.8s ease-in-out infinite;
         }
         /* Marco del título: destello dorado alrededor del borde redondeado */
         .muller-preboot-mid-right.preboot-border-blink .muller-preboot-title-frame {
@@ -644,34 +638,35 @@
                 border-color: #000000;
             }
             50% {
-                box-shadow: 0 0 30px gold, 0 0 60px rgba(212, 175, 55, 0.3);
+                box-shadow: 0 0 35px gold, 0 0 70px rgba(212, 175, 55, 0.4);
                 border-color: #d4a017;
             }
         }
 
         @media (max-width: 640px) {
-            .muller-preboot-mid { flex-direction: column; flex: 1 1 56%; }
+            .muller-preboot-mid { flex-direction: row; flex: 0 0 16vh; height: 16vh; min-height: 60px; max-height: 140px; }
             .muller-preboot-mid-left,
-            .muller-preboot-mid-right { flex: none; width: 100%; max-width: 100%; }
-            .muller-preboot-mid-left { min-height: 35%; }
-            .muller-preboot-mid-right { min-height: auto; padding: 0.75rem; align-items: center; }
-            .muller-preboot-mid-right .muller-preboot-title-frame { text-align: center; }
-            .muller-preboot-mid-right .muller-preboot-title { text-align: center; white-space: normal; }
-            .muller-preboot-mid-right .muller-preboot-hint { justify-content: center; }
-            .muller-preboot-logo-btn img { width: min(35vw, 16vh, 8rem); max-width: 8rem; }
-            .muller-preboot-title { font-size: clamp(1.2rem, 6vw, 2rem); }
+            .muller-preboot-mid-right { flex: none; }
+            .muller-preboot-mid-right { max-width: 65%; padding: 0.4rem; align-items: flex-start; }
+            .muller-preboot-mid-right .muller-preboot-title-frame { text-align: left; }
+            .muller-preboot-mid-right .muller-preboot-title { text-align: left; white-space: nowrap; font-size: clamp(1rem, 4.5vw, 1.8rem); }
+            .muller-preboot-mid-right .muller-preboot-hint { justify-content: flex-start; }
+            .muller-preboot-logo-btn { max-width: 14vh; max-height: 14vh; min-width: 50px; min-height: 50px; }
+            .muller-preboot-title-frame { padding: 0.25rem 0.4rem; border-width: 2px; border-radius: 0.8rem; }
+            .muller-preboot-hint-text { font-size: clamp(0.65rem, 2.5vw, 0.9rem); }
         }
         @media (max-width: 480px) {
             .muller-preboot-de { min-height: 50px; }
             .muller-preboot-es { min-height: 50px; }
-            .muller-preboot-title { font-size: clamp(1rem, 5vw, 1.6rem); }
-            .muller-preboot-hint-text { font-size: clamp(0.75rem, 3.5vw, 1rem); }
-            .muller-preboot-title-frame { padding: 0.35rem 0.5rem; border-width: 2px; }
+            .muller-preboot-mid { flex: 0 0 14vh; height: 14vh; min-height: 50px; max-height: 120px; }
+            .muller-preboot-title { font-size: clamp(0.85rem, 4vw, 1.4rem); }
+            .muller-preboot-hint-text { font-size: clamp(0.6rem, 2.5vw, 0.8rem); }
+            .muller-preboot-title-frame { padding: 0.2rem 0.35rem; border-width: 2px; border-radius: 0.6rem; }
         }
         @media (min-width: 768px) {
-            .muller-preboot-mid-right { max-width: 50%; }
-            .muller-preboot-logo-btn img { width: min(16vw, 22vh, 11rem); max-width: 11rem; }
-            .muller-preboot-title { font-size: clamp(2rem, 6vw, 4rem); }
+            .muller-preboot-mid { flex: 0 0 22vh; height: 22vh; max-height: 200px; }
+            .muller-preboot-logo-btn { max-width: 22vh; max-height: 22vh; }
+            .muller-preboot-title { font-size: clamp(1.5rem, 5vw, 3.2rem); }
         }
     </style>
 </head>
