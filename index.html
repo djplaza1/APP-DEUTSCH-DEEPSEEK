@@ -337,23 +337,22 @@
         }
         :root {
             /* Fila1 tabs + fila usuario (fila2 solo abajo) */
-            --muller-mobile-header-h: 10.5rem;
+            --muller-mobile-header-h: 48px;
             /* Barra móvil: una sola fila, scroll horizontal */
-            --muller-mobile-bottom-nav-h: 5.35rem;
+            --muller-mobile-bottom-nav-h: 52px;
             --muller-nav-tab-w: 10.25rem;
         }
         @media (min-width: 768px) {
             :root {
-                --muller-mobile-header-h: 11.5rem;
-                --muller-mobile-bottom-nav-h: 5.35rem;
+                --muller-mobile-header-h: 52px;
+                --muller-mobile-bottom-nav-h: 56px;
                 --muller-nav-tab-w: 11rem;
             }
         }
         @media (min-width: 1025px) {
             :root {
-                --muller-mobile-header-h: 10.5rem;
-                /* Segunda fila (herramientas) fija abajo también en escritorio */
-                --muller-mobile-bottom-nav-h: 5.35rem;
+                --muller-mobile-header-h: 52px;
+                --muller-mobile-bottom-nav-h: 56px;
                 --muller-nav-tab-w: 11.5rem;
             }
         }
@@ -398,6 +397,7 @@
             backdrop-filter: blur(12px);
             -ms-overflow-style: none;
             scrollbar-width: none;
+            box-sizing: content-box;
         }
         .muller-mobile-bottom-nav::-webkit-scrollbar { display: none; }
         .muller-mobile-bottom-nav button {
@@ -463,14 +463,17 @@
             background-color: rgba(241, 245, 249, 0.96) !important;
         }
 
-        /* Barra de reproducción historia: fija, por encima de la 2.ª fila de tabs */
+        /* Barra de reproducción historia: fija justo encima de la barra inferior */
         .muller-historia-player-bar {
             position: fixed;
             left: 0;
             right: 0;
-            bottom: calc(var(--muller-mobile-bottom-nav-h) + 1.2rem);
-            z-index: 90;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            bottom: var(--muller-mobile-bottom-nav-h);
+            z-index: 39;
+            background: #f8f8f8;
+            border-top: 1px solid #ddd;
+            padding: 8px 16px;
+            box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
         }
         .muller-main-historia-pb {
             padding-bottom: calc(var(--muller-mobile-bottom-nav-h) + 8rem) !important;
@@ -496,27 +499,33 @@
             pointer-events: none;
             visibility: hidden;
         }
-        /* Franja fina blanca bajo la bandera DE (banda "negra" → blanca y estrecha) */
-        .muller-preboot-seam {
-            flex: 0 0 0.28rem;
-            width: 100%;
-            min-height: 0.2rem;
-            background: #ffffff;
-        }
-        .muller-preboot-de {
-            flex: 0 0 min(32vh, 12rem);
+        /* Bandas de color dominantes y separadores más finos — proporciones flex */
+        .muller-preboot-de,
+        .muller-preboot-es {
+            flex: 3;
             width: 100%;
             min-height: 5rem;
             max-height: 40vh;
             position: relative;
             z-index: 1;
             margin: 0;
-            /* Negro reemplazado por blanco: franja superior clara, banderas con más color */
+        }
+        .muller-preboot-de {
             background: linear-gradient(180deg, #ffffff 0%, #ffffff 18%, #dd0000 18%, #dd0000 48%, #ffce00 48%, #ffce00 80%, #ffce00 100%);
             box-shadow: 0 3px 16px rgba(0,0,0,0.12);
         }
+        .muller-preboot-es {
+            background: linear-gradient(180deg, #aa151b 0%, #aa151b 30%, #f1bf00 30%, #f1bf00 70%, #aa151b 70%, #aa151b 100%);
+            box-shadow: 0 -3px 16px rgba(0,0,0,0.12);
+        }
+        .muller-preboot-seam,
+        .muller-preboot-seam--after {
+            flex: 0.3;
+            width: 100%;
+            background: #ffffff;
+        }
         .muller-preboot-mid {
-            flex: 0 1 auto;
+            flex: 1.5;
             min-height: 0;
             display: flex;
             flex-direction: column;
@@ -525,7 +534,7 @@
             width: 100%;
             max-width: 100vw;
             position: relative;
-            z-index: 1;
+            z-index: 2;
             overflow: visible;
             padding: clamp(0.1rem, 0.4vw, 0.3rem) clamp(0.2rem, 1vw, 0.45rem);
             background: #ffffff;
@@ -602,8 +611,7 @@
             outline-offset: 3px;
             border-radius: 0.25rem;
         }
-        /* Sólo el PNG, sin caja, sin sombra que parezca marco (si el png trae negro, hay que reexportar) */
-        /* Pixels negros del PNG (fondo) → claros: solo forma neón visible sobre blanco */
+        /* Logo con glow pulsante elegante y animación suave */
         .muller-preboot-logo-btn img {
             display: block;
             width: min(82vw, 18.5rem);
@@ -611,12 +619,27 @@
             height: auto;
             object-fit: contain;
             object-position: center;
-            background: none !important;
+            background: #ffffff !important;
             border: 0;
             box-shadow: none;
-            filter: none;
-            mix-blend-mode: screen;
+            filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.5));
+            mix-blend-mode: multiply;
+            transition: transform 0.4s ease, filter 0.4s ease;
+            animation: preboot-glow-pulse 2.4s infinite ease-in-out;
         }
+        @keyframes preboot-glow-pulse {
+            0%, 100% { filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.4)); }
+            50% { filter: drop-shadow(0 0 24px rgba(212, 175, 55, 0.8)); }
+        }
+        /* Golden blink tras 3s de inactividad */
+        .muller-preboot-logo-btn.preboot-idle-hint {
+            animation: golden-blink 0.8s ease-in-out 3;
+        }
+        @keyframes golden-blink {
+            0%, 100% { filter: drop-shadow(0 0 12px gold); }
+            50% { filter: drop-shadow(0 0 28px gold) brightness(1.2); }
+        }
+        /* Legacy: mullerPrebootLogoBlink se sigue usando para el blink inicial */
         @keyframes mullerPrebootLogoBlink {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.86; transform: scale(0.99); }
@@ -626,7 +649,7 @@
         }
         .muller-preboot-logo-btn.muller-preboot-logo--blink img {
             filter: none;
-            mix-blend-mode: screen;
+            mix-blend-mode: multiply;
         }
         /* CTA: texto + flecha hacia el logo (visible a los 3s con el parpadeo) */
         .muller-preboot-cta {
@@ -672,22 +695,6 @@
         @keyframes mullerPrebootArrowBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(0.2rem); }
-        }
-        .muller-preboot-seam--after {
-            flex: 0 0 0.28rem;
-            width: 100%;
-            background: #ffffff;
-        }
-        .muller-preboot-es {
-            flex: 0 0 min(32vh, 12rem);
-            width: 100%;
-            min-height: 5rem;
-            max-height: 40vh;
-            position: relative;
-            z-index: 1;
-            margin: 0;
-            background: linear-gradient(180deg, #aa151b 0%, #aa151b 30%, #f1bf00 30%, #f1bf00 70%, #aa151b 70%, #aa151b 100%);
-            box-shadow: 0 -3px 16px rgba(0,0,0,0.12);
         }
     </style>
 </head>
@@ -737,7 +744,10 @@
                 var wrap = document.getElementById('muller-preboot');
                 if (!wrap || wrap.classList.contains('is-hidden')) return;
                 if (wrap) wrap.classList.add('muller-preboot--blink');
-                if (btn) btn.classList.add('muller-preboot-logo--blink');
+                if (btn) {
+                    btn.classList.add('muller-preboot-logo--blink');
+                    btn.classList.add('preboot-idle-hint');
+                }
                 var h = document.getElementById('muller-preboot-hint');
                 if (h) {
                     h.classList.add('muller-preboot-cta--visible');
