@@ -22,7 +22,7 @@
     <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="preload" as="image" href="icons/Logo-Plaza-Sin-fondo_20250125_054126_0000.png" />
+    <link rel="preload" as="image" href="icons/profesor-plaza-muller-logo.jpg" />
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -530,17 +530,40 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             width: 100%;
             max-width: 100vw;
             position: relative;
             z-index: 2;
             overflow: visible;
-            padding: clamp(0.1rem, 0.4vw, 0.3rem) clamp(0.2rem, 1vw, 0.45rem);
-            background: #ffffff;
+            padding: 0;
+            background: #000000;
             box-shadow: none;
         }
+        .muller-preboot-title-bar {
+            width: 100%;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(0.3rem, 1vw, 0.6rem) 0.5rem;
+            flex-shrink: 0;
+        }
+        .muller-preboot-hero-title {
+            margin: 0;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 800;
+            font-size: clamp(1.2rem, 6.2vw, 2.1rem);
+            letter-spacing: 0.02em;
+            line-height: 1.0;
+            text-align: center;
+            text-transform: uppercase;
+            color: #0f172a;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.9);
+            width: 100%;
+            box-sizing: border-box;
+        }
         .muller-preboot-mid-inner {
+            flex: 1;
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -548,17 +571,8 @@
             gap: clamp(0.6rem, 2.5vw, 2rem);
             width: 100%;
             max-width: 100%;
-            flex-wrap: nowrap;
-        }
-        .muller-preboot-logo-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at center, #f0f4ff 0%, #e2e8f0 100%);
-            border-radius: 1.5rem;
-            padding: clamp(0.4rem, 1.2vw, 0.8rem);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6), 0 4px 12px rgba(0,0,0,0.08);
-            flex-shrink: 0;
+            padding: clamp(0.5rem, 2vw, 1.5rem) 0.5rem;
+            min-height: 0;
         }
         .muller-preboot-cta-wrap {
             display: flex;
@@ -611,47 +625,6 @@
             0%, 100% { transform: translateX(0); }
             50% { transform: translateX(-0.2rem); }
         }
-        .muller-preboot-mid::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 55%;
-            pointer-events: none;
-            opacity: 0;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(253, 224, 71, 0.35) 50%, rgba(234, 179, 8, 0.5) 100%);
-        }
-        .muller-preboot:has(.muller-preboot-logo--blink) .muller-preboot-mid::after,
-        .muller-preboot.muller-preboot--blink .muller-preboot-mid::after {
-            animation: mullerPrebootGoldFlash 1.15s ease-in-out infinite;
-        }
-        @keyframes mullerPrebootGoldFlash {
-            0%, 100% { opacity: 0; }
-            40% { opacity: 0.55; }
-            50% {
-                opacity: 1;
-                background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(253, 224, 71, 0.45) 45%, rgba(234, 179, 8, 0.55) 100%);
-            }
-            60% { opacity: 0.55; }
-        }
-        .muller-preboot-hero-title {
-            margin: 0 0 0.1rem;
-            font-family: 'Outfit', system-ui, sans-serif;
-            font-weight: 800;
-            /* Casi todo el ancho, centrado, muy legible */
-            font-size: clamp(1.2rem, 6.2vw, 2.1rem);
-            letter-spacing: 0.02em;
-            line-height: 1.0;
-            text-align: center;
-            text-transform: uppercase;
-            color: #0f172a;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.9);
-            max-width: 98vw;
-            width: 100%;
-            box-sizing: border-box;
-            padding: 0 0.15rem;
-        }
         @media (min-width: 480px) {
             .muller-preboot-hero-title { font-size: clamp(1.35rem, 5.2vw, 2.35rem); }
         }
@@ -688,10 +661,11 @@
             width: min(92vw, 26rem);
             max-height: min(38vh, 20rem);
             height: auto;
-            object-fit: contain;
+            object-fit: cover;
             object-position: center;
             background: transparent !important;
             border: 0;
+            border-radius: 50%;
             box-shadow: none;
             filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.5));
             transition: transform 0.4s ease, filter 0.4s ease;
@@ -701,24 +675,13 @@
             0%, 100% { filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.4)); }
             50% { filter: drop-shadow(0 0 24px rgba(212, 175, 55, 0.8)); }
         }
-        /* Golden blink tras 3s de inactividad */
+        /* Golden blink tras 3s de inactividad - solo contorno del logo */
         .muller-preboot-logo-btn.preboot-idle-hint {
             animation: golden-blink 0.8s ease-in-out 3;
         }
         @keyframes golden-blink {
             0%, 100% { filter: drop-shadow(0 0 12px gold); }
-            50% { filter: drop-shadow(0 0 28px gold) brightness(1.2); }
-        }
-        /* Legacy: mullerPrebootLogoBlink se sigue usando para el blink inicial */
-        @keyframes mullerPrebootLogoBlink {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.86; transform: scale(0.99); }
-        }
-        .muller-preboot-logo-btn.muller-preboot-logo--blink {
-            animation: mullerPrebootLogoBlink 1.1s ease-in-out infinite;
-        }
-        .muller-preboot-logo-btn.muller-preboot-logo--blink img {
-            filter: none;
+            50% { filter: drop-shadow(0 0 32px gold) brightness(1.15); }
         }
     </style>
 </head>
@@ -727,13 +690,13 @@
         <div class="muller-preboot-de" aria-hidden="true"></div>
         <div class="muller-preboot-seam" aria-hidden="true"></div>
         <div class="muller-preboot-mid">
-            <h1 id="muller-preboot-hero" class="muller-preboot-hero-title">PROFESOR PLAZA <span class="muller-preboot-uml" lang="de">MÜLLER</span></h1>
+            <div class="muller-preboot-title-bar">
+                <h1 id="muller-preboot-hero" class="muller-preboot-hero-title">PROFESOR PLAZA <span class="muller-preboot-uml" lang="de">MÜLLER</span></h1>
+            </div>
             <div class="muller-preboot-mid-inner">
-                <div class="muller-preboot-logo-wrap">
                     <button type="button" id="muller-preboot-logo-btn" class="muller-preboot-logo-btn" title="Pulsa el logo para entrar" aria-label="Pulsa en el logo para abrir la aplicación">
-                        <img src="icons/Logo-Plaza-Sin-fondo_20250125_054126_0000.png" alt="" width="600" height="600" loading="eager" fetchpriority="high" decoding="async" class="muller-preboot-logo-img" />
+                        <img src="icons/profesor-plaza-muller-logo.jpg" alt="" width="600" height="600" loading="eager" fetchpriority="high" decoding="async" class="muller-preboot-logo-img" />
                     </button>
-                </div>
                 <div class="muller-preboot-cta-wrap">
                     <div id="muller-preboot-hint" class="muller-preboot-cta" role="status" aria-live="polite" aria-hidden="true">
                         <span class="muller-preboot-cta-arrow" aria-hidden="true">←</span>
