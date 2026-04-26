@@ -7424,8 +7424,15 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             <MullerErrorBoundary>
                 <>
                     <App />
-
-
+                    <FloatingButtons />
+                    <AdvancedPracticePanelFinal />
+                </>
+            </MullerErrorBoundary>
+        );
+      window.requestAnimationFrame(() => window.requestAnimationFrame(hidePreboot));
+      
 window.App = App;
+
+
 
 
