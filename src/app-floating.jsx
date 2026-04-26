@@ -1,4 +1,4 @@
-function FloatingButtons() {
+﻿function FloatingButtons() {
     const [lastBackupIso, setLastBackupIso] = React.useState(() => localStorage.getItem('muller_last_backup_iso'));
 
     const requestMicPermission = async () => {
@@ -51,7 +51,7 @@ function FloatingButtons() {
                 const data = JSON.parse(e.target.result);
                 if (data.type === 'muller_partial_v1' && data.part === 'srs') {
                     localStorage.setItem('muller_vocab_srs_v1', JSON.stringify(data.muller_vocab_srs_v1 || {}));
-                    window.__mullerToast && window.__mullerToast('SRS importado. Recargando...', 'success');
+                    window.__mullerToast && window.__mullerToast('SRS importado. Recargando…', 'success');
                     window.location.reload();
                     return;
                 }
@@ -59,7 +59,7 @@ function FloatingButtons() {
                     const cur = JSON.parse(localStorage.getItem('mullerStats') || '{}');
                     const merged = { ...cur, difficultVocab: data.difficultVocab || cur.difficultVocab, normalVocab: data.normalVocab || cur.normalVocab, difficultGrammar: data.difficultGrammar || cur.difficultGrammar };
                     localStorage.setItem('mullerStats', JSON.stringify(merged));
-                    window.__mullerToast && window.__mullerToast('Mazos importados. Recargando...', 'success');
+                    window.__mullerToast && window.__mullerToast('Mazos importados. Recargando…', 'success');
                     window.location.reload();
                     return;
                 }
@@ -79,7 +79,7 @@ function FloatingButtons() {
                     if (data.savedScripts) localStorage.setItem('mullerScripts', JSON.stringify(data.savedScripts));
                     if (data.customVocabLessons) localStorage.setItem('mullerCustomVocab', JSON.stringify(data.customVocabLessons));
                 }
-                window.__mullerToast && window.__mullerToast('Datos importados correctamente. Recargando...', 'success');
+                window.__mullerToast && window.__mullerToast('Datos importados correctamente. Recargando…', 'success');
                 window.location.reload();
             } catch(err) { window.__mullerToast && window.__mullerToast('Archivo inválido.', 'error'); }
         };
@@ -126,7 +126,7 @@ function FloatingButtons() {
 
     const showSyncHelp = () => {
         alert(
-            "♻ Sincronización TOTAL gratis:\n\n" +
+            "🔄 Sincronización TOTAL gratis:\n\n" +
             "1) En tu dispositivo actual pulsa Exportar.\n" +
             "2) Sube el archivo .json a Google Drive.\n" +
             "3) En otro dispositivo descarga ese .json.\n" +

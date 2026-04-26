@@ -1,0 +1,21 @@
+﻿        const el = document.getElementById('muller-preboot');
+        if (!el) return;
+        el.classList.add('is-hidden');
+        window.setTimeout(() => {
+          try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
+        }, 260);
+      };
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <MullerErrorBoundary>
+                <>
+                    <App />
+                    <FloatingButtons />
+                    <AdvancedPracticePanelFinal />
+                </>
+            </MullerErrorBoundary>
+        );
+      window.requestAnimationFrame(() => window.requestAnimationFrame(hidePreboot));
+// ========== MÓDULO COMPLETO Y DEFINITIVO (4 PESTAÑAS + AUDIOLIBRO REAL) ==========
+// No modifica nada del código original, solo añade funcionalidad.
+

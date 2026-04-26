@@ -76,11 +76,6 @@ function App() {
     );
 }
 
-// ====== BOTONES FLOTANTES ======
-function FloatingButtons() {
-    return null;
-}
-
 // ====== OCULTAR PREBOOT ======
 const hidePreboot = () => {
     const el = document.getElementById('muller-preboot');
@@ -97,8 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     root.render(
         React.createElement(MullerErrorBoundary, null,
             React.createElement(React.Fragment, null,
-                React.createElement(App, null),
-                React.createElement(AdvancedPracticePanelFinal, { initialActive: true })
+        React.createElement(App, null),
+        React.createElement(FloatingButtons, null),
+        React.createElement(AdvancedPracticePanelFinal, null)
             )
         )
     );
