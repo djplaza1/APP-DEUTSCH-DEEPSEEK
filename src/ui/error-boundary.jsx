@@ -32,3 +32,5 @@ class MullerErrorBoundary extends React.Component {
         );
     }
 }
+
+window.MullerErrorBoundary = MullerErrorBoundary;
