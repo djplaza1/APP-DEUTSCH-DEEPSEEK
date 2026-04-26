@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>PROFESOR PLAZA MÜLLER</title>
     <meta name="theme-color" content="#581c87" />
     <meta name="description" content="PROFESOR PLAZA MÜLLER: historia, vocabulario, B1/B2 y progreso." />
@@ -19,7 +19,10 @@
     <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="icons/logo-plaza-sin-fondo.png" />
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -518,7 +521,7 @@
     <div id="muller-preboot" class="muller-preboot" role="status" aria-live="polite">
         <div class="muller-preboot-card">
             <div class="muller-preboot-spin"></div>
-            <img class="muller-preboot-logo" src="icons/logo-plaza-sin-fondo.png" alt="Logo Profesor Plaza Muller" />
+            <img class="muller-preboot-logo" src="icons/logo-plaza-sin-fondo.png" alt="Logo Profesor Plaza Muller" width="1024" height="1024" loading="eager" fetchpriority="high" decoding="async" />
             <p class="muller-preboot-title">CARGANDO PROFESOR PLAZA MÜLLER</p>
             <p class="muller-preboot-subtitle">
                 La app tiene bastante contenido (OCR, PDF, rutas y bancos B1-B2) y se está inicializando.

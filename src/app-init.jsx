@@ -117,8 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         React.createElement(ErrorBoundaryCmp, null,
             React.createElement(React.Fragment, null,
         React.createElement(App, null),
-        React.createElement(FloatingButtonsCmp, null),
-        React.createElement(AdvancedPracticePanelFinalCmp, null)
+        React.createElement(FloatingButtonsCmp, null)
             )
         )
     );
