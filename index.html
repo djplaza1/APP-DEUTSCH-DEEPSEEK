@@ -1,9 +1,9 @@
-
+﻿
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>PROFESOR PLAZA MÜLLER</title>
     <meta name="theme-color" content="#581c87" />
     <meta name="description" content="PROFESOR PLAZA MÜLLER: historia, vocabulario, B1/B2 y progreso." />
@@ -12,12 +12,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PROFESOR PLAZA MÜLLER" />
     <link rel="manifest" href="manifest.json" />
-    <link rel="icon" type="image/jpeg" href="./icons/profesor-plaza-muller-logo.jpg" />
-    <link rel="apple-touch-icon" href="./icons/profesor-plaza-muller-logo.jpg" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://unpkg.com" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="preload" as="image" href="icons/logo-plaza-sin-fondo.png" />
     
     <!-- Tailwind CSS -->
@@ -30,15 +34,69 @@
     <!-- Babel para compilar JSX en el navegador -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- OCR manuscrito / impreso en el navegador: gratis, sin API key (Tesseract + datos de idioma de) -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <!-- PDF.js (MVP PDF libros): extracción local de texto por página -->
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/legacy/build/pdf.min.js"></script>
+    <!-- OCR/PDF se cargan bajo demanda para acelerar arranque -->
     
     <!-- Lucide Icons (versión fija: API estable para data-lucide + createIcons) -->
     <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
     <!-- Supabase JS (plan gratuito): expone self.supabase.createClient -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8/dist/umd/supabase.js"></script>
+    <script type="text/babel" src="src/core/constants.jsx"></script>
+    <script type="text/babel" src="src/core/config.jsx"></script>
+    <script type="text/babel" src="src/core/helpers.jsx"></script>
+    <script type="text/babel" src="src/core/translate.jsx"></script>
+    <script type="text/babel" src="src/core/auth.jsx"></script>
+    <script type="text/babel" src="src/core/exercise-help.jsx"></script>
+    <script type="text/babel" src="src/core/storage.jsx"></script>
+    <script type="text/babel" src="src/core/cloud-core.jsx"></script>
+    <script type="text/babel" src="src/core/speech-utils.jsx"></script>
+    <script type="text/babel" src="src/core/tts-voice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-constants.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-logic.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/article-practice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/cloud-practice.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/telc-mixed-exam.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/advanced-practice-panel.jsx"></script>
+    <script type="text/babel" src="src/features/entrenamiento/training-extractors.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/bot-players.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/league-core.jsx"></script>
+    <script type="text/babel" src="src/features/comunidad/comunidad-panel.jsx"></script>
+    <script type="text/babel" src="src/features/pdf/pdf-core.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/telc-core.jsx"></script>
+    <script type="text/babel" src="src/features/telc/telc-levels.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/writing-drills.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/dictation-lines.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/telc-tasks.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/escritura-panel.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/copy-drills.jsx"></script>
+    <script type="text/babel" src="src/features/escritura/writing-prompts.jsx"></script>
+    <script type="text/babel" src="src/features/lectura/reading-core.jsx"></script>
+    <script type="text/babel" src="src/features/lectura/lectura-panel.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-core.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-panel.jsx"></script>
+    <script type="text/babel" src="src/features/ruta/ruta-data.jsx"></script>
+    <script type="text/babel" src="src/features/vocab-lexikon/vocab-srs.jsx"></script>
+    <script type="text/babel" src="src/features/vocab-lexikon/vocab-srs-panel.jsx"></script>
+    <script type="text/babel" src="src/features/vocab-lexikon/bx-core.jsx"></script>
+    <script type="text/babel" src="src/features/biblioteca/biblioteca-helpers.jsx"></script>
+    <script type="text/babel" src="src/features/biblioteca/biblioteca-panel.jsx"></script>
+    <script type="text/babel" src="src/features/telc/telc-levels-panel.jsx"></script>
+    <script type="text/babel" src="src/features/historia/default-guion.jsx"></script>
+    <script type="text/babel" src="src/features/historia/tempus-dict.jsx"></script>
+    <script type="text/babel" src="src/features/historia/oral-b1-questions.jsx"></script>
+    <script type="text/babel" src="src/features/historia/historia-helpers.jsx"></script>
+    <script type="text/babel" src="src/features/historia/historia-panel.jsx"></script>
+    <script type="text/babel" src="src/features/historia/audiobook.jsx"></script>
+    <script type="text/babel" src="src/features/historiaspro/story-utils.jsx"></script>
+    <script type="text/babel" src="src/legacy/distance.jsx"></script>
+    <script type="text/babel" src="src/ui/icon.jsx"></script>
+    <script type="text/babel" src="src/ui/error-boundary.jsx"></script>
+    <script type="text/babel" src="src/ui/inicio-panel.jsx"></script>
+    <script type="text/babel" src="src/ui/onboarding-modal.jsx"></script>
+    <script type="text/babel" src="src/ui/profile-settings-modal.jsx"></script>
+    <script type="text/babel" src="src/ui/tablet-writing-canvas.jsx"></script>
+    <script type="text/babel" src="src/ui/handwriting-pad.jsx"></script>
+    <script type="text/babel" src="src/hooks/TelcExamHud.jsx"></script>
+    <script type="text/babel" src="src/app-floating.jsx"></script>
 
     <style>
         html {
@@ -72,7 +130,7 @@
         .lucide-wrapper .fill-current svg { fill: currentColor; stroke: none; }
         button.muller-icon-nav .lucide-wrapper,
         button.muller-icon-nav i[data-lucide] { color: #fff; }
-        /* Mic “mantén pulsado” en Shadowing: anillo claro + trazo más grueso para que el icono no se pierda sobre el verde */
+        /* Mic â€œmantÃ©n pulsadoâ€ en Shadowing: anillo claro + trazo mÃ¡s grueso para que el icono no se pierda sobre el verde */
         button.muller-mic-hold-btn {
             position: relative;
             background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22) 0%, transparent 52%),
@@ -129,6 +187,17 @@
             display: flex;
             align-items: center;
             gap: 0.4rem;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            justify-content: flex-start;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .muller-nav-row::-webkit-scrollbar { display: none; }
+        .muller-nav-row button {
+            flex: 0 0 var(--muller-nav-tab-w);
+            min-width: var(--muller-nav-tab-w);
+            justify-content: center;
         }
         @media (max-width: 1024px) {
             .muller-top-nav {
@@ -136,27 +205,10 @@
                 top: 0;
                 z-index: 80;
             }
-            .muller-nav-row {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                justify-content: flex-start;
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
-            .muller-nav-row::-webkit-scrollbar { display: none; }
             .muller-nav-row button {
                 min-height: 2.35rem !important;
                 padding-top: 0.55rem !important;
                 padding-bottom: 0.55rem !important;
-            }
-        }
-        @media (max-width: 640px) {
-            .muller-nav-row {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-            }
-            .muller-nav-row button {
-                flex: 0 0 auto;
             }
         }
         .muller-skeleton {
@@ -242,7 +294,7 @@
             cursor: crosshair;
             background: transparent;
         }
-        /* Temas UI: se aplican en el contenedor raíz de la app */
+        /* Temas UI: se aplican en el contenedor raÃ­z de la app */
         .muller-theme-light {
             --muller-surface: #f1f5f9;
             --muller-ink: #0f172a;
@@ -284,19 +336,23 @@
             flex-wrap: wrap;
         }
         :root {
-            --muller-mobile-header-h: 10rem;
+            /* Tres franjas: 2 filas de tabs con scroll + fila de usuario/ayuda */
+            --muller-mobile-header-h: 12.75rem;
             --muller-mobile-bottom-nav-h: 5rem;
+            --muller-nav-tab-w: 10.25rem;
         }
         @media (min-width: 768px) {
             :root {
-                --muller-mobile-header-h: 8.5rem;
+                --muller-mobile-header-h: 11rem;
                 --muller-mobile-bottom-nav-h: 5rem;
+                --muller-nav-tab-w: 11rem;
             }
         }
         @media (min-width: 1025px) {
             :root {
-                --muller-mobile-header-h: 8rem;
-                --muller-mobile-bottom-nav-h: 0rem;
+                --muller-mobile-header-h: 10rem;
+                --muller-mobile-bottom-nav-h: 5rem;
+                --muller-nav-tab-w: 11.5rem;
             }
         }
         .muller-main-fill {
@@ -321,8 +377,8 @@
         }
         .muller-mobile-bottom-nav::-webkit-scrollbar { display: none; }
         .muller-mobile-bottom-nav button {
-            flex: 1 0 auto;
-            min-width: 18vw;
+            flex: 0 0 var(--muller-nav-tab-w);
+            min-width: var(--muller-nav-tab-w);
             border-radius: 0.85rem;
             padding: 0.45rem 0.55rem;
             border: 1px solid transparent;
@@ -351,7 +407,7 @@
             border: 0;
             box-shadow: none;
         }
-        /* Tema claro: el scroll principal tiene fondo claro pero muchos bloques siguen con text-white → forzamos tinta oscura salvo botones/badges con fondo de color */
+        /* Tema claro: el scroll principal tiene fondo claro pero muchos bloques siguen con text-white â†’ forzamos tinta oscura salvo botones/badges con fondo de color */
         .muller-theme-light .muller-app-main {
             color: #0f172a;
         }
@@ -387,21 +443,16 @@
         @media (max-width: 1024px) {
             .muller-historia-player-bar {
                 position: fixed;
-                bottom: var(--muller-mobile-bottom-nav-h);
+                /* Sube un poco respecto a la barra inferior de pestañas (z-index 95) para no solaparse */
+                bottom: calc(var(--muller-mobile-bottom-nav-h) + 0.45rem);
                 left: 0;
                 right: 0;
                 z-index: 90;
                 border-top: 1px solid rgba(255,255,255,0.1);
             }
-            /* Espacio extra cuando la barra historia está visible */
+            /* Espacio extra cuando la barra historia está visible + hueco bajo reproductor */
             .muller-main-historia-pb {
-                padding-bottom: calc(var(--muller-mobile-bottom-nav-h) + 7rem) !important;
-            }
-        }
-        /* Navegación superior alineada a la derecha en desktop */
-        @media (min-width: 1025px) {
-            .muller-nav-row {
-                justify-content: flex-end;
+                padding-bottom: calc(var(--muller-mobile-bottom-nav-h) + 8.25rem) !important;
             }
         }
         @media (max-width: 640px) {
@@ -425,90 +476,119 @@
             visibility: hidden;
         }
         .muller-preboot-de {
-            flex: 0 0 32vh;
+            flex: 0 0 18vh;
             width: 100%;
-            min-height: 5rem;
+            min-height: 4rem;
             background: linear-gradient(180deg, #000000 0%, #000000 33.33%, #dd0000 33.33%, #dd0000 66.66%, #ffce00 66.66%, #ffce00 100%);
             box-shadow: 0 4px 24px rgba(0,0,0,0.45);
         }
         .muller-preboot-mid {
-            flex: 0 0 auto;
+            flex: 1 1 auto;
             min-height: 0;
-            max-height: 36vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
-            padding: clamp(0.4rem, 1.2vw, 0.9rem) clamp(0.75rem, 2.5vw, 1.5rem);
+            position: relative;
+            overflow: hidden;
+            padding: clamp(0.4rem, 1.2vw, 0.9rem) clamp(0.5rem, 2vw, 1.25rem) clamp(0.5rem, 1.5vw, 1rem);
             background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
             box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
         }
+        .muller-preboot-mid::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 48%;
+            pointer-events: none;
+            opacity: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 55%, rgba(251, 191, 36, 0.35) 100%);
+        }
+        .muller-preboot:has(.muller-preboot-logo--blink) .muller-preboot-mid::after,
+        .muller-preboot.muller-preboot--blink .muller-preboot-mid::after {
+            animation: mullerPrebootBottomFlash 1.1s ease-in-out infinite;
+        }
+        @keyframes mullerPrebootBottomFlash {
+            0%, 100% { opacity: 0; transform: scaleY(0.92); }
+            50% { opacity: 0.9; transform: scaleY(1); }
+        }
         .muller-preboot-hero-title {
-            margin: 0 0 0.4rem;
+            margin: 0 0 0.35rem;
             font-family: 'Outfit', system-ui, sans-serif;
             font-weight: 800;
-            font-size: clamp(0.95rem, 2.4vw, 1.35rem);
-            letter-spacing: 0.1em;
-            line-height: 1.2;
+            font-size: clamp(1.8rem, 9.2vw, 4.1rem);
+            letter-spacing: 0.04em;
+            line-height: 0.95;
             text-align: center;
             text-transform: uppercase;
             color: #0f172a;
             text-shadow: 0 1px 0 rgba(255,255,255,0.9);
-            max-width: 22ch;
+            max-width: min(100%, 100vw - 1rem);
+            width: 100%;
+            box-sizing: border-box;
         }
         .muller-preboot-hero-title .muller-preboot-uml {
             letter-spacing: 0.04em;
         }
         .muller-preboot-logo-btn {
             -webkit-tap-highlight-color: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0.15rem 0 0.1rem;
-            padding: 0.25rem 0.45rem 0.35rem;
+            display: block;
+            margin: 0.15rem 0 0;
+            padding: 0;
             border: none;
             cursor: pointer;
-            background: #fff;
-            border-radius: 1.1rem;
-            max-width: 100%;
-            max-height: min(28vh, 100%);
-            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.1), 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 0 6px rgba(148, 163, 184, 0.35);
-            transition: transform 180ms ease, box-shadow 180ms ease;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            transition: transform 180ms ease, filter 180ms ease;
         }
-        .muller-preboot-logo-btn:hover { transform: scale(1.02); }
-        .muller-preboot-logo-btn:focus-visible { outline: 3px solid #6366f1; outline-offset: 3px; }
+        .muller-preboot-logo-btn:hover {
+            transform: scale(1.02);
+        }
+        .muller-preboot-logo-btn:focus-visible {
+            outline: 3px solid #6366f1;
+            outline-offset: 4px;
+            border-radius: 0.5rem;
+        }
         .muller-preboot-logo-btn img {
             display: block;
-            width: min(78vw, 22rem);
-            max-width: 100%;
-            max-height: min(25vh, 100%);
+            width: min(78vw, 18.5rem);
+            max-height: 42vh;
             height: auto;
             object-fit: contain;
+            filter: drop-shadow(0 10px 28px rgba(15, 23, 42, 0.2));
         }
         @keyframes mullerPrebootLogoBlink {
-            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.1), 0 0 0 4px rgba(255, 255, 255, 0.9), 0 0 0 6px rgba(148, 163, 184, 0.35); }
-            50% { opacity: 0.88; transform: scale(0.97); box-shadow: 0 6px 28px rgba(245, 158, 11, 0.45), 0 0 0 1px rgba(245, 158, 11, 0.35), 0 0 0 4px #fff, 0 0 0 7px rgba(245, 158, 11, 0.5); }
+            0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 10px 28px rgba(15, 23, 42, 0.2)); }
+            50% { opacity: 0.9; transform: scale(0.98); filter: drop-shadow(0 6px 22px rgba(245, 158, 11, 0.5)); }
         }
-        .muller-preboot-logo-btn.muller-preboot-logo--blink { animation: mullerPrebootLogoBlink 1.1s ease-in-out infinite; }
+        .muller-preboot-logo-btn.muller-preboot-logo--blink {
+            animation: mullerPrebootLogoBlink 1.1s ease-in-out infinite;
+        }
         .muller-preboot-hint {
-            margin: 0.2rem 0 0;
+            margin: 0.5rem 0 0;
             font-family: 'Outfit', system-ui, sans-serif;
-            font-size: clamp(0.88rem, 2.2vw, 1.05rem);
+            font-size: clamp(0.95rem, 2.8vw, 1.15rem);
             font-weight: 700;
             color: #b45309;
             letter-spacing: 0.02em;
             text-align: center;
-            min-height: 1.3em;
+            min-height: 1.4em;
             opacity: 0;
             transform: translateY(4px);
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
-        .muller-preboot-hint.muller-preboot-hint--visible { opacity: 1; transform: translateY(0); }
+        .muller-preboot-hint.muller-preboot-hint--visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
         .muller-preboot-es {
-            flex: 1 1 32vh;
+            flex: 0 0 18vh;
             width: 100%;
-            min-height: 5rem;
+            min-height: 4rem;
             background: linear-gradient(180deg, #aa151b 0%, #aa151b 25%, #f1bf00 25%, #f1bf00 75%, #aa151b 75%, #aa151b 100%);
             box-shadow: 0 -4px 24px rgba(0,0,0,0.45);
         }
@@ -527,11 +607,15 @@
         <div class="muller-preboot-es" aria-hidden="true"></div>
     </div>
     <div id="root"></div>
+
     <script>
     (function () {
         var hintTid;
         function dismissPreboot() {
-            if (typeof window.mullerDismissPreboot === 'function') { try { window.mullerDismissPreboot(); } catch (e) {} return; }
+            if (typeof window.mullerDismissPreboot === 'function') {
+                try { window.mullerDismissPreboot(); } catch (e) {}
+                return;
+            }
             var el = document.getElementById('muller-preboot');
             if (!el) return;
             el.classList.add('is-hidden');
@@ -541,10 +625,16 @@
         }
         function setupPreboot() {
             var btn = document.getElementById('muller-preboot-logo-btn');
-            if (btn) { btn.addEventListener('click', function () { if (hintTid) { try { clearTimeout(hintTid); } catch (e) {} } dismissPreboot(); }); }
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (hintTid) { try { clearTimeout(hintTid); } catch (e) {} }
+                    dismissPreboot();
+                });
+            }
             hintTid = setTimeout(function () {
                 var wrap = document.getElementById('muller-preboot');
                 if (!wrap || wrap.classList.contains('is-hidden')) return;
+                if (wrap) wrap.classList.add('muller-preboot--blink');
                 if (btn) btn.classList.add('muller-preboot-logo--blink');
                 var h = document.getElementById('muller-preboot-hint');
                 if (h) { h.classList.add('muller-preboot-hint--visible'); h.setAttribute('aria-hidden', 'false'); }
@@ -554,16 +644,21 @@
         else setupPreboot();
     })();
     </script>
-    <script type="text/babel" src="src/app-bundled-from-user-index.jsx"></script>
+    <script type="text/babel" src="src/app-init.jsx"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
                 navigator.serviceWorker.getRegistrations()
-                    .then(function (regs) { return Promise.all(regs.map(function (reg) { return reg.unregister(); })); })
+                    .then(function (regs) {
+                        return Promise.all(regs.map(function (reg) { return reg.unregister(); }));
+                    })
                     .catch(function () {})
-                    .finally(function () { navigator.serviceWorker.register('./sw.js').catch(function () {}); });
+                    .finally(function () {
+                        navigator.serviceWorker.register('./sw.js').catch(function () {});
+                    });
             });
         }
     </script>
 </body>
 </html>
+

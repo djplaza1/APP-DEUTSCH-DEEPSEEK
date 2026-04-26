@@ -6333,9 +6333,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               )}
               
               {/* SUPERIOR NAV BAR */}
-              <div className="muller-top-nav fixed top-0 left-0 right-0 w-full bg-gradient-to-b from-zinc-900/95 via-black/90 to-black/95 backdrop-blur-xl border-b border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-1.5 md:p-3 pt-[max(0.35rem,env(safe-area-inset-top,0px))] flex flex-col md:flex-row gap-1.5 md:gap-3 justify-between items-stretch md:items-center z-20">
-                  <div className="flex flex-col gap-1.5 md:gap-2 w-full min-w-0 md:flex-1 md:max-w-[min(100%,76rem)]">
-                      <div className="muller-nav-row gap-1.5 md:gap-2 bg-zinc-950/85 p-1 md:p-1.5 rounded-2xl ring-1 ring-white/[0.1] w-full touch-manipulation">
+              <div className="muller-top-nav fixed top-0 left-0 right-0 w-full bg-gradient-to-b from-zinc-900/95 via-black/90 to-black/95 backdrop-blur-xl border-b border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.35)] p-1.5 md:p-2.5 pt-[max(0.35rem,env(safe-area-inset-top,0px))] flex flex-col gap-1.5 justify-stretch items-stretch z-20">
+                  <div className="flex flex-col gap-1.5 w-full min-w-0">
+                      <div className="muller-nav-row gap-1.5 md:gap-2 bg-zinc-950/85 p-1 md:p-1.5 rounded-2xl ring-1 ring-white/[0.1] w-full min-w-0 touch-manipulation">
                       <button onClick={()=>{setActiveTab('inicio'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'inicio' ? 'bg-indigo-600 text-white shadow-[0_0_18px_rgba(79,70,229,0.5)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="layout-dashboard" className="w-4 h-4 md:w-5 md:h-5" /> Inicio</button>
                       <button onClick={()=>{setActiveTab('ruta'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'ruta' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.45)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="map" className="w-4 h-4 md:w-5 md:h-5" /> Ruta</button>
                       <button onClick={()=>{setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'historia' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="play" className="w-4 h-4 md:w-5 md:h-5" /> Historia</button>
@@ -6346,7 +6346,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       <button onClick={()=>{setActiveTab('entrenamiento'); stopAudio(); setPracticeActive(null);}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'entrenamiento' ? 'bg-fuchsia-600 text-white shadow-[0_0_18px_rgba(192,38,211,0.6)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="graduation-cap" className="w-4 h-4 md:w-5 md:h-5" /> Entrena</button>
                       <button onClick={()=>{setActiveTab('bxbank'); setBxBankLevel('b1'); stopAudio(); setPracticeActive(null); setBxCategory('mix');}} className={`flex items-center gap-2 px-3.5 md:px-4 py-2.5 md:py-3 rounded-xl font-black text-[13px] md:text-sm min-h-[3rem] transition border ${activeTab === 'bxbank' ? 'bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.8)] ring-1 ring-white/25 border-white/20' : 'text-gray-300 hover:text-white whitespace-nowrap bg-white/[0.02] hover:bg-white/[0.08] border-white/0 hover:border-white/20'}`}><Icon nav name="target" className="w-4 h-4 md:w-5 md:h-5" /> Banco B1/B2</button>
                       </div>
-                      <div className="muller-nav-row gap-1.5 md:gap-2 bg-zinc-950/85 p-1 md:p-1.5 rounded-2xl ring-1 ring-white/[0.1] w-full touch-manipulation">
+                      <div className="muller-nav-row gap-1.5 md:gap-2 bg-zinc-950/85 p-1 md:p-1.5 rounded-2xl ring-1 ring-white/[0.1] w-full min-w-0 touch-manipulation">
                       {activeTab === 'bxbank' ? (
                           <div className="flex items-center gap-1 rounded-xl bg-black/30 border border-white/10 px-1.5 py-1">
                               <button type="button" onClick={() => setBxBankLevel('b1')} className={`px-2.5 py-1 rounded-lg text-[11px] font-black ${bxBankLevel === 'b1' ? 'bg-emerald-600 text-white' : 'text-gray-300 hover:text-white'}`}>B1</button>
@@ -6363,7 +6363,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       </div>
                   </div>
 
-                  <div className="hidden md:flex items-center gap-1.5 shrink-0 self-start md:self-auto">
+                  <div className="flex w-full min-w-0 flex-col gap-1.5 border-t border-white/[0.08] pt-1.5 mt-0.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-shrink-0 items-center gap-1.5">
                       <button type="button" onClick={() => window.__MULLER_OPEN_EXERCISE_HELP && window.__MULLER_OPEN_EXERCISE_HELP('nav_inicio')} className="text-[10px] font-black text-amber-200/90 hover:text-white underline underline-offset-2 px-2 py-1 rounded-lg border border-white/10 hover:bg-white/10" title="Ayuda contextual rápida">
                           Ayuda
                       </button>
@@ -6374,7 +6375,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                       </span>
                   </div>
                   
-                  <div className={`flex items-center gap-1.5 md:gap-3 w-full md:w-auto pb-0.5 md:pb-0 justify-end ${userMenuOpen ? 'overflow-visible' : 'overflow-x-auto'}`}>
+                  <div className={`flex min-w-0 flex-1 items-center gap-1.5 md:gap-3 justify-end sm:justify-end ${userMenuOpen ? 'overflow-visible' : 'overflow-x-auto'}`}>
                       <div className="flex items-center gap-2 md:gap-3 bg-black/60 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-white/20 whitespace-nowrap">
                           <div className="relative flex items-center mr-1 md:mr-2 border-r border-white/20 pr-2 md:pr-3" ref={userMenuWrapRef}>
                               <button
@@ -6527,6 +6528,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                               )}
                           </div>
                       )}
+                  </div>
                   </div>
               </div>
 
