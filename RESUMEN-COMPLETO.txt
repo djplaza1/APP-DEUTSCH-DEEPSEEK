@@ -1,0 +1,215 @@
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                    RESUMEN COMPLETO — PROFESOR PLAZA MÜLLER                       ║
+║                    Chat del 26/04/2026 — Cline en Windsurf                         ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+1.  DATOS DEL PROYECTO
+================================================================================
+
+Repositorio local:   C:\PROFESOR-PLAZA-MULLER-git
+Repositorio remoto:  https://github.com/djplaza1/PROFESOR-PLAZA-MULLER.git
+Rama:                main
+URL pública:         https://djplaza1.github.io/PROFESOR-PLAZA-MULLER/
+Entorno:             GitHub Pages (estático). No hay servidor local. El PC está capado.
+Commit más reciente: 4c9da56
+
+================================================================================
+2.  ESTRUCTURA DEL PROYECTO (archivos relevantes)
+================================================================================
+
+ARCHIVOS ESENCIALES (se usan en producción):
+────────────────────────────────────────────
+  index.html                              → Página única. Contiene todo: splash HTML+CSS+JS, <script> React/ReactDOM/Babel/Tailwind/Lucide/Supabase, y carga app-bundled.
+  src/app-bundled-from-user-index.jsx     → BUNDLE ÚNICO de 897 KB / 11,462 líneas. Contiene TODA la app React (JSX). Se carga con <script type="text/babel">.
+  manifest.json                           → PWA manifest (tema, iconos)
+  sw.js                                   → Service Worker
+  icons/Logo-Plaza-Sin-fondo_20250125_054126_0000.png  → Logo sin fondo para el splash
+  icons/icon-192.png                      → Icono PWA 192x192
+  icons/icon-512.png                      → Icono PWA 512x512
+  supabase/schema.sql                     → Esquema de base de datos Supabase
+
+ARCHIVOS DE DOCUMENTACIÓN / REFERENCIA:
+───────────────────────────────────────
+  SPLASH-INSTRUCCIONES.txt                → DOCUMENTO COMPLETO con todo el CSS, HTML, JS del splash. Creado en este chat para que el dueño pueda modificar sin necesidad de hablar conmigo.
+  RESUMEN-COMPLETO.txt                    → Este mismo archivo.
+  APLICACION CON DEEPSEEK.txt             → Notas/texto del dueño (no se ha tocado)
+  index.modular-backup.html               → BACKUP de una versión anterior del index. NO se debe tocar.
+  b1-b2-database.json                     → Datos de vocabulario B1/B2
+  verbos-db.json                          → Datos de verbos
+
+CARPETAS DE SCRIPTS (herramientas, no producción):
+─────────────────────────────────────────────────
+  scripts/                                → Scripts Python/PowerShell de análisis y extracción
+  src/core/, src/features/, src/hooks/, src/legacy/, src/ui/  → Componentes modulares antiguos (no se usan; la app usa el bundle único)
+
+OTROS ARCHIVOS:
+───────────────
+  .gitignore, .gitattributes              → Configuración de Git
+  lined.txt, temp_lines.txt, temp_original.html → Archivos temporales (no se han tocado)
+  pdf-immersive-block.part.txt, pdf-immersive-body.jsx, muller-pdf-splice.mjs, apply-pdf-immersive-merge.mjs → Scripts de procesamiento PDF
+  vocab-packs/reise-mini.json             → Paquete de vocabulario
+
+================================================================================
+3.  COSAS QUE FUNCIONAN (✅)
+================================================================================
+
+3.1  SPLASH / PANTALLA DE CARGA
+────────────────────────────────
+  ✅ Bandera de Alemania arriba (gradiente CSS: negro/rojo/amarillo). El negro se ve gracias a border-top: 1px.
+  ✅ Zona central blanca (18vh fijo, max-height 170px, fondo #ffffff)
+  ✅ Logo circular SIN marcos: fondo negro redondo detrás del PNG sin fondo. El PNG usa object-fit: contain para verse completo.
+  ✅ "PROFESOR PLAZA MÜLLER" a la derecha, dentro de un marco negro redondeado con borde.
+  ✅ A los 3 segundos: logo empieza a PARPADEAR con destello dorado (animación golden-frame-blink)
+  ✅ A los 3 segundos: marco del título también parpadea con la misma animación
+  ✅ A los 3 segundos: aparece "← PULSE AQUÍ" con flecha que rebota y texto degradado dorado
+  ✅ Click/Enter/Espacio en el logo → fade out (280ms) y eliminación del DOM (320ms)
+  ✅ Bandera de España abajo (gradiente CSS: rojo/amarillo/rojo)
+  ✅ Splash NO desaparece hasta que el usuario pulsa el logo
+  ✅ Responsive: media queries para móvil (≤640px, ≤480px) y escritorio (≥768px)
+  ✅ Accesibilidad: role="dialog", aria-modal, aria-label, aria-live, focus-visible
+
+3.2  APP PRINCIPAL
+──────────────────
+  ✅ React 18.2.0 carga desde cdnjs (Cloudflare) — SIN errores CORS
+  ✅ ReactDOM 18.2.0 carga desde cdnjs
+  ✅ Tailwind CSS desde CDN
+  ✅ Babel standalone compila JSX en el navegador
+  ✅ Lucide Icons cargan desde unpkg (íconos vectoriales)
+  ✅ Supabase JS desde jsDelivr (base de datos)
+  ✅ Fuente Outfit desde Google Fonts
+  ✅ Service Worker registrado para PWA
+
+================================================================================
+4.  CAMBIOS REALIZADOS (🔧)
+================================================================================
+
+4.1  Commits en este chat (orden cronológico, del más antiguo al más reciente):
+─────────────────────────────────────────────────────────────────────────────────
+
+Commit 1:  d3c72b2
+  Mensaje:   "add: SPLASH-INSTRUCCIONES.txt - documento completo con todo el
+              diseño, CSS, HTML, JS, clases, animaciones y notas de la pantalla
+              de carga (splash) para que el chat lo lea y aplique cambios sin
+              configuración manual"
+  Archivos:  + SPLASH-INSTRUCCIONES.txt (516 líneas, nuevo)
+  Qué hace:  Crea el documento de referencia con TODO el código del splash:
+             CSS completo, HTML completo, JS completo, tabla de clases, notas.
+
+Commit 2:  4c9da56  ← ÚLTIMO COMMIT
+  Mensaje:   "fix: cambiar unpkg por cdnjs en React y ReactDOM para evitar
+              errores CORS"
+  Archivos:  index.html (2 líneas cambiadas: 2 inserciones, 2 eliminaciones)
+  Qué hace:  Cambia las URLs de React y ReactDOM de unpkg.com a cdnjs.cloudflare.com
+             para solucionar el error CORS que bloqueaba la carga desde GitHub Pages.
+
+4.2  Cambios en index.html (resumen de TODOS los cambios acumulados):
+─────────────────────────────────────────────────────────────────────
+  - Líneas 30-31: Cambio de unpkg → cdnjs para React y ReactDOM
+  - Líneas 414-670 (aprox.): CSS completo del splash (banderas, logo, animaciones, responsive)
+  - Líneas 674-698 (aprox.): HTML del splash (bandera alemana, logo, título, CTA, bandera española)
+  - Líneas 701-755 (aprox.): JS del splash (setup, dismiss, setTimeout 3s, animaciones)
+  - Línea 21: preconnect a cdnjs.cloudflare.com (no se ha añadido todavía — quedaría pendiente si se quiere optimizar)
+
+4.3  Archivos creados:
+──────────────────────
+  SPLASH-INSTRUCCIONES.txt   → 516 líneas, documento completo del splash
+  RESUMEN-COMPLETO.txt        → Este archivo
+
+4.4  Archivos NO modificados:
+─────────────────────────────
+  - src/app-bundled-from-user-index.jsx   (NO se ha tocado — 897 KB original)
+  - index.modular-backup.html             (NO se ha tocado — backup)
+  - manifest.json, sw.js                  (NO se han tocado)
+  - Ningún archivo en src/core/, src/features/, etc.
+
+================================================================================
+5.  PROBLEMAS CONOCIDOS (⚠️)
+================================================================================
+
+5.1  Babel deoptimiza app-bundled-from-user-index.jsx (⚠️ GRAVE)
+─────────────────────────────────────────────────────────────────
+  - El archivo pesa 897 KB / 11,462 líneas
+  - Babel en el navegador muestra este warning:
+    "[BABEL] Note: The code generator has deoptimised the styling of
+     app-bundled-from-user-index.jsx as it exceeds the max of 500KB."
+  - CONSECUENCIA: subpestañas de Historia y otros componentes pueden no cargar
+    correctamente. El código generado por Babel pierde calidad al superar 500KB.
+  - AFECTA A: todos los usuarios, no solo al PC del dueño.
+  - SOLUCIONES PROPUESTAS (aún no implementadas):
+    Opción A: Partir el archivo en 3 trozos más pequeños (<500KB cada uno)
+              → src/a-core.jsx, src/b-app.jsx, src/c-extra.jsx
+              → Cargarlos en orden en index.html con 3 <script> tags
+    Opción B: Precompilar JSX → JS con Babel CLI, eliminar dependencia de
+              Babel en el navegador. Requiere Node.js + build script.
+
+5.2  Error CORS con unpkg (✅ YA SOLUCIONADO)
+──────────────────────────────────────────────
+  - Error: "Access to script at unpkg.com/react-dom@18.3.1/umd/... blocked by CORS"
+  - Solución aplicada: cambiar a cdnjs.cloudflare.com (Commit 4c9da56)
+  - Estado: RESUELTO ✅
+
+5.3  ReactDOM is not defined (✅ YA SOLUCIONADO)
+─────────────────────────────────────────────────
+  - Causa: el error CORS de unpkg impedía cargar ReactDOM
+  - Solución: misma que arriba (cdnjs)
+  - Estado: RESUELTO ✅
+
+================================================================================
+6.  REGLAS SEGUIDAS (⚙️)
+================================================================================
+
+  - Commits siempre en main (no se ha creado ninguna rama nueva)
+  - Push inmediato tras cada commit
+  - No tocar index.modular-backup.html (backup sagrado)
+  - No usar CMD/PowerShell del sistema para tareas destructivas
+  - Los cambios se hacen con reemplazos quirúrgicos (replace_in_file), no reescribiendo archivos enteros
+  - Todo el código del splash está en index.html (CSS + HTML + JS), sin archivos externos
+  - Las banderas se hacen solo con CSS (gradientes), sin imágenes
+
+================================================================================
+7.  DATOS DE CONEXIÓN (Supabase)
+================================================================================
+
+URL:           https://mrimappoycvfujzegxdt.supabase.co
+Anon Key:      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaW1hcHBveWN2ZnVqemVneGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MzI1MDMsImV4cCI6MjA5MjIwODUwM30.L_5Lk3S_TgiaSe8jAAhTcQTbUsQiTjxA9pWq0ZDayBY
+Creator email: djplaza1@gmail.com
+
+================================================================================
+8.  PENDIENTE INMEDIATO (para el siguiente programador/chat)
+================================================================================
+
+  1. ⚠️ URGENTE: Solucionar el problema de Babel con app-bundled-from-user-index.jsx (897 KB).
+     Partir en 3 archivos o precompilar. Esto afecta a la app en producción.
+
+  2. Opcional: Añadir preconnect a cdnjs.cloudflare.com en index.html para optimizar carga.
+
+  3. Opcional: Si se parte el bundle, actualizar index.html para cargar los 3 archivos
+     en orden, eliminando la referencia al archivo único actual.
+
+================================================================================
+9.  NOTAS PARA EL SIGUIENTE PROGRAMADOR
+================================================================================
+
+  - El splash está COMPLETO y FUNCIONAL. Si se necesita modificar, leer
+    SPLASH-INSTRUCCIONES.txt (contiene TODO el código copiable y explicaciones).
+
+  - La app es una SPA (Single Page Application) que vive en GitHub Pages.
+    No hay backend propio; usa Supabase como BaaS.
+
+  - index.html es el único punto de entrada. Carga React/ReactDOM/Babel/Tailwind
+    desde CDNs y luego el bundle JSX.
+
+  - El archivo app-bundled-from-user-index.jsx es UN SOLO ARCHIVO con toda la
+    lógica de la app. NO hay módulos separados en uso. Las carpetas src/core/,
+    src/features/, etc. contienen código legacy/modular que NO se usa actualmente.
+
+  - El dueño NO quiere perder tiempo configurando cosas. Prefiere soluciones
+    directas que funcionen sin instalación de herramientas adicionales.
+
+  - El PC del dueño tiene Windows 10 (shell: cmd.exe), Python no está en el PATH,
+    Git sí funciona.
+
+================================================================================
+FIN DEL DOCUMENTO
+================================================================================
