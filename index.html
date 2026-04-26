@@ -716,56 +716,23 @@
                 try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
             }, 320);
         }
+        // Pre-cargar audio real para cero latencia al pulsar
+        var prebootAudio = new Audio('audio/bist-du-bereit.mp3');
+        prebootAudio.preload = 'auto';
+        prebootAudio.load();
         function speakGermanAndDismiss() {
             if (hintTid) { try { clearTimeout(hintTid); } catch (e) {} }
-            var phrase = 'Bist du bereit, deine Ziele zu erreichen?';
-            if ('speechSynthesis' in window) {
-                var utter = new SpeechSynthesisUtterance(phrase);
-                utter.lang = 'de-DE';
-                utter.rate = 0.9;
-                utter.pitch = 1.0;
-                var voices = speechSynthesis.getVoices();
-                // Buscar voz nativa alemana de alta calidad
-                var bestVoice = null;
-                for (var i = 0; i < voices.length; i++) {
-                    if (voices[i].lang === 'de-DE' && voices[i].localService) {
-                        bestVoice = voices[i];
-                        break;
-                    }
-                }
-                if (!bestVoice) {
-                    for (var j = 0; j < voices.length; j++) {
-                        if (voices[j].lang.startsWith('de')) {
-                            bestVoice = voices[j];
-                            break;
-                        }
-                    }
-                }
-                if (bestVoice) utter.voice = bestVoice;
-                utter.onend = function () { dismissPreboot(); };
-                utter.onerror = function () { dismissPreboot(); };
-                // Si las voces no están listas, intentar cargarlas y luego hablar
-                if (voices.length === 0) {
-                    speechSynthesis.onvoiceschanged = function () {
-                        var v2 = speechSynthesis.getVoices();
-                        var bv = null;
-                        for (var k = 0; k < v2.length; k++) {
-                            if (v2[k].lang === 'de-DE' && v2[k].localService) { bv = v2[k]; break; }
-                        }
-                        if (!bv) {
-                            for (var l = 0; l < v2.length; l++) {
-                                if (v2[l].lang.startsWith('de')) { bv = v2[l]; break; }
-                            }
-                        }
-                        if (bv) utter.voice = bv;
-                        speechSynthesis.speak(utter);
-                    };
-                } else {
-                    speechSynthesis.speak(utter);
-                }
-            } else {
+            prebootAudio.currentTime = 0;
+            prebootAudio.play().then(function () {
+                prebootAudio.onended = function () { dismissPreboot(); };
+            }).catch(function () {
+                // Si falla (autoplay bloqueado o archivo no encontrado), dismiss directo
                 dismissPreboot();
-            }
+            });
+            // Timeout de seguridad: si el audio no dispara onended en 8s, dismiss igual
+            setTimeout(function () {
+                if (!prebootDismissed) dismissPreboot();
+            }, 8000);
         }
         function setupPreboot() {
             var btn = document.getElementById('muller-preboot-logo-btn');
