@@ -116,7 +116,9 @@ function HistoriaPanel(rawProps) {
   props.puzzleWords = Array.isArray(props.puzzleWords) ? props.puzzleWords : [];
   props.tempusVerbList = Array.isArray(props.tempusVerbList) ? props.tempusVerbList : [];
   if (typeof props.getActualSceneIndex !== 'function') props.getActualSceneIndex = () => 0;
-  if (typeof props.renderHighlightedText !== 'function') props.renderHighlightedText = (t) => t;
+  if (typeof props.renderHighlightedText !== 'function') {
+    props.renderHighlightedText = (t, v) => t;
+  }
   if (typeof props.renderDiktatDiff !== 'function') props.renderDiktatDiff = () => null;
   if (typeof props.inferTempusContextLabel !== 'function') props.inferTempusContextLabel = () => '';
   if (typeof props.playSceneAudio !== 'function') props.playSceneAudio = () => new SpeechSynthesisUtterance('');
@@ -225,6 +227,13 @@ function HistoriaPanel(rawProps) {
     setCustomGrammarInput,
     handleCustomGrammarSave,
   } = props;
+  const guionList = Array.isArray(guionData) ? guionData : [];
+  const getScene = () => {
+    if (!guionList.length) return { speaker: '—', text: '', translation: '', vocab: [], isRedemittel: false };
+    const i = Math.min(Math.max(0, getActualSceneIndex()), guionList.length - 1);
+    return guionList[i] || guionList[0];
+  };
+  const callHighlight = (text, voc) => renderHighlightedText(text, Array.isArray(voc) ? voc : []);
   const ExerciseHelpBtn = window.ExerciseHelpBtn || (() => null);
   return (
                      <div className="flex-1 flex flex-col relative w-full min-h-full justify-center items-center p-3 md:p-8">
@@ -243,7 +252,7 @@ function HistoriaPanel(rawProps) {
                                         if (v === '__default__') loadDefaultGuion();
                                         else if (v === '__other__') return;
                                         else {
-                                            const s = savedScripts.find((x) => String(x.id) === v);
+                                            const s = (savedScripts || []).find((x) => String(x.id) === v);
                                             if (s) loadSavedScript(s);
                                         }
                                     }}
@@ -285,17 +294,20 @@ function HistoriaPanel(rawProps) {
                         {podcastMode && (
                             <div className="absolute top-2 right-2 bg-indigo-600/30 text-indigo-200 border border-indigo-500/50 px-2 md:px-4 py-1 md:py-2 rounded-full font-bold flex flex-col sm:flex-row items-start sm:items-center gap-0.5 sm:gap-2 animate-pulse z-10 text-[10px] md:text-sm max-w-[min(96%,280px)] sm:max-w-none text-left">
                                 <span className="flex items-center gap-1 md:gap-2"><Icon name="car" className="w-3 h-3 md:w-5 md:h-5 shrink-0" /> Modo Podcast</span>
-                                {historiaPlaylistAllScripts && savedScripts.length > 0 ? <span className="text-indigo-100/90 font-semibold normal-case">+ Todos los guiones (siguiente al terminar)</span> : null}
+                                {historiaPlaylistAllScripts && (savedScripts || []).length > 0 ? <span className="text-indigo-100/90 font-semibold normal-case">+ Todos los guiones (siguiente al terminar)</span> : null}
                             </div>
                         )}
 
                         {mode === 'interview' ? (
                             (() => {
-                                const q = MULLER_ORAL_B1_QUESTIONS[oralQIdx % MULLER_ORAL_B1_QUESTIONS.length];
+                                const QLIST = (typeof MULLER_ORAL_B1_QUESTIONS !== 'undefined' && MULLER_ORAL_B1_QUESTIONS && MULLER_ORAL_B1_QUESTIONS.length)
+                                    ? MULLER_ORAL_B1_QUESTIONS
+                                    : [{ de: 'Frage', es: 'Pregunta', model: 'Antwort' }];
+                                const q = QLIST[oralQIdx % QLIST.length];
                                 const modelDe = q.model || '';
                                 return (
                             <div className="max-w-4xl w-full flex flex-col items-center justify-center animate-in zoom-in duration-500 p-4">
-                                <div className="bg-emerald-900 text-emerald-200 border border-emerald-500 px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 mb-4 md:mb-6 text-xs md:text-sm"><Icon name="message-square" className="w-4 h-4 md:w-5 md:h-5" /> Mündliche Prüfung Teil 2 · {oralQIdx + 1}/{MULLER_ORAL_B1_QUESTIONS.length}</div>
+                                <div className="bg-emerald-900 text-emerald-200 border border-emerald-500 px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 mb-4 md:mb-6 text-xs md:text-sm"><Icon name="message-square" className="w-4 h-4 md:w-5 md:h-5" /> Mündliche Prüfung Teil 2 · {oralQIdx + 1}/{QLIST.length}</div>
                                 <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                                     <span className="text-[10px] font-bold text-gray-500 uppercase">Tiempo por respuesta</span>
                                     {[60, 90, 120].map((s) => (
@@ -315,7 +327,7 @@ function HistoriaPanel(rawProps) {
                                     {spokenText && (
                                         <div className="text-center w-full mt-4 md:mt-6">
                                             <p className="text-yellow-300 font-medium text-base md:text-2xl mb-3 md:mb-4">"{spokenText}"</p>
-                                            {pronunciationFeedback.length > 0 && (
+                                            {(pronunciationFeedback || []).length > 0 && (
                                                 <div className="flex flex-wrap gap-1 md:gap-2 justify-center my-3 md:my-4 bg-black/50 p-2 md:p-4 rounded-xl border border-white/10">
                                                     {(pronunciationFeedback || []).map((item, idx) => (
                                                         <span key={idx} className={`text-xs md:text-lg font-bold px-1 md:px-2 py-0.5 md:py-1 rounded ${item.correct ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-red-900/50 text-red-400 border border-red-500/30 line-through decoration-red-500'}`}>{item.word}</span>
@@ -336,17 +348,17 @@ function HistoriaPanel(rawProps) {
                             <div className="max-w-4xl w-full flex flex-col items-center justify-center gap-4 md:gap-6 animate-in zoom-in duration-300 p-4">
                                 <div className="bg-red-600 text-white px-3 md:px-6 py-1 md:py-2 rounded-full font-bold flex items-center gap-2 text-xs md:text-sm"><Icon name="mic-off" className="w-4 h-4 md:w-5 md:h-5" /> {roleplayChar === 'Todos' ? "Modo Lectura" : "Tu turno (Roleplay)"}</div>
                                 <h1 className="text-xl md:text-5xl font-medium text-white text-center leading-snug break-words w-full max-w-full px-1">
-                                    {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
-                                    {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
+                                    {callHighlight(getScene().text, getScene().vocab)}
+                                    {getScene().isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
                                 </h1>
                                 {!showCurrentTranslation ? (
                                     <button onClick={() => setShowCurrentTranslation(true)} className="text-gray-500 hover:text-white transition text-xs md:text-sm font-bold flex items-center gap-1 mt-2 border border-gray-700 rounded-full px-2 md:px-3 py-0.5 md:py-1"><Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" /> Ver Traducción</button>
                                 ) : (
-                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 mt-2 text-base md:text-xl animate-in slide-in-from-top-2 text-center">"{guionData[getActualSceneIndex()].translation}"</div>
+                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 mt-2 text-base md:text-xl animate-in slide-in-from-top-2 text-center">"{getScene().translation}"</div>
                                 )}
                                 <div className="flex flex-col items-center gap-3 md:gap-4 w-full mt-3 md:mt-4 bg-black/40 p-4 md:p-6 rounded-xl border border-white/10">
                                     <div className="flex gap-4 md:gap-8 justify-center items-center">
-                                        <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(playSceneAudio(sanitizeHistoriaSpeechText(guionData[getActualSceneIndex()].text), guionData[getActualSceneIndex()].speaker)); }} className="flex flex-col items-center text-gray-400 hover:text-white transition">
+                                        <button onClick={() => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(playSceneAudio(sanitizeHistoriaSpeechText(getScene().text), getScene().speaker)); }} className="flex flex-col items-center text-gray-400 hover:text-white transition">
                                             <div className="bg-gray-800 p-2 md:p-4 rounded-full mb-1 md:mb-2"><Icon name="volume-2" className="w-5 h-5 md:w-8 md:h-8" /></div><span className="text-[10px] md:text-sm font-bold">1. Escuchar</span>
                                         </button>
                                         <button type="button" onMouseDown={micMouseDownGuard(() => handleVoiceStart())} onMouseUp={handleVoiceStop} onMouseLeave={handleVoiceStop} onTouchStart={micTouchStartGuard(() => handleVoiceStart())} onTouchEnd={handleVoiceStop} className={`flex flex-col items-center transition transform select-none touch-manipulation ${isListening ? 'text-red-400 scale-110' : 'text-blue-400 hover:text-blue-300'}`}>
@@ -356,7 +368,7 @@ function HistoriaPanel(rawProps) {
                                     {spokenText && (
                                         <div className="text-center w-full mt-4 md:mt-6">
                                             <p className="text-yellow-300 font-mono text-base md:text-xl mb-2">"{spokenText}"</p>
-                                            {pronunciationFeedback.length > 0 && (
+                                            {(pronunciationFeedback || []).length > 0 && (
                                                 <div className="flex flex-wrap gap-1 md:gap-2 justify-center my-3 md:my-4 bg-black/50 p-2 md:p-4 rounded-xl border border-white/10">
                                                     {(pronunciationFeedback || []).map((item, idx) => (
                                                         <span key={idx} className={`text-xs md:text-lg font-bold px-1 md:px-2 py-0.5 md:py-1 rounded ${item.correct ? 'bg-green-900/50 text-green-400 border border-green-500/30' : 'bg-red-900/50 text-red-400 border border-red-500/30 line-through decoration-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]'}`}>{item.word}</span>
@@ -377,7 +389,7 @@ function HistoriaPanel(rawProps) {
                             </div>
                         ) : mode === 'dialogue' && puzzleMode ? (
                             <div className="max-w-4xl w-full flex flex-col gap-4 md:gap-6 animate-in fade-in relative mt-6 md:mt-8 items-center p-4">
-                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold text-white/70 bg-indigo-900/50 border border-indigo-500/50 px-3 md:px-5 py-1 md:py-2 rounded-full flex items-center gap-2"><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau Puzzle: {guionData[getActualSceneIndex()].speaker}</span>
+                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold text-white/70 bg-indigo-900/50 border border-indigo-500/50 px-3 md:px-5 py-1 md:py-2 rounded-full flex items-center gap-2"><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau Puzzle: {getScene().speaker}</span>
                                 {!showPuzzleResult ? (
                                     <div className="flex flex-col items-center gap-4 md:gap-8 w-full mt-2 md:mt-4">
                                         <div className="min-h-[80px] md:min-h-[100px] w-full bg-black/40 border-2 border-dashed border-indigo-500/50 rounded-xl p-2 md:p-4 flex flex-wrap gap-1 md:gap-2 items-center justify-center">
@@ -388,17 +400,17 @@ function HistoriaPanel(rawProps) {
                                         </div>
                                         <div className="flex gap-3 md:gap-4 w-full md:w-auto justify-center">
                                             <button onClick={() => { setIsPlaying(true); togglePlay(); setIsPlaying(true); }} className="bg-gray-800 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm"><Icon name="volume-2" className="w-3 h-3 md:w-5 md:h-5" /> Pista</button>
-                                            <button onClick={() => runSingleSubmitAction('puzzle-check', handlePuzzleCheck)} disabled={puzzleWords.length > 0} className={`px-4 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm ${puzzleWords.length === 0 ? 'bg-green-600' : 'bg-gray-800'}`}><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Comprobar</button>
+                                            <button onClick={() => runSingleSubmitAction('puzzle-check', handlePuzzleCheck)} disabled={(puzzleWords || []).length > 0} className={`px-4 md:px-8 py-2 md:py-3 rounded-lg font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm ${(puzzleWords || []).length === 0 ? 'bg-green-600' : 'bg-gray-800'}`}><Icon name="check-circle" className="w-3 h-3 md:w-5 md:h-5" /> Comprobar</button>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
                                         {puzzleLastOk ? (
-                                            <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full max-w-full break-words leading-snug">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
+                                            <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full max-w-full break-words leading-snug">{callHighlight(getScene().text, getScene().vocab)}</h1>
                                         ) : (
                                             <div className="w-full max-w-full space-y-3">
                                                 <p className="text-red-200 font-black text-lg md:text-2xl bg-red-950/50 border border-red-500/40 rounded-xl px-4 py-3">Orden incorrecto — compara con la solución:</p>
-                                                <h1 className="text-xl md:text-4xl font-medium text-white bg-amber-950/40 p-4 md:p-6 rounded-xl border border-amber-600/30 w-full max-w-full break-words leading-snug">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
+                                                <h1 className="text-xl md:text-4xl font-medium text-white bg-amber-950/40 p-4 md:p-6 rounded-xl border border-amber-600/30 w-full max-w-full break-words leading-snug">{callHighlight(getScene().text, getScene().vocab)}</h1>
                                             </div>
                                         )}
                                         <button onClick={() => runSingleSubmitAction('puzzle-next', handleNext)} className="bg-indigo-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-xl font-bold mt-2 md:mt-4 flex items-center gap-2 w-full md:w-auto justify-center text-sm md:text-base">Siguiente ➔</button>
@@ -408,7 +420,7 @@ function HistoriaPanel(rawProps) {
                         ) : mode === 'dialogue' && diktatMode ? (
                             <div className="max-w-4xl w-full flex flex-col gap-4 md:gap-6 animate-in fade-in relative mt-6 md:mt-8 items-center p-4">
                                 {isReviewing && <div className="absolute -top-8 md:-top-12 text-red-500 font-black animate-pulse text-xs md:text-xl">⚠️ REPASO OBLIGATORIO (SRS)</div>}
-                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold bg-black/30 px-3 md:px-5 py-1 md:py-2 rounded-full border border-white/10">{guionData[getActualSceneIndex()].speaker} spricht...</span>
+                                <span className="uppercase tracking-widest text-xs md:text-sm font-bold bg-black/30 px-3 md:px-5 py-1 md:py-2 rounded-full border border-white/10">{getScene().speaker} spricht...</span>
                                 {!showDiktatResult ? (
                                     <>
                                         <p className="text-base md:text-xl text-blue-200 font-bold mb-1 md:mb-2">✍️ Escribe lo que oyes:</p>
@@ -420,7 +432,7 @@ function HistoriaPanel(rawProps) {
                                     </>
                                 ) : (
                                     <div className="w-full text-center flex flex-col items-center gap-4 md:gap-6">
-                                        {renderDiktatDiff(guionData[getActualSceneIndex()].text, diktatInput)}
+                                        {renderDiktatDiff(getScene().text, diktatInput)}
                                         {diktatMotivationMsg ? (
                                             <p className="text-amber-100/95 text-sm md:text-base font-semibold max-w-lg rounded-2xl border border-amber-500/35 bg-amber-950/50 px-4 py-3 shadow-lg">{diktatMotivationMsg}</p>
                                         ) : null}
@@ -431,8 +443,8 @@ function HistoriaPanel(rawProps) {
                         ) : mode === 'dialogue' && historiaAudioOnly && !podcastMode && !puzzleMode && !diktatMode && !isReviewing ? (
                             <div className="max-w-3xl w-full flex flex-col items-center justify-center flex-1 py-8 md:py-16 px-4 gap-8 md:gap-10 animate-in fade-in">
                                 <p className="text-violet-300 font-black text-xs uppercase tracking-[0.2em]">Solo audio · manos libres</p>
-                                <p className="text-3xl md:text-5xl font-black text-center text-white leading-tight">{guionData[getActualSceneIndex()]?.speaker || '—'}</p>
-                                <p className="text-gray-500 text-sm font-mono">Szene {sceneIndex + 1} / {guionData.length} · {activeScriptTitle}</p>
+                                <p className="text-3xl md:text-5xl font-black text-center text-white leading-tight">{getScene()?.speaker || '—'}</p>
+                                <p className="text-gray-500 text-sm font-mono">Szene {sceneIndex + 1} / {guionList.length} · {activeScriptTitle}</p>
                                 <div className="flex items-center justify-center gap-6 md:gap-10 w-full">
                                     <button type="button" onClick={handlePrev} className="muller-icon-nav p-5 md:p-6 rounded-full bg-gray-800 border border-white/10 hover:bg-gray-700 transition text-white" disabled={podcastMode}><Icon name="chevron-left" className="w-8 h-8 md:w-10 md:h-10 text-white" /></button>
                                     <button type="button" onClick={togglePlay} className={`p-8 md:p-12 rounded-full shadow-[0_0_40px_rgba(37,99,235,0.45)] transition text-white ${isPlaying ? 'bg-red-600' : 'bg-blue-600'}`}><Icon name={isPlaying ? 'square' : 'play'} className="w-12 h-12 md:w-16 md:h-16 fill-current text-white" /></button>
@@ -448,11 +460,11 @@ function HistoriaPanel(rawProps) {
                         ) : mode === 'dialogue' && (
                             <div className="max-w-4xl w-full flex flex-col gap-3 md:gap-6 animate-in fade-in relative mt-4 md:mt-8 p-3 md:p-0">
                                 {isReviewing && <div className="absolute -top-8 md:-top-12 left-1/2 -translate-x-1/2 text-red-500 font-black animate-pulse text-xs md:text-xl w-full text-center">⚠️ REPASO OBLIGATORIO (SRS)</div>}
-                                <span className="uppercase tracking-widest text-[10px] md:text-sm font-bold bg-black/30 px-2 md:px-4 py-0.5 md:py-1.5 rounded-full self-start border border-white/10">{guionData[getActualSceneIndex()].speaker}</span>
+                                <span className="uppercase tracking-widest text-[10px] md:text-sm font-bold bg-black/30 px-2 md:px-4 py-0.5 md:py-1.5 rounded-full self-start border border-white/10">{getScene().speaker}</span>
                                 
                                 <h1 className={`text-2xl md:text-5xl font-medium text-white shadow-sm transition-all duration-300 leading-snug break-words w-full max-w-full ${blindMode ? 'blur-md hover:blur-none cursor-pointer' : ''}`}>
-                                    {renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}
-                                    {guionData[getActualSceneIndex()].isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
+                                    {callHighlight(getScene().text, getScene().vocab)}
+                                    {getScene().isRedemittel && <span className="inline-flex items-center justify-center ml-2 md:ml-3 mb-1 md:mb-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[8px] md:text-xs font-black px-1 md:px-2 py-0.5 md:py-1 rounded shadow-lg animate-pulse whitespace-nowrap"><Icon name="flame" className="w-2 h-2 md:w-3 md:h-3 mr-0.5 md:mr-1" /> ÚTIL</span>}
                                 </h1>
 
                                 {tempusMode && tempusVerbList.length > 0 && (
@@ -489,7 +501,7 @@ function HistoriaPanel(rawProps) {
                                 {!showCurrentTranslation ? (
                                     <button onClick={() => setShowCurrentTranslation(true)} className="text-gray-500 hover:text-white transition text-[10px] md:text-sm font-bold flex items-center gap-1 w-max border border-gray-700 rounded-full px-2 md:px-3 py-0.5 md:py-1 mt-1 md:mt-2"><Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" /> Ver Traducción</button>
                                 ) : (
-                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 w-max max-w-full text-base md:text-xl animate-in slide-in-from-top-2">"{guionData[getActualSceneIndex()].translation}"</div>
+                                    <div className="bg-white/10 text-gray-300 italic px-3 md:px-6 py-1 md:py-2 rounded-lg border border-white/20 w-max max-w-full text-base md:text-xl animate-in slide-in-from-top-2">"{getScene().translation}"</div>
                                 )}
 
                                 {(declinaMode || artikelSniperMode) && !isPlaying && (
@@ -527,7 +539,7 @@ function HistoriaPanel(rawProps) {
                                         <div className="bg-cyan-950 border-2 border-cyan-500 p-4 md:p-8 rounded-2xl max-w-lg w-full shadow-[0_0_30px_rgba(6,182,212,0.4)]">
                                             <h2 className="text-lg md:text-2xl font-black text-cyan-400 flex items-center gap-2 md:gap-3 mb-3 md:mb-4"><Icon name="save" className="w-5 h-5 md:w-6 md:h-6" /> Guardar Manual</h2>
                                             <p className="text-cyan-100 mb-4 md:mb-6 text-xs md:text-sm">No he detectado ninguna regla automática en esta frase. ¿Qué gramática quieres guardar en tus Flashcards?</p>
-                                            <p className="text-gray-400 italic mb-2 text-[10px] md:text-xs">Frase actual: "{guionData[getActualSceneIndex()].text}"</p>
+                                            <p className="text-gray-400 italic mb-2 text-[10px] md:text-xs">Frase actual: "{getScene().text}"</p>
                                             <input type="text" placeholder="Ej: Nebensatz con weil" className="w-full bg-black/50 border border-cyan-800 p-2 md:p-3 rounded-lg text-white outline-none focus:border-cyan-400 mb-4 md:mb-6 text-xs md:text-sm" value={customGrammarInput} onChange={(e)=>setCustomGrammarInput(e.target.value)} autoFocus />
                                             <div className="flex gap-3 md:gap-4">
                                                 <button onClick={()=>setShowGrammarPrompt(false)} className="flex-1 bg-gray-800 hover:bg-gray-700 py-2 md:py-3 rounded-xl font-bold text-xs md:text-base">Cancelar</button>

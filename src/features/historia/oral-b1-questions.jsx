@@ -19,3 +19,4 @@ var MULLER_ORAL_B1_QUESTIONS = [
             { de: 'Diskutieren Sie kurz: Bildung vs. Berufserfahrung.', es: 'Debate breve: formación vs. experiencia laboral.', model: 'Beides ist wichtig, aber Erfahrung hilft im Alltag oft schneller.' },
             { de: 'Wie stehen Sie zu Homeoffice?', es: '¿Qué opina del teletrabajo?', model: 'Homeoffice ist flexibel, aber man braucht Disziplin.' }
         ];
+        if (typeof window !== 'undefined') window.MULLER_ORAL_B1_QUESTIONS = MULLER_ORAL_B1_QUESTIONS;

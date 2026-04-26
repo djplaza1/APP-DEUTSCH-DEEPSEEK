@@ -166,8 +166,9 @@ const hidePreboot = () => {
     el.classList.add('is-hidden');
     window.setTimeout(() => {
         try { if (el && el.parentNode) el.parentNode.removeChild(el); } catch (e) {}
-    }, 260);
+    }, 320);
 };
+if (typeof window !== 'undefined') window.mullerDismissPreboot = hidePreboot;
 
 // ====== RENDER ======
 const bootApp = () => {
@@ -193,9 +194,7 @@ const bootApp = () => {
                 rootNode.innerHTML = '<div style="min-height:100vh;background:#020617;color:#fff;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;font-family:Outfit,system-ui">Error de arranque. Revisa consola (F12).</div>';
             }
         } catch (e) {}
-    } finally {
-        window.requestAnimationFrame(() => window.requestAnimationFrame(hidePreboot));
-    }
+    } finally { /* preboot: el usuario la cierra con el logo o con window.mullerDismissPreboot */ }
 };
 
 if (document.readyState === 'loading') {
