@@ -291,7 +291,7 @@
             }
         }
         .muller-bottom-secondary-nav {
-            --muller-bottom-tab-w: 5.9rem;
+            --muller-bottom-tab-w: var(--muller-nav-tab-w);
         }
         .muller-bottom-secondary-nav > button,
         .muller-bottom-secondary-nav > * > button {
@@ -336,19 +336,20 @@
         .muller-mobile-bottom-nav button {
             flex: 0 0 var(--muller-nav-tab-w);
             min-width: var(--muller-nav-tab-w);
-            border-radius: 0.85rem;
-            padding: 0.45rem 0.55rem;
+            border-radius: 0.75rem;
+            padding: 0.625rem 0.875rem;
+            min-height: 3rem;
             border: 1px solid transparent;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.02);
             color: #d1d5db;
-            font-size: 0.68rem;
-            font-weight: 800;
+            font-size: 0.8125rem;
+            font-weight: 900;
             line-height: 1.1;
-            display: flex;
-            flex-direction: column;
+            display: inline-flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 0.15rem;
+            gap: 0.5rem;
             white-space: nowrap;
         }
         .muller-mobile-bottom-nav button.is-active {

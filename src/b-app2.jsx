@@ -861,7 +861,7 @@
                       </span>
                   </div>
 
-                  <div className={`flex min-w-0 flex-1 items-center gap-1.5 md:gap-3 justify-end sm:justify-end ${userMenuOpen ? 'overflow-visible' : 'overflow-x-auto'}`}>
+                  <div className="flex min-w-0 flex-1 items-center flex-wrap gap-1.5 md:gap-2 justify-end overflow-visible">
                       <div className="flex items-center gap-2 md:gap-3 bg-black/60 px-2 py-1 md:px-3 md:py-1.5 rounded-full border border-white/20 whitespace-nowrap">
                           <div className="relative flex items-center mr-1 md:mr-2 border-r border-white/20 pr-2 md:pr-3" ref={userMenuWrapRef}>
                               <button
@@ -983,6 +983,29 @@
                           <span className="flex items-center gap-1 font-black text-red-500 text-xs md:text-sm"><Icon name="heart" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {userStats.hearts}</span>
                           <span className="flex items-center gap-1 font-black text-yellow-400 text-xs md:text-sm"><Icon name="coins" className="w-3 h-3 md:w-4 md:h-4 fill-current" /> {coinsUiLabel}</span>
                       </div>
+                      {activeTab === 'historia' && mode !== 'quiz' && mode !== 'interview' && !podcastMode && !practiceActive && (
+                          <div className="flex flex-wrap items-center gap-1 md:gap-1.5 bg-black/70 p-1 rounded-xl border border-white/10 backdrop-blur-md max-w-[100%] justify-end">
+                              <button onClick={() => setFluesternMode(!fluesternMode)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${fluesternMode ? 'bg-zinc-600 text-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Modo Flüstern"><Icon name="ear" className="w-3 h-3 md:w-4 md:h-4" /> Flüstern</button>
+                              <button onClick={() => setNoiseEnabled(!noiseEnabled)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${noiseEnabled ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Ruido de fondo (examen)"><Icon name="volume-2" className="w-3 h-3 md:w-4 md:h-4" /> Ruido</button>
+                              <button onClick={() => {setDiktatMode(!diktatMode); setBlindMode(false); setLueckentextMode(false); setPuzzleMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${diktatMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit" className="w-3 h-3 md:w-4 md:h-4" /> Diktat</button>
+                              <button onClick={() => {setLueckentextMode(!lueckentextMode); setDiktatMode(false); setPuzzleMode(false); setArtikelSniperMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${lueckentextMode ? 'bg-amber-500 text-black' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit-3" className="w-3 h-3 md:w-4 md:h-4" /> Huecos</button>
+                              <button onClick={() => {setArtikelSniperMode(!artikelSniperMode); setDiktatMode(false); setLueckentextMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${artikelSniperMode ? 'bg-red-800 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="target" className="w-3 h-3 md:w-4 md:h-4" /> Artículos</button>
+                              <button onClick={() => {setDeclinaMode(!declinaMode); setDiktatMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${declinaMode ? 'bg-pink-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="wand-2" className="w-3 h-3 md:w-4 md:h-4" /> Declinar</button>
+                              <button onClick={() => {setTempusMode(!tempusMode);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${tempusMode ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="clock" className="w-3 h-3 md:w-4 md:h-4" /> Tempus</button>
+                              <button onClick={() => {setPuzzleMode(!puzzleMode); setDiktatMode(false); setBlindMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${puzzleMode ? 'bg-indigo-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau</button>
+                              <button onClick={() => {setBlindMode(!blindMode); setDiktatMode(false); setPuzzleMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${blindMode ? 'bg-blue-400 text-black' : 'text-gray-300 hover:bg-white/10'}`}>{blindMode ? <Icon name="eye-off" className="w-3 h-3 md:w-4 md:h-4" /> : <Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" />} Oído</button>
+                              <div className="flex items-center gap-0.5 md:gap-1 pl-1 md:pl-2 border-l border-white/20">
+                                  <Icon name="mic-off" className={`w-3 h-3 md:w-4 md:h-4 ${roleplayChar !== 'none' ? 'text-red-400' : 'text-gray-400'}`} />
+                                  <select className="bg-transparent text-[10px] md:text-xs text-white font-bold outline-none cursor-pointer" value={roleplayChar} onChange={(e) => setRoleplayChar(e.target.value)}>
+                                      <option value="none" className="text-black">No mutear</option>
+                                      <option value="Todos" className="text-black font-bold">Mutear TODOS</option>
+                                      <option value="Lukas" className="text-black">Lukas</option>
+                                      <option value="Elena" className="text-black">Elena</option>
+                                      <option value="Herr Weber" className="text-black">Weber</option>
+                                  </select>
+                              </div>
+                          </div>
+                      )}
                       {activeTab === 'historia' && (
                           <div className="flex relative">
                               <button type="button" onClick={() => setShowHistoriaMenu(v => !v)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition border whitespace-nowrap ${showHistoriaMenu ? 'bg-blue-700 border-blue-500 text-white' : 'bg-black/50 border-white/20 text-gray-200 hover:bg-white/10'}`}>
@@ -1015,31 +1038,6 @@
                           </div>
                       )}
                   </div>
-                  {activeTab === 'historia' && mode !== 'quiz' && mode !== 'interview' && !podcastMode && !practiceActive && (
-                      <div className="w-full flex justify-end px-0.5 md:px-0 pt-0.5">
-                          <div className="flex flex-wrap items-center gap-1 md:gap-2 bg-black/70 p-1 rounded-xl border border-white/10 backdrop-blur-md max-w-[98%] justify-end">
-                              <button onClick={() => setFluesternMode(!fluesternMode)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${fluesternMode ? 'bg-zinc-600 text-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Modo Flüstern"><Icon name="ear" className="w-3 h-3 md:w-4 md:h-4" /> Flüstern</button>
-                              <button onClick={() => setNoiseEnabled(!noiseEnabled)} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${noiseEnabled ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'text-gray-300 hover:bg-white/10'}`} title="Ruido de fondo (examen)"><Icon name="volume-2" className="w-3 h-3 md:w-4 md:h-4" /> Ruido</button>
-                              <button onClick={() => {setDiktatMode(!diktatMode); setBlindMode(false); setLueckentextMode(false); setPuzzleMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${diktatMode ? 'bg-red-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit" className="w-3 h-3 md:w-4 md:h-4" /> Diktat</button>
-                              <button onClick={() => {setLueckentextMode(!lueckentextMode); setDiktatMode(false); setPuzzleMode(false); setArtikelSniperMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${lueckentextMode ? 'bg-amber-500 text-black' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="edit-3" className="w-3 h-3 md:w-4 md:h-4" /> Huecos</button>
-                              <button onClick={() => {setArtikelSniperMode(!artikelSniperMode); setDiktatMode(false); setLueckentextMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${artikelSniperMode ? 'bg-red-800 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="target" className="w-3 h-3 md:w-4 md:h-4" /> Artículos</button>
-                              <button onClick={() => {setDeclinaMode(!declinaMode); setDiktatMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${declinaMode ? 'bg-pink-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="wand-2" className="w-3 h-3 md:w-4 md:h-4" /> Declinar</button>
-                              <button onClick={() => {setTempusMode(!tempusMode);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${tempusMode ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="clock" className="w-3 h-3 md:w-4 md:h-4" /> Tempus</button>
-                              <button onClick={() => {setPuzzleMode(!puzzleMode); setDiktatMode(false); setBlindMode(false); setDeclinaMode(false); setArtikelSniperMode(false); resetModes(); stopAudio();}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${puzzleMode ? 'bg-indigo-500 text-white' : 'text-gray-300 hover:bg-white/10'}`}><Icon name="puzzle" className="w-3 h-3 md:w-4 md:h-4" /> Satzbau</button>
-                              <button onClick={() => {setBlindMode(!blindMode); setDiktatMode(false); setPuzzleMode(false);}} className={`flex items-center gap-0.5 md:gap-1 px-2 md:px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold transition ${blindMode ? 'bg-blue-400 text-black' : 'text-gray-300 hover:bg-white/10'}`}>{blindMode ? <Icon name="eye-off" className="w-3 h-3 md:w-4 md:h-4" /> : <Icon name="eye" className="w-3 h-3 md:w-4 md:h-4" />} Oído</button>
-                              <div className="flex items-center gap-0.5 md:gap-1 pl-1 md:pl-2 border-l border-white/20">
-                                  <Icon name="mic-off" className={`w-3 h-3 md:w-4 md:h-4 ${roleplayChar !== 'none' ? 'text-red-400' : 'text-gray-400'}`} />
-                                  <select className="bg-transparent text-[10px] md:text-xs text-white font-bold outline-none cursor-pointer" value={roleplayChar} onChange={(e) => setRoleplayChar(e.target.value)}>
-                                      <option value="none" className="text-black">No mutear</option>
-                                      <option value="Todos" className="text-black font-bold">Mutear TODOS</option>
-                                      <option value="Lukas" className="text-black">Lukas</option>
-                                      <option value="Elena" className="text-black">Elena</option>
-                                      <option value="Herr Weber" className="text-black">Weber</option>
-                                  </select>
-                              </div>
-                          </div>
-                      </div>
-                  )}
                   </div>
               </div>
               </div>
