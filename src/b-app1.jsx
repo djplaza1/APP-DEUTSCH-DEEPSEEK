@@ -1,4 +1,4 @@
-﻿        function App() {
+        function App() {
           const [activeTab, setActiveTab] = useState(() => { try { return localStorage.getItem('muller_active_tab_v1') || 'inicio'; } catch { return 'inicio'; } });
           const [showSplash, setShowSplash] = useState(false); 
           const [splashLogoBlink, setSplashLogoBlink] = useState(false);

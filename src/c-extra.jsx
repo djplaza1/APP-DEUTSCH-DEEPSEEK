@@ -1,4 +1,4 @@
-﻿// ========== MÃ“DULO COMPLETO Y DEFINITIVO (4 PESTAÃ‘AS + AUDIOLIBRO REAL) ==========
+// ========== MÃ“DULO COMPLETO Y DEFINITIVO (4 PESTAÃ‘AS + AUDIOLIBRO REAL) ==========
 // No modifica nada del código original, solo añade funcionalidad.
 
 // -------------------- DATOS DE RESPALDO --------------------

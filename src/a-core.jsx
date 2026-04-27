@@ -1,4 +1,4 @@
-﻿        const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
+        const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
 
         class MullerErrorBoundary extends React.Component {
             constructor(props) {
