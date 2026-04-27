@@ -1,4 +1,4 @@
-// ========== MÃ“DULO COMPLETO Y DEFINITIVO (4 PESTAÃ‘AS + AUDIOLIBRO REAL) ==========
+// ========== MÓDULO COMPLETO Y DEFINITIVO (4 PESTAÃ‘AS + AUDIOLIBRO REAL) ==========
 // No modifica nada del código original, solo añade funcionalidad.
 
 // -------------------- DATOS DE RESPALDO --------------------
@@ -24,7 +24,7 @@ function extractPluralsFromGuion(guionData, scriptTitle) {
     let existing = JSON.parse(localStorage.getItem('muller_extracted_plurals') || '[]');
     guionData.forEach(scene => {
         const text = scene.text;
-        const matches = text.match(/\bdie\s+([A-ZÃ„Ã–Ãœ][a-zÃ¤Ã¶Ã¼ÃŸ]+(?:e|er|en|n|s)?)\b/g) || [];
+        const matches = text.match(/\bdie\s+([A-ZÄÖÜ][a-zäöüß]+(?:e|er|en|n|s)?)\b/g) || [];
         matches.forEach(m => {
             const plural = m.replace('die ', '');
             let singular = plural.replace(/[äöü]/g, c => ({'ä':'a','ö':'o','ü':'u'}[c]));
@@ -72,7 +72,7 @@ function extractArticlesFromGuionFinal(guionData, scriptTitle) {
     if (!guionData || !Array.isArray(guionData)) return;
     const corrections = JSON.parse(localStorage.getItem('muller_article_corrections') || '{}');
     let existing = JSON.parse(localStorage.getItem('muller_extracted_articles') || '[]');
-    const regex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÃ„Ã–Ãœ][a-zÃ¤Ã¶Ã¼ÃŸ]+)\s+(ist|sind|hat|haben|kann|muss|will|mÃ¶chte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiÃŸ|sieht|hÃ¶rt|fÃ¤hrt|lÃ¤uft|bringt|nimmt|gibt|hilft|trifft|schlÃ¤ft|wÃ¤scht|trÃ¤gt|verliert|schreibt|liest|kennt|nennt)\b/gi;
+    const regex = /\b(Der|Die|Das|Ein|Eine)\s+([A-ZÄÖÜ][a-zäöüß]+)\s+(ist|sind|hat|haben|kann|muss|will|möchte|kommt|geht|steht|liegt|sitzt|arbeitet|spricht|denkt|findet|glaubt|weiß|sieht|hört|fährt|läuft|bringt|nimmt|gibt|hilft|trifft|schläft|wäscht|trägt|verliert|schreibt|liest|kennt|nennt)\b/gi;
     guionData.forEach(scene => {
         const text = scene.text || '';
         let match;
@@ -106,7 +106,7 @@ function extractArticlesFromGuionFinal(guionData, scriptTitle) {
 
 
 // ============================================================================
-// ðŸ“ SISTEMA DE ENTRENAMIENTO AVANZADO - LOGICA MÃœLLER (SRS + MEMORIA)
+// ðŸ“ SISTEMA DE ENTRENAMIENTO AVANZADO - LOGICA MÜLLER (SRS + MEMORIA)
 // ============================================================================
 
 const ADVANCED_PROGRESS_KEY = 'muller_advanced_progress';
@@ -156,12 +156,12 @@ const ACHIEVEMENT_DEFS = [
     { id: 'telc_steady', icon: 'ðŸ’ª', title: 'Konstant', desc: '50 intentos acumulados', test: (d) => d.totalAttempts >= 50 },
     { id: 'telc_marathon', icon: 'ðŸƒ', title: 'Ausdauer', desc: '200 intentos acumulados', test: (d) => d.totalAttempts >= 200 },
     { id: 'telc_daily', icon: 'âœ…', title: 'Tagesziel', desc: 'Completaste el objetivo diario', test: (d) => d.todayAttempts >= d.dailyGoal && d.dailyGoal > 0 },
-    { id: 'telc_streak3', icon: 'ðŸ”¥', title: 'Serie 3', desc: 'Racha de 3 dÃ­as seguidos', test: (d) => d.streakDays >= 3 },
-    { id: 'telc_streak7', icon: 'ðŸ”¥', title: 'Serie 7', desc: 'Racha de 7 dÃ­as seguidos', test: (d) => d.streakDays >= 7 },
-    { id: 'telc_streak30', icon: 'ðŸ†', title: 'Serie 30', desc: 'Racha de 30 dÃ­as seguidos', test: (d) => d.streakDays >= 30 },
-    { id: 'telc_precision', icon: 'ðŸŽ¯', title: 'PrÃ¤zision', desc: 'â‰¥85% precisiÃ³n con â‰¥40 intentos', test: (d) => d.totalAttempts >= 40 && d.accuracy >= 85 },
-    { id: 'telc_three_pillars', icon: 'âš¡', title: 'Drei SÃ¤ulen', desc: 'Has practicado ArtÃ­culos, Verbos+Prep y Preposiciones', test: (d) => d.art.total > 0 && d.verb.total > 0 && d.prep.total > 0 },
-    { id: 'telc_weak_zero', icon: 'ðŸ›¡ï¸', title: 'SchwÃ¤chen im Griff', desc: '0 tarjetas dÃ©biles con â‰¥80 intentos', test: (d) => d.totalAttempts >= 80 && d.weak === 0 }
+    { id: 'telc_streak3', icon: 'ðŸ”¥', title: 'Serie 3', desc: 'Racha de 3 días seguidos', test: (d) => d.streakDays >= 3 },
+    { id: 'telc_streak7', icon: 'ðŸ”¥', title: 'Serie 7', desc: 'Racha de 7 días seguidos', test: (d) => d.streakDays >= 7 },
+    { id: 'telc_streak30', icon: 'ðŸ†', title: 'Serie 30', desc: 'Racha de 30 días seguidos', test: (d) => d.streakDays >= 30 },
+    { id: 'telc_precision', icon: 'ðŸŽ¯', title: 'Präzision', desc: '≥85% precisión con ≥40 intentos', test: (d) => d.totalAttempts >= 40 && d.accuracy >= 85 },
+    { id: 'telc_three_pillars', icon: 'âš¡', title: 'Drei Säulen', desc: 'Has practicado Artículos, Verbos+Prep y Preposiciones', test: (d) => d.art.total > 0 && d.verb.total > 0 && d.prep.total > 0 },
+    { id: 'telc_weak_zero', icon: 'ðŸ›¡ï¸', title: 'Schwächen im Griff', desc: '0 tarjetas débiles con ≥80 intentos', test: (d) => d.totalAttempts >= 80 && d.weak === 0 }
 ];
 
 function getAchievementsUnlocked() {
@@ -377,7 +377,7 @@ function TelcExamHud({ examCtx, onUseTranslationHint, answered, translationVisib
         <div className={`mb-4 rounded-xl border p-3 text-left transition-all ${urgent ? 'border-amber-500/70 bg-amber-950/25 shadow-[0_0_20px_rgba(245,158,11,0.12)]' : softOver ? 'border-rose-600/55 bg-rose-950/35' : 'border-slate-600/45 bg-black/35'}`}>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <p className={`text-[11px] font-bold uppercase tracking-widest ${softOver ? 'text-rose-300' : urgent ? 'text-amber-300' : 'text-slate-400'}`}>
-                    {softOver ? 'Tiempo guÃ­a agotado â€” puedes seguir' : urgent ? 'Ãšltimos minutos (ritmo TELC)' : 'Modo examen TELC'}
+                    {softOver ? 'Tiempo guía agotado — puedes seguir' : urgent ? 'Ãšltimos minutos (ritmo TELC)' : 'Modo examen TELC'}
                 </p>
                 <span className="font-mono text-sm text-white tabular-nums">{softOver ? '0:00' : `${mm}:${ss < 10 ? '0' : ''}${ss}`}</span>
             </div>
@@ -388,7 +388,7 @@ function TelcExamHud({ examCtx, onUseTranslationHint, answered, translationVisib
                 <p className="text-xs text-slate-400">Pistas para traducción: <span className="text-cyan-300 font-bold">{hintsLeft}</span> / {examCtx.hintsTotal}</p>
                 <button type="button" onClick={() => canHint && onUseTranslationHint && onUseTranslationHint()} disabled={!canHint}
                     className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition ${!canHint ? 'opacity-40 border-slate-700 text-slate-500 cursor-not-allowed' : 'border-cyan-600/60 text-cyan-200 hover:bg-cyan-900/40'}`}>
-                    âˆ’1 pista: mostrar traducciÃ³n
+                    âˆ’1 pista: mostrar traducción
                 </button>
             </div>
             <p className="text-[10px] text-slate-500 mt-2 leading-snug">El cronómetro es orientativo (estilo TELC): no corta la sesión. Usa las pistas con moderación, como en un examen real.</p>
@@ -426,7 +426,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
             const finalQueue = filtered.filter(item => !masteredArticles.includes(item.de));
             
             if (finalQueue.length === 0) {
-                alert(`Â¡IncreÃ­ble! Ya dominas todo el mazo ${selectedMode}. ðŸ†`);
+                alert(`¡Increíble! Ya dominas todo el mazo ${selectedMode}. ðŸ†`);
                 if (examCtx) onBack();
                 else setMode(null);
             } else {
@@ -476,7 +476,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         setShowTranslation(true);
     };
 
-    // ðŸŒŸ AcciÃ³n: "Ya me la sÃ©" (Descartar para siempre)
+    // ðŸŒŸ Acción: "Ya me la sé" (Descartar para siempre)
     const handleMastered = () => {
         const currentWord = queue[0].de;
         const newMastered = [...masteredArticles, currentWord];
@@ -486,7 +486,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         setFeedback(null);
     };
 
-    // ðŸ”„ AcciÃ³n: Siguiente / Reintento
+    // ðŸ”„ Acción: Siguiente / Reintento
     const handleNextWord = () => {
         if (feedback.type === 'success') {
             setQueue(prev => prev.slice(1)); // Si acertó, se va de la sesión
@@ -533,7 +533,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         window.speechSynthesis.speak(utterance);
 
         if (guess === correct) {
-            setFeedback({ type: 'success', text: `Â¡Richtig! ðŸŸ¢ ${current.de}`, tip: getCardTip('articulos', current), currentCard: current });
+            setFeedback({ type: 'success', text: `¡Richtig! ðŸŸ¢ ${current.de}`, tip: getCardTip('articulos', current), currentCard: current });
             if (window.__mullerNotifyExerciseOutcome) window.__mullerNotifyExerciseOutcome(true);
         } else {
             setFeedback({ type: 'error', text: `âš ï¸ FALSCH! Era: ${current.de}`, tip: getCardTip('articulos', current), currentCard: current });
@@ -553,7 +553,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
             <div className="bg-black/30 border border-blue-800/50 rounded-xl p-3 mb-5 w-full text-sm text-gray-200">
                 {(() => {
                     const c = getProgressCounts(progressMap, 'articulos');
-                    return <p>ðŸ“Š Intentos: <b>{c.attempts}</b> Â· Fallos: <b>{c.errors}</b> Â· FÃ¡cil: <b>{c.easy}</b> Â· Normal: <b>{c.normal}</b> Â· DifÃ­cil: <b>{c.difficult}</b> Â· ProblemÃ¡ticas: <b>{c.weak}</b></p>;
+                    return <p>ðŸ“Š Intentos: <b>{c.attempts}</b> · Fallos: <b>{c.errors}</b> · Fácil: <b>{c.easy}</b> · Normal: <b>{c.normal}</b> · Difícil: <b>{c.difficult}</b> · Problemáticas: <b>{c.weak}</b></p>;
                 })()}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full mb-6">
@@ -574,7 +574,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
     }
 
     if (loading) return <div className="p-10"><div className="muller-skeleton h-6 w-64 rounded mb-4" /><div className="muller-skeleton h-36 w-full max-w-xl rounded-2xl" /></div>;
-    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">Â¡Mazo completado! ðŸ†</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
+    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! ðŸ†</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
 
     const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
     const examHideEs = !!(examCtx && !showTranslation && !feedback);
@@ -588,7 +588,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
                 )}
                 <h3 className="text-5xl font-black text-white mb-2">{wordWithoutArticle}</h3>
                 {examHideEs ? (
-                    <p className="text-slate-500 mb-8 text-sm italic border border-dashed border-slate-600 rounded-lg py-6 px-3">TraducciÃ³n oculta â€” usa una pista arriba si la necesitas (como en examen).</p>
+                    <p className="text-slate-500 mb-8 text-sm italic border border-dashed border-slate-600 rounded-lg py-6 px-3">Traducción oculta — usa una pista arriba si la necesitas (como en examen).</p>
                 ) : (
                     <p className="text-gray-400 mb-8 text-xl italic">{queue[0].es}</p>
                 )}
@@ -616,7 +616,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
                                 <button onClick={() => registerTrainingResult('difficult')} className="bg-rose-700 hover:bg-rose-600 text-white py-2 rounded-lg font-bold text-sm">Difícil</button>
                             </div>
                             {!examCtx && (
-                                <button onClick={handleMastered} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 transition">ðŸŒŸ Â¡Ya me la sÃ© para siempre!</button>
+                                <button onClick={handleMastered} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold border-b-4 border-emerald-800 transition">ðŸŒŸ ¡Ya me la sé para siempre!</button>
                             )}
                             <button onClick={handleNextWord} className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-xl font-bold transition">
                                 {feedback.type === 'error' ? 'Reintentar luego âž”' : 'Siguiente âž”'}
@@ -724,7 +724,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
     };
 
     if (loading) return <div className="p-10"><div className="muller-skeleton h-5 w-64 rounded mb-4 mx-auto" /><div className="muller-skeleton h-36 w-full max-w-2xl rounded-2xl mx-auto" /></div>;
-    if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">Â¡Mazo Completado! ðŸ†</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
+    if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! ðŸ†</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
 
     const current = queue[0];
     const options = type === 'verbos' 
@@ -743,7 +743,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
                     {(() => {
                         const scope = type === 'verbos' ? 'verbos' : 'preposiciones';
                         const c = getProgressCounts(progressMap, scope);
-                        return <p>ðŸ“Š Intentos: <b>{c.attempts}</b> Â· Fallos: <b>{c.errors}</b> Â· FÃ¡cil: <b>{c.easy}</b> Â· Normal: <b>{c.normal}</b> Â· DifÃ­cil: <b>{c.difficult}</b> Â· ProblemÃ¡ticas: <b>{c.weak}</b></p>;
+                        return <p>ðŸ“Š Intentos: <b>{c.attempts}</b> · Fallos: <b>{c.errors}</b> · Fácil: <b>{c.easy}</b> · Normal: <b>{c.normal}</b> · Difícil: <b>{c.difficult}</b> · Problemáticas: <b>{c.weak}</b></p>;
                     })()}
                 </div>
                 {!examCtx && (
@@ -759,7 +759,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
                 <p className="text-blue-400 font-bold mb-2 uppercase tracking-widest">{current.prepCase || 'ðŸŸ¡ Wechsel'}</p>
                 <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
                 {examHideEs ? (
-                    <p className="text-slate-500 mb-8 text-sm italic border border-dashed border-slate-600 rounded-lg py-6 px-3">TraducciÃ³n oculta â€” usa una pista arriba si la necesitas.</p>
+                    <p className="text-slate-500 mb-8 text-sm italic border border-dashed border-slate-600 rounded-lg py-6 px-3">Traducción oculta — usa una pista arriba si la necesitas.</p>
                 ) : (
                     <p className="text-gray-400 mb-8 text-xl italic">{current.es}</p>
                 )}
@@ -779,7 +779,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
                         </div>
                         <p className="text-gray-400 mb-4 text-lg italic border border-slate-600/50 rounded-lg py-2 px-3 bg-black/20">ES: {(feedback.currentCard || current).es}</p>
                         <div className="bg-black/40 p-4 rounded-xl border border-amber-500/30 text-left mb-6">
-                            <p className="text-amber-400 font-bold text-sm uppercase mb-1">ðŸ’¡ MÃ¼ller-Tipp:</p>
+                            <p className="text-amber-400 font-bold text-sm uppercase mb-1">ðŸ’¡ Müller-Tipp:</p>
                             <p className="text-gray-200 text-sm italic">{feedback.tip}</p>
                         </div>
                         <div className="grid grid-cols-3 gap-2 mb-4">
@@ -932,7 +932,7 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
             window.__mullerApplyPreferredDeVoice(utterance);
             window.speechSynthesis.speak(utterance);
             if (guess === correct) {
-                setFeedback({ type: 'success', text: `Â¡Richtig! ðŸŸ¢ ${current.de}`, tip: getCardTip('articulos', current), currentCard: current, kind: 'articulos' });
+                setFeedback({ type: 'success', text: `¡Richtig! ðŸŸ¢ ${current.de}`, tip: getCardTip('articulos', current), currentCard: current, kind: 'articulos' });
                 if (window.__mullerNotifyExerciseOutcome) window.__mullerNotifyExerciseOutcome(true);
             } else {
                 setFeedback({ type: 'error', text: `âš ï¸ FALSCH! Era: ${current.de}`, tip: getCardTip('articulos', current), currentCard: current, kind: 'articulos' });
@@ -981,7 +981,7 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
                     <>
                         <h3 className="text-4xl md:text-5xl font-black text-white mb-2">{current.de.split(' ').slice(1).join(' ')}</h3>
                         {examHideEs ? (
-                            <p className="text-slate-500 mb-6 text-sm italic border border-dashed border-slate-600 rounded-lg py-4 px-3">TraducciÃ³n oculta â€” usa una pista arriba si la necesitas.</p>
+                            <p className="text-slate-500 mb-6 text-sm italic border border-dashed border-slate-600 rounded-lg py-4 px-3">Traducción oculta — usa una pista arriba si la necesitas.</p>
                         ) : (
                             <p className="text-gray-400 mb-6 text-xl italic">{current.es}</p>
                         )}
@@ -991,7 +991,7 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
                         <p className="text-blue-400 font-bold mb-2 uppercase tracking-widest text-sm">{current.prepCase || 'ðŸŸ¡ Wechsel'}</p>
                         <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">{current.de.replace('___', '_____')}</h3>
                         {examHideEs ? (
-                            <p className="text-slate-500 mb-6 text-sm italic border border-dashed border-slate-600 rounded-lg py-4 px-3">TraducciÃ³n oculta â€” usa una pista arriba si la necesitas.</p>
+                            <p className="text-slate-500 mb-6 text-sm italic border border-dashed border-slate-600 rounded-lg py-4 px-3">Traducción oculta — usa una pista arriba si la necesitas.</p>
                         ) : (
                             <p className="text-gray-400 mb-6 text-xl italic">{current.es}</p>
                         )}
@@ -1100,7 +1100,7 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
 
             {activeMode === 'exam_setup' && (
                 <div className="max-w-lg mx-auto w-full space-y-5 mb-6">
-                    <button type="button" onClick={() => setActiveMode('menu')} className="text-sm text-gray-400 hover:text-white">â† Volver al menÃº</button>
+                    <button type="button" onClick={() => setActiveMode('menu')} className="text-sm text-gray-400 hover:text-white">â† Volver al menú</button>
                     <div className="bg-slate-900/85 border border-amber-600/45 rounded-2xl p-6 shadow-xl shadow-amber-900/10">
                         <h3 className="text-xl font-bold text-amber-100 mb-1 flex items-center gap-2"><i data-lucide="timer" className="w-5 h-5"></i> Modo examen TELC</h3>
                         <p className="text-sm text-gray-400 mb-5 leading-relaxed">Cronómetro orientativo (no detiene la sesión), traducción al español oculta hasta que uses una pista. Pensado para la presión del examen sin castigos duros.</p>
@@ -1170,7 +1170,7 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
                         <div className="bg-slate-900/80 border border-fuchsia-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Débiles</p><p className="text-xl font-black text-fuchsia-300">{dashboard.weak}</p></div>
                         <div className="bg-slate-900/80 border border-amber-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Art/Verb/Prep</p><p className="text-sm font-black text-amber-300">{dashboard.art.total}/{dashboard.verb.total}/{dashboard.prep.total}</p></div>
                         <div className="bg-slate-900/80 border border-cyan-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Objetivo Hoy</p><p className="text-xl font-black text-cyan-300">{dashboard.todayAttempts}/{dashboard.dailyGoal}</p><p className="text-[10px] text-cyan-200">{dashboard.dailyProgress}%</p></div>
-                        <div className="bg-slate-900/80 border border-orange-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Racha</p><p className="text-xl font-black text-orange-300">ðŸ”¥ {dashboard.streakDays}</p><p className="text-[10px] text-orange-200">dÃ­as</p></div>
+                        <div className="bg-slate-900/80 border border-orange-900/40 rounded-xl p-3 text-center"><p className="text-xs text-gray-400">Racha</p><p className="text-xl font-black text-orange-300">ðŸ”¥ {dashboard.streakDays}</p><p className="text-[10px] text-orange-200">días</p></div>
                     </div>
                     <div className="bg-slate-900/60 border border-purple-800/40 rounded-xl p-4 mb-6 flex flex-col md:flex-row md:items-center gap-4">
                         <div className="flex-1">
@@ -1248,7 +1248,7 @@ function AdvancedPracticePanelFinal({ embedded = false, onRequestClose = null })
 
 // ============================================================================
 
-// -------------------- MODO AUDIOLIBRO (guion TTS encadenado) â€” control desde React --------------------
+// -------------------- MODO AUDIOLIBRO (guion TTS encadenado) — control desde React --------------------
 (function() {
     let isPlaying = false;
     let currentIdx = 0;

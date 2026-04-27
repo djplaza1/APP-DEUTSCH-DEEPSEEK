@@ -1,4 +1,4 @@
-﻿          const themeShellClass = uiTheme === 'light' ? 'muller-theme-light' : uiTheme === 'hc' ? 'muller-theme-hc' : '';
+          const themeShellClass = uiTheme === 'light' ? 'muller-theme-light' : uiTheme === 'hc' ? 'muller-theme-hc' : '';
 
           const currentPracticeList = practiceActive === 'diff' ? userStats.difficultVocab : (practiceActive === 'norm' ? userStats.normalVocab : userStats.difficultGrammar);
           const currentPracticeItem = currentPracticeList ? currentPracticeList[practiceIndex] : null;
@@ -318,7 +318,7 @@
                       worker = await Tesseract.createWorker('deu', 1, {
                           logger: (m) => {
                               if (m.status === 'recognizing text' && m.progress != null) setOcrHint(`Leyendo⬦ ${Math.round(100 * m.progress)}%`);
-                              else if (m.status && String(m.status).includes('loading')) setOcrHint('Descargando modelo alemÃ¡n (solo la 1Âª vez, ~2â€“5 MB)â€¦');
+                              else if (m.status && String(m.status).includes('loading')) setOcrHint('Descargando modelo alemán (solo la 1ª vez, ~2â€“5 MB)…');
                               else if (m.status) setOcrHint(String(m.status));
                           },
                       });
@@ -632,16 +632,16 @@
               const low = normalizeGermanSpeechText(t);
               const words = low.split(/\s+/).filter(Boolean);
               const sentences = t.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
-              const connectors = ['weil', 'deshalb', 'auÃŸerdem', 'denn', 'damit', 'trotzdem', 'obwohl', 'zuerst', 'danach', 'zum schluss', 'daher', 'allerdings'];
-              const formalMarkers = ['sehr geehrte', 'mit freundlichen grÃ¼ÃŸen', 'ich mÃ¶chte', 'hiermit', 'vielen dank', 'bitte'];
-              const informalMarkers = ['liebe', 'hallo', 'viele grÃ¼ÃŸe', 'bis bald'];
+              const connectors = ['weil', 'deshalb', 'außerdem', 'denn', 'damit', 'trotzdem', 'obwohl', 'zuerst', 'danach', 'zum schluss', 'daher', 'allerdings'];
+              const formalMarkers = ['sehr geehrte', 'mit freundlichen grüßen', 'ich möchte', 'hiermit', 'vielen dank', 'bitte'];
+              const informalMarkers = ['liebe', 'hallo', 'viele grüße', 'bis bald'];
               const hasFormal = formalMarkers.some((x) => low.includes(x));
               const hasInformal = informalMarkers.some((x) => low.includes(x));
               const connectorHits = connectors.filter((x) => low.includes(x)).length;
               const scoreTask = Math.max(0, Math.min(5, Math.round((words.length >= 65 ? 3 : words.length >= 40 ? 2 : 1) + (task && Array.isArray(task.checklist) ? Math.min(2, task.checklist.filter((c) => low.includes(normalizeGermanSpeechText(c).split(/\s+/)[0] || '')).length) : 0))));
               const scoreRegister = Math.max(0, Math.min(5, hasFormal ? 5 : hasInformal ? 3 : 2));
               const scoreCohesion = Math.max(0, Math.min(5, Math.round((sentences.length >= 4 ? 2 : 1) + Math.min(3, connectorHits))));
-              const umlautHits = (t.match(/[Ã¤Ã¶Ã¼ÃŸ]/gi) || []).length;
+              const umlautHits = (t.match(/[äöüß]/gi) || []).length;
               const punctHits = (t.match(/[.,!?]/g) || []).length;
               const scoreGrammar = Math.max(0, Math.min(5, Math.round((punctHits >= 3 ? 2 : 1) + (umlautHits >= 2 ? 1 : 0) + (words.length >= 50 ? 2 : words.length >= 30 ? 1 : 0))));
               const total = scoreTask + scoreRegister + scoreCohesion + scoreGrammar;
@@ -649,8 +649,8 @@
               const pct = Math.round((total / max) * 100);
               const suggestion = [
                   scoreTask < 4 ? 'Añade más contenido concreto del encargo (datos, petición y cierre).' : null,
-                  scoreRegister < 4 ? 'Refuerza registro formal TELC (Sehr geehrte..., Mit freundlichen GrÃ¼ÃŸen).' : null,
-                  scoreCohesion < 4 ? 'Usa mÃ¡s conectores: weil, deshalb, auÃŸerdem, trotzdem.' : null,
+                  scoreRegister < 4 ? 'Refuerza registro formal TELC (Sehr geehrte..., Mit freundlichen Grüßen).' : null,
+                  scoreCohesion < 4 ? 'Usa más conectores: weil, deshalb, außerdem, trotzdem.' : null,
                   scoreGrammar < 4 ? 'Revisa signos de puntuación, mayúsculas de sustantivos y umlauts.' : null
               ].filter(Boolean);
               setWritingTelcCoach({
@@ -821,7 +821,7 @@
                               </button>
                               <div className="ml-2 md:ml-3 flex-1 h-full flex items-center justify-center overflow-hidden">
                                   <p className="w-full text-center text-black font-black uppercase tracking-[0.04em] whitespace-nowrap text-[clamp(1.35rem,5.4vw,4.15rem)] leading-none">
-                                      PROFESOR PLAZA MÃœLLER
+                                      PROFESOR PLAZA MÜLLER
                                   </p>
                               </div>
                           </div>
@@ -1259,9 +1259,9 @@
                   const obSteps = [
                       { t: 'Bienvenida', d: 'Müller funciona en el navegador: Historia (audio), Vocab con SRS, Escritura con OCR local, B1/B2 y Progreso. Todo gratis en este dispositivo.' },
                       { t: 'Pestañas', d: 'Arriba cambias de actividad. La pestaña Entrenamiento abre artículos, verbos y preposiciones con simulacro. El panel azul es el Centro Müller (voces, plan, ayuda).' },
-                      { t: 'Temas y accesibilidad', d: 'En Centro MÃ¼ller â†’ Voces puedes elegir tema Oscuro / Claro / Alto contraste y presets de velocidad TTS (Lenta / Normal / Examen).' },
+                      { t: 'Temas y accesibilidad', d: 'En Centro Müller → Voces puedes elegir tema Oscuro / Claro / Alto contraste y presets de velocidad TTS (Lenta / Normal / Examen).' },
                       { t: 'Objetivos y racha', d: 'En Vocab configuras objetivo diario de tarjetas; la racha solo sube si hay actividad mínima real (umbrales fijos en el informe del Centro).' },
-                      { t: 'Copia de seguridad', d: 'Ahora las acciones de exportar/importar estÃ¡n dentro de Perfil â†’ Ajustes â†’ Respaldo y sincronizaciÃ³n. AhÃ­ puedes hacer backup total o solo SRS / mazos, sin botones flotantes tapando la pantalla.' },
+                      { t: 'Copia de seguridad', d: 'Ahora las acciones de exportar/importar están dentro de Perfil → Ajustes → Respaldo y sincronización. Ahí puedes hacer backup total o solo SRS / mazos, sin botones flotantes tapando la pantalla.' },
                   ];
                   const ob = obSteps[onboardingStep - 1];
                   return (
@@ -1288,15 +1288,15 @@
                       <div className="bg-slate-900 border border-white/15 rounded-2xl p-5 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
                           <h3 className="text-lg font-black text-white mb-3">Atajos de teclado</h3>
                           <ul className="text-sm text-gray-400 space-y-2">
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">?</kbd> â€” esta ayuda</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">I</kbd> â€” Inicio</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">R</kbd> â€” Ruta (A0â†’C1)</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">H</kbd> â€” Historia</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">V</kbd> â€” Vocabulario</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">P</kbd> â€” Progreso</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">M</kbd> â€” Centro MÃ¼ller</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">O</kbd> â€” Comunidad (cuenta, directorio, liga)</li>
-                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">Esc</kbd> â€” cerrar modales</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">?</kbd> — esta ayuda</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">I</kbd> — Inicio</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">R</kbd> — Ruta (A0→C1)</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">H</kbd> — Historia</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">V</kbd> — Vocabulario</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">P</kbd> — Progreso</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">M</kbd> — Centro Müller</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">O</kbd> — Comunidad (cuenta, directorio, liga)</li>
+                              <li><kbd className="px-1.5 py-0.5 rounded bg-black/50 border border-white/20 text-xs">Esc</kbd> — cerrar modales</li>
                           </ul>
                           <button type="button" className="mt-4 w-full py-2 rounded-xl bg-slate-700 font-bold text-sm" onClick={() => setShowShortcutsModal(false)}>Cerrar</button>
                       </div>
@@ -1390,7 +1390,7 @@
                                               {sortedDeVoices.map((v) => {
                                                   const uri = v.voiceURI || v.name;
                                                   return (
-                                                  <option key={uri + v.name} value={uri}>{v.name} Â· {v.lang}{window.__mullerRankVoiceNatural(v) >= 20 ? ' â˜…' : ''}</option>
+                                                  <option key={uri + v.name} value={uri}>{v.name} · {v.lang}{window.__mullerRankVoiceNatural(v) >= 20 ? ' â˜…' : ''}</option>
                                                   );
                                               })}
                                           </select>
@@ -1441,7 +1441,7 @@
                                                   window.speechSynthesis.speak(u);
                                               }}
                                           >
-                                              â–¶ Probar voz espaÃ±ol
+                                              â–¶ Probar voz español
                                           </button>
                                       </div>
                                       <div className="border-t border-white/10 pt-4 mt-4 space-y-2">
@@ -1477,13 +1477,13 @@
                                   <div className="space-y-3 text-xs text-gray-300">
                                       <p className="text-[10px] font-bold text-sky-400 uppercase tracking-wider">Atajos de teclado (fuera de campos de texto)</p>
                                       <ul className="list-disc list-inside space-y-1 text-[11px]">
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">?</kbd> o <kbd className="px-1 rounded bg-black/50 border border-white/20">Shift+/</kbd> â€” ayuda de atajos</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">I</kbd> â€” Inicio (panel principal)</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">H</kbd> â€” pestaÃ±a Historia</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">V</kbd> â€” Vocab</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">P</kbd> â€” Progreso</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">M</kbd> â€” Centro MÃ¼ller</li>
-                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">Esc</kbd> â€” cierra paneles / ayuda</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">?</kbd> o <kbd className="px-1 rounded bg-black/50 border border-white/20">Shift+/</kbd> — ayuda de atajos</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">I</kbd> — Inicio (panel principal)</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">H</kbd> — pestaña Historia</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">V</kbd> — Vocab</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">P</kbd> — Progreso</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">M</kbd> — Centro Müller</li>
+                                          <li><kbd className="px-1 rounded bg-black/50 border border-white/20">Esc</kbd> — cierra paneles / ayuda</li>
                                       </ul>
                                       <p>Usa <strong className="text-white">Chrome o Edge</strong> para más voces y mejor reconocimiento de voz.</p>
                                       <p><strong className="text-white">GitHub Pages</strong> requiere HTTPS; el micrófono funciona al permitir permisos.</p>
@@ -1496,7 +1496,7 @@
                                   <div className="space-y-3 text-xs text-gray-300">
                                       <ExerciseHelpBtn helpId="hub_chrome_ai" compact className="!border-violet-500/40" />
                                       <p className="text-[11px] leading-relaxed text-gray-400">
-                                          Esto usa la <strong className="text-white">IA integrada de Google Chrome</strong> (<strong className="text-violet-300">Gemini Nano</strong>): el modelo se <strong className="text-white">descarga en tu PC</strong> y luego puede funcionar <strong className="text-white">sin depender de nuestro servidor</strong>. No es la â€œgalerÃ­aâ€ de Edge: Microsoft Edge puede tener APIs parecidas <strong className="text-gray-300">con flags</strong>.
+                                          Esto usa la <strong className="text-white">IA integrada de Google Chrome</strong> (<strong className="text-violet-300">Gemini Nano</strong>): el modelo se <strong className="text-white">descarga en tu PC</strong> y luego puede funcionar <strong className="text-white">sin depender de nuestro servidor</strong>. No es la “galería” de Edge: Microsoft Edge puede tener APIs parecidas <strong className="text-gray-300">con flags</strong>.
                                       </p>
                                       <p className="text-[10px] text-gray-500">
                                           Requisitos típicos: Chrome de escritorio reciente, espacio libre en disco, modelo descargable desde Chrome. Documentación:{' '}
@@ -1510,7 +1510,7 @@
                                       </div>
                                       <textarea
                                           className="w-full min-h-[100px] bg-black/50 border border-white/15 rounded-lg p-2 text-white font-mono text-[11px] outline-none focus:border-violet-500"
-                                          placeholder="Pega aquÃ­ un texto en alemÃ¡n (guion, artÃ­culoâ€¦) o usa â€œCargar escenaâ€."
+                                          placeholder="Pega aquí un texto en alemán (guion, artículo…) o usa “Cargar escena”."
                                           value={chromeAiText}
                                           onChange={(e) => setChromeAiText(e.target.value)}
                                       />
@@ -1531,7 +1531,7 @@
               {tourStep >= 1 && tourStep <= 5 && (() => {
                   const steps = [
                       { t: 'Bienvenido al Entrenador Müller', d: 'Historia es el centro: escenas, audio y modos (Diktat, quiz⬦). Usa las pestañas arriba para cambiar de actividad.' },
-                      { t: 'Voces naturales (gratis)', d: 'Pulsa el icono del panel azul: elige voz alemana y espaÃ±ol del sistema. Prueba con el botÃ³n â€œProbar vozâ€.' },
+                      { t: 'Voces naturales (gratis)', d: 'Pulsa el icono del panel azul: elige voz alemana y español del sistema. Prueba con el botón “Probar voz”.' },
                       { t: 'Vocab y Progreso', d: 'Fácil/Normal/Difícil programa repaso espaciado (SRS). En Progreso ves mazos y exportas a Anki.' },
                       { t: 'Entrenamiento avanzado', d: 'Entrenamiento concentra artículos, verbos y preposiciones con seguimiento de precisión.' },
                       { t: 'Shadowing, Escritura y B1/B2', d: 'Shadowing entrena pronunciación; Escritura incluye OCR; B1/B2 son frases modelo. ¡Viel Erfolg!' },
@@ -1639,10 +1639,10 @@
                               <section className={`rounded-2xl border p-4 md:p-6 ${tc}`}>
                                   <h3 className={`text-lg font-bold mb-2 flex items-center gap-2 ${tcHeading}`}><Icon name="clock" className="w-5 h-5" /> Tiempos orientativos</h3>
                                   <ul className="list-disc list-inside space-y-1.5">
-                                      <li>Lectura: varias tareas seguidas â€” gestiona el reloj desde el primer minuto.</li>
+                                      <li>Lectura: varias tareas seguidas — gestiona el reloj desde el primer minuto.</li>
                                       <li>Escritura: planifica unos minutos de borrador antes de escribir en limpio.</li>
                                       <li>Oral: suele haber preparación corta; usa notas solo si el formato lo permite.</li>
-                                      <li>Escucha: en muchos centros una sola emisiÃ³n â€” lee las preguntas antes del audio.</li>
+                                      <li>Escucha: en muchos centros una sola emisión — lee las preguntas antes del audio.</li>
                                   </ul>
                               </section>
                               <section className={`rounded-2xl border p-4 md:p-6 ${tc}`}>
@@ -1660,7 +1660,7 @@
                           <div className="flex flex-wrap gap-3 mt-2">
                               <button type="button" onClick={() => {
                                   const lines = [
-                                      `Checklist TELC â€” MÃ¼ller Â· nivel ${telcLevel}`,
+                                      `Checklist TELC — Müller · nivel ${telcLevel}`,
                                       telcPack.label,
                                       telcPack.summary,
                                       '',
@@ -1695,7 +1695,7 @@
                               <ExerciseHelpBtn helpId="storybuilder" />
                           </div>
                           <p className="text-fuchsia-200 mb-6 md:mb-8 text-base md:text-lg">Crea historias a medida generadas por IA utilizando el nivel y vocabulario exacto que quieres repasar.</p>
-                          <p className="text-[11px] text-fuchsia-400/80 mb-4 max-w-xl leading-relaxed border border-fuchsia-800/40 rounded-xl p-3 bg-black/20">Nota: la IA integrada aquÃ­ es simulada en el navegador (sin coste). Si conectas un proveedor de IA externo, serÃ­a opcional y con <strong className="text-fuchsia-200">clave aportada por ti</strong> â€” no hay IA de pago centralizada en esta app.</p>
+                          <p className="text-[11px] text-fuchsia-400/80 mb-4 max-w-xl leading-relaxed border border-fuchsia-800/40 rounded-xl p-3 bg-black/20">Nota: la IA integrada aquí es simulada en el navegador (sin coste). Si conectas un proveedor de IA externo, sería opcional y con <strong className="text-fuchsia-200">clave aportada por ti</strong> — no hay IA de pago centralizada en esta app.</p>
                           {!isGeneratingStory ? (
                               <div className="bg-fuchsia-900/40 p-4 md:p-8 rounded-2xl md:rounded-3xl border-2 border-fuchsia-500/50 shadow-2xl flex flex-col gap-4 md:gap-6">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -1889,7 +1889,7 @@
                                       {bxBankLevel === 'b1' ? 'Banco B1 · Fundamentos' : 'Banco B2 · Meisterklasse'}
                                   </h1>
                                   <p className="text-gray-300 text-xs md:text-sm mt-1">{bxBankLevel === 'b1' ? 'Domina las bases absolutas.' : 'Estructuras avanzadas de nativos.'}</p>
-                                  <p className="text-[10px] text-gray-500 mt-1">Tarjetas desde <code className="text-amber-200/90">b1-b2-database.json</code> mÃ¡s lo que aÃ±adas desde <strong className="text-gray-400">Biblioteca â†’ Distribuir texto â†’ B1/B2</strong> (local).</p>
+                                  <p className="text-[10px] text-gray-500 mt-1">Tarjetas desde <code className="text-amber-200/90">b1-b2-database.json</code> más lo que añadas desde <strong className="text-gray-400">Biblioteca → Distribuir texto → B1/B2</strong> (local).</p>
                               </div>
                               <div className="flex flex-wrap items-center gap-2 justify-end">
                                   <div className="flex gap-1 md:gap-2 flex-wrap bg-black/40 p-1 md:p-2 rounded-xl border border-white/10">
@@ -1977,16 +1977,16 @@
                               </h1>
                               <ExerciseHelpBtn helpId="nav_lexikon" />
                           </div>
-                          <p className="text-gray-400 text-xs md:text-sm mb-6 border-b border-white/10 pb-4">TraducciÃ³n de palabras o frases (detecciÃ³n automÃ¡tica del idioma de origen) y opciÃ³n de solo Wiktionary. Los textos salen por internet; puedes guardar pares en las mismas lecciones que en <strong className="text-amber-200">Biblioteca â†’ Vocab</strong>.</p>
+                          <p className="text-gray-400 text-xs md:text-sm mb-6 border-b border-white/10 pb-4">Traducción de palabras o frases (detección automática del idioma de origen) y opción de solo Wiktionary. Los textos salen por internet; puedes guardar pares en las mismas lecciones que en <strong className="text-amber-200">Biblioteca → Vocab</strong>.</p>
 
                           <div className="rounded-2xl border border-cyan-700/40 bg-slate-900/80 p-4 md:p-6 mb-6 shadow-xl">
                               <h2 className="text-lg font-black text-cyan-200 mb-3 flex items-center gap-2"><Icon name="search" className="w-5 h-5" /> Palabra o frase</h2>
-                              <p className="text-[11px] text-gray-500 mb-3">Elige primero si quieres <strong className="text-gray-300">traducciÃ³n</strong> (recomendado para espaÃ±ol â†’ alemÃ¡n) o solo enlaces a <strong className="text-gray-300">Wiktionary</strong> (definiciones en un idioma).</p>
+                              <p className="text-[11px] text-gray-500 mb-3">Elige primero si quieres <strong className="text-gray-300">traducción</strong> (recomendado para español → alemán) o solo enlaces a <strong className="text-gray-300">Wiktionary</strong> (definiciones en un idioma).</p>
                               <div className="flex flex-wrap gap-2 mb-3">
                                   <input type="text" value={lexikonSearch} onChange={(e) => setLexikonSearch(e.target.value)} placeholder="Palabra o frase⬦" className="flex-1 min-w-[160px] bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-cyan-500" onKeyDown={(e) => { if (e.key === 'Enter') runLexikonDictionarySearch(); }} />
                                   <select value={lexikonDictKind} onChange={(e) => setLexikonDictKind(e.target.value)} className="bg-black/50 border border-cyan-800/60 rounded-xl px-3 py-2 text-white text-sm outline-none max-w-[min(100%,220px)]">
-                                      <option value="tr-es-de">TraducciÃ³n: ES â†’ DE</option>
-                                      <option value="tr-de-es">TraducciÃ³n: DE â†’ ES</option>
+                                      <option value="tr-es-de">Traducción: ES → DE</option>
+                                      <option value="tr-de-es">Traducción: DE → ES</option>
                                       <option value="wiki-de">Solo Wiktionary (alemán)</option>
                                       <option value="wiki-es">Solo Wiktionary (español)</option>
                                   </select>
@@ -1995,9 +1995,9 @@
                               {lexikonResults && lexikonResults.dictTranslate && !lexikonResults.error ? (
                                   <div className="rounded-xl bg-cyan-950/40 border border-cyan-600/25 p-4 space-y-2">
                                       <p className="text-white text-base md:text-lg"><span className="text-gray-400 font-bold text-xs uppercase mr-2">Entrada</span><strong>{lexikonResults.query}</strong></p>
-                                      <p className="text-cyan-100 text-lg md:text-2xl font-bold leading-snug">{lexikonResults.out || 'â€”'}</p>
+                                      <p className="text-cyan-100 text-lg md:text-2xl font-bold leading-snug">{lexikonResults.out || '—'}</p>
                                       {lexikonResults.detected ? (
-                                          <p className="text-[10px] text-gray-500">Idioma detectado (aprox.): {lexikonResults.detected} â†’ {lexikonResults.tl === 'de' ? 'alemÃ¡n' : 'espaÃ±ol'}</p>
+                                          <p className="text-[10px] text-gray-500">Idioma detectado (aprox.): {lexikonResults.detected} → {lexikonResults.tl === 'de' ? 'alemán' : 'español'}</p>
                                       ) : null}
                                       <div className="flex flex-wrap gap-2 pt-1">
                                           {lexikonResults.tl === 'de' && lexikonResults.out ? (
@@ -2015,7 +2015,7 @@
                                                   {lexikonResults.urls && lexikonResults.urls[i] ? (
                                                       <a href={lexikonResults.urls[i]} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 text-xs font-bold underline">Abrir entrada</a>
                                                   ) : null}
-                                                  <button type="button" onClick={() => { setLexikonTransText(t); setLexikonTransOut(''); }} className="text-[10px] font-bold text-amber-300 hover:text-white">â†’ Traductor</button>
+                                                  <button type="button" onClick={() => { setLexikonTransText(t); setLexikonTransOut(''); }} className="text-[10px] font-bold text-amber-300 hover:text-white">→ Traductor</button>
                                               </div>
                                           </li>
                                       ))}
@@ -2029,8 +2029,8 @@
                               <h2 className="text-lg font-black text-indigo-200 mb-3 flex items-center gap-2"><Icon name="languages" className="w-5 h-5" /> Traductor (DE â†” ES)</h2>
                               <p className="text-[11px] text-gray-500 mb-2">Elige el idioma de <strong className="text-gray-300">salida</strong>; el origen se detecta solo (evita que una palabra española se traduzca mal por empate DE/ES).</p>
                               <div className="flex flex-wrap gap-2 mb-3">
-                                  <button type="button" onClick={() => setLexikonTransTarget('de')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'de' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>â†’ AlemÃ¡n</button>
-                                  <button type="button" onClick={() => setLexikonTransTarget('es')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'es' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>â†’ EspaÃ±ol</button>
+                                  <button type="button" onClick={() => setLexikonTransTarget('de')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'de' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>→ Alemán</button>
+                                  <button type="button" onClick={() => setLexikonTransTarget('es')} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${lexikonTransTarget === 'es' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-black/40 border-white/15 text-gray-400'}`}>→ Español</button>
                               </div>
                               <textarea value={lexikonTransText} onChange={(e) => setLexikonTransText(e.target.value)} placeholder="Frase o palabra (cualquier registro)⬦" className="w-full min-h-[100px] bg-black/50 border border-indigo-800/60 rounded-xl p-3 text-white text-sm outline-none focus:border-indigo-500 mb-3" />
                               <button type="button" disabled={lexikonTransLoading} onClick={runLexikonTranslate} className="mb-4 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-sm disabled:opacity-50">{lexikonTransLoading ? 'Traduciendo⬦' : 'Traducir'}</button>
@@ -2044,7 +2044,7 @@
                                   <p className="text-[10px] font-bold text-amber-300 uppercase">Guardar par en lección (Vocab)</p>
                                   <div className="flex flex-wrap gap-2 items-center">
                                       <select value={lexikonSaveLessonId} onChange={(e) => setLexikonSaveLessonId(e.target.value)} className="bg-black/60 border border-amber-800/60 text-white text-sm rounded-lg px-3 py-2 outline-none flex-1 min-w-[180px]">
-                                          <option value="">â€” Elige lecciÃ³n â€”</option>
+                                          <option value="">— Elige lección —</option>
                                           <option value="__new__">+ Nueva lección⬦</option>
                                           {customVocabLessons.map((l) => (
                                               <option key={l.id} value={l.id}>{l.title} ({l.words?.length || 0} pal.)</option>
@@ -2059,7 +2059,7 @@
                                       <label className="flex-1 min-w-[120px] text-[10px] text-gray-500 block">Español<input type="text" value={lexikonPairEs} onChange={(e) => setLexikonPairEs(e.target.value)} className="mt-0.5 w-full bg-black/50 border border-sky-800/50 rounded-lg px-2 py-1.5 text-sm text-sky-100" placeholder="la estación⬦" /></label>
                                   </div>
                                   <button type="button" onClick={() => appendPairToCustomLesson(lexikonPairDe, lexikonPairEs)} className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-600 font-bold text-sm border border-amber-500/40">Guardar par DE / ES en la lección</button>
-                                  <p className="text-[10px] text-gray-500">Usa el orden detectado (arriba) o traduce antes de guardar. Puedes abrir la lecciÃ³n en Vocab â†’ Practicar.</p>
+                                  <p className="text-[10px] text-gray-500">Usa el orden detectado (arriba) o traduce antes de guardar. Puedes abrir la lección en Vocab → Practicar.</p>
                               </div>
                           </div>
                       </div>
@@ -2072,11 +2072,11 @@
                               <div className="rounded-2xl border border-sky-500/35 bg-gradient-to-br from-sky-950/70 to-slate-900/80 p-4 md:p-5 shadow-xl">
                                   <h2 className="text-xs font-black text-sky-300 uppercase tracking-wider mb-3 flex items-center gap-2"><Icon name="calendar" className="w-4 h-4" /> Plan de hoy</h2>
                                   <div className="grid gap-2">
-                                      <button type="button" className="py-2 px-3 rounded-xl bg-blue-900/40 border border-blue-500/25 text-left text-xs hover:bg-blue-900/60 transition" onClick={() => { setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null); }}>1. Historia â€” escenas en voz alta o podcast</button>
-                                      <button type="button" className="py-2 px-3 rounded-xl bg-teal-900/40 border border-teal-500/25 text-left text-xs hover:bg-teal-900/60 transition" onClick={() => { setActiveTab('shadowing'); stopAudio(); setPracticeActive(null); }}>2. Shadowing â€” misma escena + pronunciaciÃ³n</button>
-                                      <button type="button" className="py-2 px-3 rounded-xl bg-amber-900/40 border border-amber-500/25 text-left text-xs hover:bg-amber-900/60 transition" onClick={() => { setActiveTab('vocabulario'); stopAudio(); setPracticeActive(null); }}>3. Vocab â€” tarjetas</button>
+                                      <button type="button" className="py-2 px-3 rounded-xl bg-blue-900/40 border border-blue-500/25 text-left text-xs hover:bg-blue-900/60 transition" onClick={() => { setActiveTab('historia'); setMode('dialogue'); stopAudio(); setPracticeActive(null); }}>1. Historia — escenas en voz alta o podcast</button>
+                                      <button type="button" className="py-2 px-3 rounded-xl bg-teal-900/40 border border-teal-500/25 text-left text-xs hover:bg-teal-900/60 transition" onClick={() => { setActiveTab('shadowing'); stopAudio(); setPracticeActive(null); }}>2. Shadowing — misma escena + pronunciación</button>
+                                      <button type="button" className="py-2 px-3 rounded-xl bg-amber-900/40 border border-amber-500/25 text-left text-xs hover:bg-amber-900/60 transition" onClick={() => { setActiveTab('vocabulario'); stopAudio(); setPracticeActive(null); }}>3. Vocab — tarjetas</button>
                                       <button type="button" className="py-2 px-3 rounded-xl bg-purple-900/40 border border-purple-500/25 text-left text-xs hover:bg-purple-900/60 transition" onClick={() => { setActiveTab('entrenamiento'); stopAudio(); setPracticeActive(null); }}>4. Entrenamiento avanzado</button>
-                                      <button type="button" className="py-2 px-3 rounded-xl bg-rose-900/40 border border-rose-500/25 text-left text-xs hover:bg-rose-900/60 transition" onClick={() => { setActiveTab('escritura'); setWritingMode('dictation'); stopAudio(); setPracticeActive(null); }}>5. Escritura â€” dictado + OCR</button>
+                                      <button type="button" className="py-2 px-3 rounded-xl bg-rose-900/40 border border-rose-500/25 text-left text-xs hover:bg-rose-900/60 transition" onClick={() => { setActiveTab('escritura'); setWritingMode('dictation'); stopAudio(); setPracticeActive(null); }}>5. Escritura — dictado + OCR</button>
                                   </div>
                                   <p className="text-[10px] text-gray-500 uppercase tracking-wider pt-3 mb-2">Retos del día (+5 monedas, una vez al día)</p>
                                   <div className="flex flex-wrap gap-2">
@@ -2090,7 +2090,7 @@
                                   <h2 className="text-xs font-black text-amber-200 uppercase tracking-wider mb-3">Resumen rápido</h2>
                                   <div className="space-y-2 text-xs text-gray-300">
                                       <p><span className="text-white font-bold">Racha (honesta):</span> {userStats.streakDays} días</p>
-                                      <p className="text-[10px] text-gray-500 leading-snug">Cuenta solo si hubo actividad mÃ­nima: â‰¥{MULLER_STREAK_MIN_VOCAB_RATINGS} tarjetas de vocab calificadas, o â‰¥{MULLER_STREAK_MIN_ACTIVITY_POINTS} puntos, o â‰¥{Math.round(MULLER_STREAK_MIN_ACTIVE_SEC / 60)} min con la app (timer).</p>
+                                      <p className="text-[10px] text-gray-500 leading-snug">Cuenta solo si hubo actividad mínima: ≥{MULLER_STREAK_MIN_VOCAB_RATINGS} tarjetas de vocab calificadas, o ≥{MULLER_STREAK_MIN_ACTIVITY_POINTS} puntos, o ≥{Math.round(MULLER_STREAK_MIN_ACTIVE_SEC / 60)} min con la app (timer).</p>
                                       <p><span className="text-white font-bold">Monedas:</span> {coinsUiLabel}</p>
                                       <p><span className="text-emerald-300 font-bold">SRS vocabulario:</span> {Object.keys(vocabSrsMap).length} tarjetas (este dispositivo)</p>
                                       <p><span className="text-white font-bold">Pronunciación:</span> {userStats.pronunciationAttempts || 0} intentos</p>
@@ -2205,16 +2205,16 @@
 
                               <div className="mt-6 md:mt-8 border-t border-gray-600/80 pt-5 md:pt-6">
                                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                      <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 text-emerald-300"><Icon name="layout-grid" className="w-5 h-5 md:w-6 md:h-6" /> Distribuir texto â†’ B1 / B2</h2>
+                                      <h2 className="text-lg md:text-xl font-bold flex items-center gap-2 text-emerald-300"><Icon name="layout-grid" className="w-5 h-5 md:w-6 md:h-6" /> Distribuir texto → B1 / B2</h2>
                                       <ExerciseHelpBtn helpId="guiones_bx_distrib" compact />
                                   </div>
                                   <p className="text-[11px] md:text-xs text-gray-400 mb-3 leading-relaxed">Pega un guion (<code className="text-gray-300">Nombre:</code> ⬦), listas <code className="text-gray-300">alemán - español</code> o líneas sueltas. La app clasifica cada trozo en <strong className="text-gray-200">vocabulario, verbos, preposiciones, conectores o Redemittel</strong> y, con <strong className="text-gray-200">nivel automático</strong>, estima si va a B1 o B2 (heurística local, no IA). Si el cuadro está vacío, se usa el texto del guion de arriba. Tus aportaciones se guardan en el navegador y se <strong className="text-gray-200">mezclan</strong> con las tarjetas del archivo <code className="text-gray-300">b1-b2-database.json</code> (esas no se borran con el botón rojo).</p>
                                   <p className="text-[10px] md:text-xs text-indigo-300/90 mb-3 leading-relaxed bg-indigo-950/25 border border-indigo-500/20 rounded-lg px-3 py-2">Si en <strong className="text-white">Historia</strong> tenías cargado un guion <strong className="text-white">guardado en esta lista</strong>, al pulsar Distribuir las frases quedan <strong className="text-white">vinculadas a ese guion</strong>. Al borrar el guion con la papelera, te preguntamos si quieres quitar también esas tarjetas en B1/B2. Lo que enviaste con el ejemplo por defecto o sin guion cargado no se vincula (úsalo «Borrar mis aportaciones» para vaciar todo lo tuyo).</p>
                                   <textarea className="w-full min-h-[100px] md:min-h-[120px] bg-black/50 border border-emerald-800/60 p-3 rounded-lg text-white font-mono text-xs md:text-sm mb-3 outline-none focus:border-emerald-500 resize-none" placeholder="Pega aquí o déjalo vacío para usar el cuadro del guion de arriba⬦" value={bxImportText} onChange={(e) => setBxImportText(e.target.value)} />
                                   <div className="flex flex-wrap gap-2 mb-3">
-                                      <button type="button" onClick={() => handleBxDistribToLevels('auto')} className="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-700 to-sky-700 hover:opacity-95 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm shadow-lg">â†’ Nivel automÃ¡tico (B1 o B2 por frase)</button>
-                                      <button type="button" onClick={() => handleBxDistribToLevels('b1')} className="flex-1 min-w-[120px] bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">â†’ Todo a B1</button>
-                                      <button type="button" onClick={() => handleBxDistribToLevels('b2')} className="flex-1 min-w-[120px] bg-sky-800 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">â†’ Todo a B2</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('auto')} className="flex-1 min-w-[200px] bg-gradient-to-r from-emerald-700 to-sky-700 hover:opacity-95 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm shadow-lg">→ Nivel automático (B1 o B2 por frase)</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('b1')} className="flex-1 min-w-[120px] bg-emerald-800 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Todo a B1</button>
+                                      <button type="button" onClick={() => handleBxDistribToLevels('b2')} className="flex-1 min-w-[120px] bg-sky-800 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs md:text-sm">→ Todo a B2</button>
                                   </div>
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                       <button type="button" onClick={clearBxUserOverlay} className="text-xs md:text-sm text-red-400 hover:text-red-300 underline">Borrar mis aportaciones B1/B2</button>
@@ -2248,7 +2248,7 @@
                                           <input type="text" placeholder="Título (Ej: Lektion 12)" className="w-2/3 bg-black/50 border border-amber-800 p-1.5 md:p-2 rounded-lg text-white text-xs md:text-sm outline-none focus:border-amber-500" value={vocabTitleInput} onChange={(e) => setVocabTitleInput(e.target.value)} />
                                           <button onClick={handleSaveCustomVocab} className="w-1/3 bg-amber-600 hover:bg-amber-500 text-white py-1.5 md:py-2 rounded-lg font-bold text-xs transition shadow-lg flex justify-center items-center gap-1"><Icon name="save" className="w-3 h-3 md:w-4 md:h-4" /> Guardar</button>
                                       </div>
-                                      <p className="text-[10px] text-amber-700/90 mb-1">Paquetes de ejemplo en el repo: <code className="text-amber-200">vocab-packs/reise-mini.json</code> â€” abre el archivo, copia las lÃ­neas <code className="text-amber-200">de/es</code> o pega una lista: <code className="text-amber-200">der Bahnhof - la estaciÃ³n</code> por lÃ­nea.</p>
+                                      <p className="text-[10px] text-amber-700/90 mb-1">Paquetes de ejemplo en el repo: <code className="text-amber-200">vocab-packs/reise-mini.json</code> — abre el archivo, copia las líneas <code className="text-amber-200">de/es</code> o pega una lista: <code className="text-amber-200">der Bahnhof - la estación</code> por línea.</p>
                                   <textarea className="w-full h-12 md:h-14 bg-black/50 border border-amber-800 p-2 rounded-lg text-white font-mono text-[10px] md:text-xs outline-none focus:border-amber-500 resize-none" placeholder="Pega aquí tu lista...&#10;der Apfel - la manzana" value={vocabTextInput} onChange={(e) => setVocabTextInput(e.target.value)} />
                                   </div>
                                   <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
@@ -2332,7 +2332,7 @@
                                       const rc = s && typeof s.ratedCount === 'number' ? s.ratedCount : 0;
                                       return (
                                           <div className="text-[10px] text-amber-900/70 -mt-2 text-center max-w-lg space-y-0.5">
-                                              {s && s.due ? <p>PrÃ³ximo repaso: <strong className="text-amber-950">{s.due}</strong> Â· intervalo {s.interval} d Â· EF {typeof s.easeFactor === 'number' ? s.easeFactor.toFixed(2) : 'â€”'}</p> : <p className="text-amber-900/50">Sin calificar aÃºn en SRS</p>}
+                                              {s && s.due ? <p>Próximo repaso: <strong className="text-amber-950">{s.due}</strong> · intervalo {s.interval} d · EF {typeof s.easeFactor === 'number' ? s.easeFactor.toFixed(2) : '—'}</p> : <p className="text-amber-900/50">Sin calificar aún en SRS</p>}
                                               <p>Vistas: <strong>{vc}</strong> · Calificaciones: <strong>{rc}</strong></p>
                                           </div>
                                       );
@@ -2373,11 +2373,11 @@
                                       return (
                                           <>
                                               <div className="bg-black/45 border border-teal-500/35 rounded-2xl p-4 md:p-6 mb-4 shadow-inner">
-                                                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-2">Escena {si + 1} / {guionData.length} Â· {scene?.speaker || 'â€”'}</p>
+                                                  <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-2">Escena {si + 1} / {guionData.length} · {scene?.speaker || '—'}</p>
                                                   {shadowShowText ? (
                                                       <p className="text-xl md:text-2xl text-white font-medium leading-relaxed">{scene?.text}</p>
                                                   ) : (
-                                                      <p className="text-gray-500 italic text-lg">Texto oculto â€” escucha el modelo y repite de memoria (shadowing ciego).</p>
+                                                      <p className="text-gray-500 italic text-lg">Texto oculto — escucha el modelo y repite de memoria (shadowing ciego).</p>
                                                   )}
                                                   {shadowShowText && scene?.translation && (
                                                       <p className="text-gray-400 mt-3 text-sm italic border-t border-white/10 pt-3">({scene.translation})</p>
@@ -2428,7 +2428,7 @@
                                                                       <span className="font-black text-white text-sm md:text-lg tabular-nums">{pronunciationScore}%</span>
                                                                   </div>
                                                               )}
-                                                              <p className="text-[10px] text-gray-500 mt-2">&gt;85%: verde Â· 55â€“84%: mejorable Â· &lt;55%: repite tras escuchar el modelo</p>
+                                                              <p className="text-[10px] text-gray-500 mt-2">&gt;85%: verde · 55â€“84%: mejorable · &lt;55%: repite tras escuchar el modelo</p>
                                                           </div>
                                                       )}
                                                   </div>
@@ -2541,7 +2541,7 @@
                                   </div>
                               </div>
                           <p className="text-[11px] text-sky-200/80 mb-2">
-                              Puedes seleccionar una frase con el dedo o ratÃ³n y usar ðŸ”Š Frase para reproducir solo esa parte.
+                              Puedes seleccionar una frase con el dedo o ratón y usar ðŸ”Š Frase para reproducir solo esa parte.
                           </p>
                           <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/25 p-3 mb-3 space-y-2">
                               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2560,7 +2560,7 @@
                                               e.target.value = '';
                                           }}
                                       />
-                                      {pdfStudyExtracting ? 'â³ Procesando PDFâ€¦' : 'ðŸ“„ Subir PDF'}
+                                      {pdfStudyExtracting ? 'â³ Procesando PDF…' : 'ðŸ“„ Subir PDF'}
                                   </label>
                                   {pdfStudySavedDocs.length > 0 && (
                                       <>
@@ -2669,7 +2669,7 @@
                               {pdfStudyDoc && (
                                   <div className="text-[10px] text-cyan-100/80 space-y-1">
                                       <p><strong className="text-cyan-200">Libro:</strong> {pdfStudyDoc.name} · {pdfStudyDoc.totalPages} páginas</p>
-                                      <p><strong className="text-cyan-200">Unidad:</strong> {activePdfPageData.unit || 'â€”'} Â· <strong className="text-cyan-200">LecciÃ³n:</strong> {activePdfPageData.lesson || 'â€”'} Â· <strong className="text-cyan-200">PÃ¡gina:</strong> {activePdfPageData.page || 'â€”'}</p>
+                                      <p><strong className="text-cyan-200">Unidad:</strong> {activePdfPageData.unit || '—'} · <strong className="text-cyan-200">Lección:</strong> {activePdfPageData.lesson || '—'} · <strong className="text-cyan-200">Página:</strong> {activePdfPageData.page || '—'}</p>
                                       {pdfStudyLastApplied ? <p className="text-emerald-300/90">{pdfStudyLastApplied}</p> : null}
                                   </div>
                               )}
@@ -2835,7 +2835,7 @@
                               <ExerciseHelpBtn helpId={escrituraExerciseHelpId} />
                           </div>
                           <p className="text-stone-300/95 text-xs md:text-sm mb-4 leading-relaxed border-b border-white/10 pb-3">
-                              Zona solo para escribir a mano â€” pensada para <strong className="text-white">tableta con lÃ¡piz</strong> (p. ej. Lenovo Tab). El lienzo usa <strong className="text-white">pointer capture</strong> para que el trazo no se pierda al apoyar la mano. Encima del lienzo tienes <strong className="text-white">goma con varios anchos</strong>, marcador fluorescente, subrayado y <strong className="text-white">deshacer el Ãºltimo trazo</strong> sin borrar todo. Activa las <strong className="text-white">lÃ­neas</strong> como cuaderno.
+                              Zona solo para escribir a mano — pensada para <strong className="text-white">tableta con lápiz</strong> (p. ej. Lenovo Tab). El lienzo usa <strong className="text-white">pointer capture</strong> para que el trazo no se pierda al apoyar la mano. Encima del lienzo tienes <strong className="text-white">goma con varios anchos</strong>, marcador fluorescente, subrayado y <strong className="text-white">deshacer el último trazo</strong> sin borrar todo. Activa las <strong className="text-white">líneas</strong> como cuaderno.
                           </p>
                           <div className="flex flex-wrap gap-1.5 md:gap-2 mb-4">
                               {[
@@ -2844,7 +2844,7 @@
                                   { id: 'dictation', label: 'Dictado', sub: 'oír y escribir' },
                                   { id: 'prompt', label: 'Tema', sub: 'redacción' },
                                   { id: 'telc', label: 'TELC', sub: 'carta/email examen' },
-                                  { id: 'letters', label: 'Letras DE', sub: 'Ã„Ã–ÃœÃŸ' },
+                                  { id: 'letters', label: 'Letras DE', sub: 'ÄÖÜß' },
                                   { id: 'guion', label: 'Guion', sub: 'misma historia' },
                                   { id: 'vocab', label: 'Palabra', sub: 'del vocab' }
                               ].map((m) => (
@@ -2887,7 +2887,7 @@
                                   <p className="text-rose-200/90 text-sm font-bold">Copia la frase (caligrafía alemana)</p>
                                   <p className="text-lg md:text-2xl text-white font-medium leading-snug">{WRITING_COPY_DRILLS[writingCopyIdx % WRITING_COPY_DRILLS.length]}</p>
                                   <div className="flex flex-wrap gap-2 pt-2">
-                                      <button type="button" onClick={() => { setWritingCopyIdx((i) => (i + 1) % WRITING_COPY_DRILLS.length); setWritingCanvasKey((k) => k + 1); }} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40">Otra frase â†’</button>
+                                      <button type="button" onClick={() => { setWritingCopyIdx((i) => (i + 1) % WRITING_COPY_DRILLS.length); setWritingCanvasKey((k) => k + 1); }} className="text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-900/80 hover:bg-rose-800 border border-rose-600/40">Otra frase →</button>
                                   </div>
                               </div>
                           )}
@@ -3016,7 +3016,7 @@
                                               onClick={() => setWritingTelcInputMode('pen')}
                                               className={`text-xs font-bold px-3 py-1.5 rounded-lg border ${writingTelcInputMode === 'pen' ? 'bg-orange-600 text-white border-orange-300/60' : 'bg-black/40 text-gray-300 border-white/10 hover:text-white'}`}
                                           >
-                                              âœ LÃ¡piz Ã³ptico
+                                              âœ Lápiz óptico
                                           </button>
                                           <button
                                               type="button"
@@ -3117,7 +3117,7 @@
                                   ) : (
                                       <>
                                           <p className="text-rose-200/90 text-sm font-bold">Copia una línea del guion activo</p>
-                                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">Escena {writingGuionWriteIdx + 1} / {guionData.length} Â· {guionData[writingGuionWriteIdx]?.speaker || 'â€”'}</p>
+                                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">Escena {writingGuionWriteIdx + 1} / {guionData.length} · {guionData[writingGuionWriteIdx]?.speaker || '—'}</p>
                                           <p className="text-lg md:text-xl text-white leading-relaxed">{guionData[writingGuionWriteIdx]?.text}</p>
                                           {guionData[writingGuionWriteIdx]?.translation && <p className="text-xs text-gray-500 italic border-t border-white/10 pt-2">({guionData[writingGuionWriteIdx].translation})</p>}
                                           <div className="flex flex-wrap gap-2 pt-2">
@@ -3201,7 +3201,7 @@
                       <div className="flex-1 flex flex-col overflow-y-auto hide-scrollbar p-4 md:p-8 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
                           <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                               <div>
-                              <h1 className="text-3xl md:text-4xl font-black text-white flex items-center gap-3 mb-2"><Icon name="map" className="w-9 h-9 md:w-12 md:h-12 text-fuchsia-400" /> Ruta A0 â†’ C1</h1>
+                              <h1 className="text-3xl md:text-4xl font-black text-white flex items-center gap-3 mb-2"><Icon name="map" className="w-9 h-9 md:w-12 md:h-12 text-fuchsia-400" /> Ruta A0 → C1</h1>
                                   <p className="text-gray-400 text-sm md:text-base max-w-2xl">Camino desde cero: frases, huecos, voz y recompensas. Tecla <kbd className="px-1.5 py-0.5 rounded bg-white/10 border border-white/15 font-mono text-xs">R</kbd>.</p>
                               </div>
                               <ExerciseHelpBtn helpId="nav_ruta" />
@@ -3232,7 +3232,7 @@
                               </div>
                               <div className="min-w-[220px]">
                                   <p className="text-[10px] font-black uppercase tracking-wider text-fuchsia-300">Tutor Ruta</p>
-                                  <p className="text-sm font-bold text-white">Entrenador guiado desde cero (A0 â†’ C1)</p>
+                                  <p className="text-sm font-bold text-white">Entrenador guiado desde cero (A0 → C1)</p>
                                   <p className="text-[11px] text-gray-400">Banco de verbos detectado: <strong className="text-fuchsia-300">{(rutaVerbDb.verbs || []).length}</strong> entradas.</p>
                               </div>
                           </div>
@@ -3301,7 +3301,7 @@
                                           <div className="flex justify-end"><ExerciseHelpBtn helpId="ruta_gramatica" /></div>
                                           {(window.MULLER_GRAMMAR_REF || []).map((sec) => (
                                               <div key={sec.level} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 md:p-5">
-                                                  <h3 className="text-fuchsia-300 font-black text-lg mb-1">{sec.level} â€” {sec.title}</h3>
+                                                  <h3 className="text-fuchsia-300 font-black text-lg mb-1">{sec.level} — {sec.title}</h3>
                                                   <div className="space-y-3 mt-3">
                                                       {sec.blocks.map((b, bi) => (
                                                           <div key={bi} className="rounded-xl border border-white/5 bg-black/25 p-3">
@@ -3502,7 +3502,7 @@
                           ) : null}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                               {[
-                                  { id: 'ruta', label: 'Ruta A0â†’C1', sub: 'Desde cero, gramÃ¡tica, test', icon: 'map', go: () => { setActiveTab('ruta'); } },
+                                  { id: 'ruta', label: 'Ruta A0→C1', sub: 'Desde cero, gramática, test', icon: 'map', go: () => { setActiveTab('ruta'); } },
                                   { id: 'historia', label: 'Historia', sub: 'Guion, audio, modos', icon: 'play', go: () => { setActiveTab('historia'); setMode('dialogue'); } },
                                   { id: 'vocab', label: 'Vocabulario', sub: 'SRS y tarjetas', icon: 'book-open', go: () => setActiveTab('vocabulario') },
                                   { id: 'shadow', label: 'Shadowing', sub: 'Pronunciación', icon: 'audio-lines', go: () => setActiveTab('shadowing') },
@@ -3701,7 +3701,7 @@
                                                                   setSupabaseUser(data.user);
                                                               }
                                                               if (!data.session) {
-                                                                  alert('Si Supabase pide confirmar el email, revisa tu bandeja. En Authentication â†’ Providers â†’ Email puedes desactivar â€œConfirm emailâ€ para pruebas. El perfil se crea al confirmar.');
+                                                                  alert('Si Supabase pide confirmar el email, revisa tu bandeja. En Authentication → Providers → Email puedes desactivar “Confirm email” para pruebas. El perfil se crea al confirmar.');
                                                               }
                                                           } else {
                                                               const { data, error } = await client.auth.signInWithPassword({ email: em, password: authPassword });
@@ -3754,13 +3754,13 @@
                                       </p>
                                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
                                           <div className="rounded-lg border border-white/10 bg-black/25 px-2 py-1.5">
-                                              <span className="text-gray-500">Bonus diario:</span> <span className="font-bold text-white">{rewardStatus ? (rewardStatus.daily_bonus_claimed ? 'Reclamado' : 'Disponible') : 'â€”'}</span>
+                                              <span className="text-gray-500">Bonus diario:</span> <span className="font-bold text-white">{rewardStatus ? (rewardStatus.daily_bonus_claimed ? 'Reclamado' : 'Disponible') : '—'}</span>
                                           </div>
                                           <div className="rounded-lg border border-white/10 bg-black/25 px-2 py-1.5">
-                                              <span className="text-gray-500">Anuncios hoy:</span> <span className="font-bold text-white">{rewardStatus ? rewardStatus.ad_claims_today : 'â€”'}</span>
+                                              <span className="text-gray-500">Anuncios hoy:</span> <span className="font-bold text-white">{rewardStatus ? rewardStatus.ad_claims_today : '—'}</span>
                                           </div>
                                           <div className="rounded-lg border border-white/10 bg-black/25 px-2 py-1.5">
-                                              <span className="text-gray-500">Restantes:</span> <span className="font-bold text-white">{rewardStatus ? rewardStatus.ad_remaining_today : 'â€”'}</span>
+                                              <span className="text-gray-500">Restantes:</span> <span className="font-bold text-white">{rewardStatus ? rewardStatus.ad_remaining_today : '—'}</span>
                                           </div>
                                       </div>
                                       {rewardStatus && Number(rewardStatus.ad_cooldown_seconds || 0) > 0 ? (
@@ -3839,7 +3839,7 @@
                                       <p className="text-xs text-gray-500 mb-3">Monetización simple: botón de pago externo + estado premium en Supabase. Para activación automática real necesitarás webhook (paso siguiente).</p>
                                       <p className="text-sm text-gray-300 mb-3">
                                           Estado: <span className="font-bold text-white">
-                                              {premiumStatus ? (premiumStatus.is_active ? 'Activo' : 'Inactivo') : 'â€”'}
+                                              {premiumStatus ? (premiumStatus.is_active ? 'Activo' : 'Inactivo') : '—'}
                                           </span>
                                           {premiumStatus && premiumStatus.expires_at ? <span className="text-xs text-gray-500 ml-2">hasta {String(premiumStatus.expires_at).slice(0, 10)}</span> : null}
                                       </p>
@@ -3904,8 +3904,8 @@
                                                   <tbody>
                                                       {remoteProfiles.map((row) => (
                                                           <tr key={row.id} className="border-b border-white/5 text-gray-300">
-                                                              <td className="py-2 pr-2 font-bold text-white">{row.display_name || 'â€”'}</td>
-                                                              <td className="py-2 text-xs text-gray-500">{row.updated_at ? String(row.updated_at).slice(0, 10) : 'â€”'}</td>
+                                                              <td className="py-2 pr-2 font-bold text-white">{row.display_name || '—'}</td>
+                                                              <td className="py-2 text-xs text-gray-500">{row.updated_at ? String(row.updated_at).slice(0, 10) : '—'}</td>
                                                           </tr>
                                                       ))}
                                                   </tbody>
@@ -3925,7 +3925,7 @@
                                                       <tr key={row.email} className="border-b border-white/5 text-gray-300">
                                                           <td className="py-2 pr-2 font-bold text-white">{row.displayName}</td>
                                                           <td className="py-2 pr-2">{mullerMaskEmail(row.email)}</td>
-                                                          <td className="py-2 text-xs text-gray-500">{row.createdAt ? String(row.createdAt).slice(0, 10) : 'â€”'}</td>
+                                                          <td className="py-2 text-xs text-gray-500">{row.createdAt ? String(row.createdAt).slice(0, 10) : '—'}</td>
                                                       </tr>
                                                   ))}
                                               </tbody>
@@ -4047,7 +4047,7 @@
                                     ))}
                                 </div>
                                 <div className={`w-full max-w-xl mb-4 rounded-2xl border px-4 py-3 text-center font-bold text-2xl md:text-4xl tabular-nums ${oralLeftSec !== null && oralLeftSec <= 15 ? 'border-amber-500 bg-amber-950/40 text-amber-200' : 'border-emerald-600/50 bg-black/30 text-emerald-200'}`}>
-                                    {oralLeftSec !== null ? `${Math.floor(oralLeftSec / 60)}:${String(oralLeftSec % 60).padStart(2, '0')}` : 'â€”'}
+                                    {oralLeftSec !== null ? `${Math.floor(oralLeftSec / 60)}:${String(oralLeftSec % 60).padStart(2, '0')}` : '—'}
                                 </div>
                                 <h2 className="text-base md:text-2xl text-gray-300 font-bold mb-2 uppercase tracking-widest text-center">Prüfer/in fragt:</h2>
                                 <h1 className="text-lg md:text-3xl font-medium text-white text-center mb-2 px-2 leading-snug border-l-4 border-emerald-500 pl-3 bg-emerald-950/30 py-3 rounded-r-xl">"{q.de}"</h1>
@@ -4150,7 +4150,7 @@
                                             <h1 className="text-xl md:text-4xl font-medium text-white bg-green-900/40 p-4 md:p-6 rounded-xl border border-green-500/30 w-full max-w-full break-words leading-snug">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
                                         ) : (
                                             <div className="w-full max-w-full space-y-3">
-                                                <p className="text-red-200 font-black text-lg md:text-2xl bg-red-950/50 border border-red-500/40 rounded-xl px-4 py-3">Orden incorrecto â€” compara con la soluciÃ³n:</p>
+                                                <p className="text-red-200 font-black text-lg md:text-2xl bg-red-950/50 border border-red-500/40 rounded-xl px-4 py-3">Orden incorrecto — compara con la solución:</p>
                                                 <h1 className="text-xl md:text-4xl font-medium text-white bg-amber-950/40 p-4 md:p-6 rounded-xl border border-amber-600/30 w-full max-w-full break-words leading-snug">{renderHighlightedText(guionData[getActualSceneIndex()].text, guionData[getActualSceneIndex()].vocab)}</h1>
                                             </div>
                                         )}
@@ -4184,7 +4184,7 @@
                         ) : mode === 'dialogue' && historiaAudioOnly && !podcastMode && !puzzleMode && !diktatMode && !isReviewing ? (
                             <div className="max-w-3xl w-full flex flex-col items-center justify-center flex-1 py-8 md:py-16 px-4 gap-8 md:gap-10 animate-in fade-in">
                                 <p className="text-violet-300 font-black text-xs uppercase tracking-[0.2em]">Solo audio · manos libres</p>
-                                <p className="text-3xl md:text-5xl font-black text-center text-white leading-tight">{guionData[getActualSceneIndex()]?.speaker || 'â€”'}</p>
+                                <p className="text-3xl md:text-5xl font-black text-center text-white leading-tight">{guionData[getActualSceneIndex()]?.speaker || '—'}</p>
                                 <p className="text-gray-500 text-sm font-mono">Szene {sceneIndex + 1} / {guionData.length} · {activeScriptTitle}</p>
                                 <div className="flex items-center justify-center gap-6 md:gap-10 w-full">
                                     <button type="button" onClick={handlePrev} className="muller-icon-nav p-5 md:p-6 rounded-full bg-gray-800 border border-white/10 hover:bg-gray-700 transition text-white" disabled={podcastMode}><Icon name="chevron-left" className="w-8 h-8 md:w-10 md:h-10 text-white" /></button>
@@ -4215,7 +4215,7 @@
                                             {tempusVerbList.map((verb, idx) => (
                                                 <div key={idx} className="bg-black/50 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-blue-400/50">
                                                     <span className="font-bold text-blue-200 text-xs md:text-sm">{verb.infinitive}</span>
-                                                    <span className="text-blue-300 text-[10px] md:text-xs ml-1 md:ml-2">â†’ {verb.forms}</span>
+                                                    <span className="text-blue-300 text-[10px] md:text-xs ml-1 md:ml-2">→ {verb.forms}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -4368,7 +4368,7 @@
                                       disabled={pdfStudyPageIdx <= 0}
                                       className="px-3 py-1.5 rounded-lg border border-white/15 bg-slate-900/70 hover:bg-slate-800 disabled:opacity-40 text-xs font-bold text-white"
                                   >
-                                      â† PÃ¡gina
+                                      â† Página
                                   </button>
                                   <button
                                       type="button"
@@ -4376,7 +4376,7 @@
                                       disabled={pdfStudyPageIdx >= Math.max(0, (pdfStudyDoc.pages || []).length - 1)}
                                       className="px-3 py-1.5 rounded-lg border border-white/15 bg-slate-900/70 hover:bg-slate-800 disabled:opacity-40 text-xs font-bold text-white"
                                   >
-                                      PÃ¡gina â†’
+                                      Página →
                                   </button>
                                   <button
                                       type="button"
@@ -4565,7 +4565,7 @@
 
             const showSyncHelp = () => {
                 alert(
-                    "ðŸ”„ SincronizaciÃ³n TOTAL gratis:\n\n" +
+                    "ðŸ”„ Sincronización TOTAL gratis:\n\n" +
                     "1) En tu dispositivo actual pulsa Exportar.\n" +
                     "2) Sube el archivo .json a Google Drive.\n" +
                     "3) En otro dispositivo descarga ese .json.\n" +

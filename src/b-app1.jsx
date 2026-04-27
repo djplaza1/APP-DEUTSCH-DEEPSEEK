@@ -82,7 +82,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [diktatInput, setDiktatInput] = useState("");
           const [showDiktatResult, setShowDiktatResult] = useState(false);
           const [savedScripts, setSavedScripts] = useState([]);
-          /** Si practicas un guion guardado en Biblioteca, su id; si no, null (ejemplo, IA o no guardado). Sirve para vincular Â«Distribuir â†’ B1/B2Â». */
+          /** Si practicas un guion guardado en Biblioteca, su id; si no, null (ejemplo, IA o no guardado). Sirve para vincular «Distribuir → B1/B2». */
           const [activeSavedScriptId, setActiveSavedScriptId] = useState(null);
           const [customVocabLessons, setCustomVocabLessons] = useState([]);
           const [lexikonSearch, setLexikonSearch] = useState('');
@@ -299,11 +299,11 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const base = Array.isArray(window.MULLER_RUTA_LEVELS) ? window.MULLER_RUTA_LEVELS : [];
               const curriculumByLevel = {
                   A0: [
-                      { title: 'Alfabeto y sonidos base', topic: 'presentacion', grammarTip: 'Prioriza pronunciaciÃ³n de vocales largas/cortas y combinaciones ch, sch, ei, ie.', phrases: [{ de: 'Ich heiÃŸe Leo.', es: 'Me llamo Leo.' }, { de: 'Das ist Anna.', es: 'Esta es Anna.' }, { de: 'Wir lernen Deutsch.', es: 'Aprendemos alemÃ¡n.' }], fill: { prompt: 'Completa: Ich ___ Leo.', answer: 'heiÃŸe', hint: 'Verbo Â«heiÃŸenÂ», 1Âª persona.' }, speak: { target: 'Ich heiÃŸe Leo.' } },
+                      { title: 'Alfabeto y sonidos base', topic: 'presentacion', grammarTip: 'Prioriza pronunciación de vocales largas/cortas y combinaciones ch, sch, ei, ie.', phrases: [{ de: 'Ich heiße Leo.', es: 'Me llamo Leo.' }, { de: 'Das ist Anna.', es: 'Esta es Anna.' }, { de: 'Wir lernen Deutsch.', es: 'Aprendemos alemán.' }], fill: { prompt: 'Completa: Ich ___ Leo.', answer: 'heiße', hint: 'Verbo «heißen», 1ª persona.' }, speak: { target: 'Ich heiße Leo.' } },
                       { title: 'Números y datos personales', topic: 'tramites', grammarTip: 'Practica deletrear nombre, edad, teléfono y país.', phrases: [{ de: 'Ich bin 24 Jahre alt.', es: 'Tengo 24 años.' }, { de: 'Meine Nummer ist null eins sieben.', es: 'Mi número es 017.' }, { de: 'Ich komme aus Spanien.', es: 'Vengo de España.' }], fill: { prompt: 'Completa: Ich bin 24 Jahre ___.', answer: 'alt', hint: 'Expresión fija para la edad.' }, speak: { target: 'Ich bin 24 Jahre alt.' } },
                       { title: 'Aula y objetos cotidianos', topic: 'clase', grammarTip: 'Memoriza sustantivo con artículo: der Stift, die Tasche, das Heft.', phrases: [{ de: 'Das ist ein Stift.', es: 'Eso es un bolígrafo.' }, { de: 'Die Tasche ist neu.', es: 'La mochila es nueva.' }, { de: 'Wo ist das Heft?', es: '¿Dónde está el cuaderno?' }], fill: { prompt: 'Completa: Das ist ___ Stift.', answer: 'ein', hint: 'Indefinido masculino.' }, speak: { target: 'Das ist ein Stift.' } },
                       { title: 'Familia inmediata', topic: 'familia', grammarTip: 'Usa posesivos básicos: mein/meine y dein/deine.', phrases: [{ de: 'Das ist meine Mutter.', es: 'Esta es mi madre.' }, { de: 'Mein Bruder ist hier.', es: 'Mi hermano está aquí.' }, { de: 'Hast du Geschwister?', es: '¿Tienes hermanos?' }], fill: { prompt: 'Completa: Das ist ___ Mutter.', answer: 'meine', hint: 'Sustantivo femenino.' }, speak: { target: 'Das ist meine Mutter.' } },
-                      { title: 'Comidas y compras simples', topic: 'alimentos', grammarTip: 'Pide con Â«Ich mÃ¶chte ...Â» + Akkusativ.', phrases: [{ de: 'Ich mÃ¶chte Wasser.', es: 'Quiero agua.' }, { de: 'Wir kaufen Brot.', es: 'Compramos pan.' }, { de: 'Der Kaffee ist heiÃŸ.', es: 'El cafÃ© estÃ¡ caliente.' }], fill: { prompt: 'Completa: Ich ___ Wasser.', answer: 'mÃ¶chte', hint: 'Forma de cortesÃ­a comÃºn.' }, speak: { target: 'Ich mÃ¶chte Wasser.' } },
+                      { title: 'Comidas y compras simples', topic: 'alimentos', grammarTip: 'Pide con «Ich möchte ...» + Akkusativ.', phrases: [{ de: 'Ich möchte Wasser.', es: 'Quiero agua.' }, { de: 'Wir kaufen Brot.', es: 'Compramos pan.' }, { de: 'Der Kaffee ist heiß.', es: 'El café está caliente.' }], fill: { prompt: 'Completa: Ich ___ Wasser.', answer: 'möchte', hint: 'Forma de cortesía común.' }, speak: { target: 'Ich möchte Wasser.' } },
                       { title: 'Rutina mínima diaria', topic: 'rutina', grammarTip: 'Separable verbs: «aufstehen» separa en presente.', phrases: [{ de: 'Ich stehe um sieben auf.', es: 'Me levanto a las siete.' }, { de: 'Ich arbeite am Montag.', es: 'Trabajo el lunes.' }, { de: 'Abends lerne ich.', es: 'Por la noche estudio.' }], fill: { prompt: 'Completa: Ich ___ um sieben auf.', answer: 'stehe', hint: 'Verbo separable «aufstehen».' }, speak: { target: 'Ich stehe um sieben auf.' } }
                   ],
                   A1: [
@@ -312,7 +312,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       { title: 'Trabajo y horarios', topic: 'trabajo', grammarTip: 'Preguntar y responder horarios con «von ... bis ...».', phrases: [{ de: 'Ich arbeite von neun bis fünf.', es: 'Trabajo de nueve a cinco.' }, { de: 'Wann beginnt dein Kurs?', es: '¿Cuándo empieza tu curso?' }, { de: 'Heute habe ich frei.', es: 'Hoy tengo libre.' }], fill: { prompt: 'Completa: Ich arbeite von neun ___ fünf.', answer: 'bis', hint: 'Expresión de intervalo.' }, speak: { target: 'Ich arbeite von neun bis fünf.' } },
                       { title: 'Restaurante y pedidos', topic: 'alimentos', grammarTip: 'Usa «ich hätte gern» para sonar natural y cortés.', phrases: [{ de: 'Ich hätte gern eine Suppe.', es: 'Quisiera una sopa.' }, { de: 'Wir zahlen zusammen.', es: 'Pagamos juntos.' }, { de: 'Die Rechnung, bitte.', es: 'La cuenta, por favor.' }], fill: { prompt: 'Completa: Ich hätte ___ eine Suppe.', answer: 'gern', hint: 'Partícula fija en la fórmula.' }, speak: { target: 'Die Rechnung, bitte.' } },
                       { title: 'Salud y farmacia', topic: 'salud', grammarTip: 'Estructura típica: «Ich habe + síntoma».', phrases: [{ de: 'Ich habe Kopfschmerzen.', es: 'Tengo dolor de cabeza.' }, { de: 'Ich brauche einen Termin.', es: 'Necesito una cita.' }, { de: 'Nehmen Sie diese Tabletten.', es: 'Tome estas pastillas.' }], fill: { prompt: 'Completa: Ich ___ Kopfschmerzen.', answer: 'habe', hint: 'Verbo haben.' }, speak: { target: 'Ich habe Kopfschmerzen.' } },
-                      { title: 'Tiempo libre y planes', topic: 'tiempo_libre', grammarTip: 'Con Â«am WochenendeÂ» y Â«mit FreundenÂ» hablas de ocio.', phrases: [{ de: 'Am Wochenende spiele ich FuÃŸball.', es: 'El fin de semana juego al fÃºtbol.' }, { de: 'Heute Abend gehe ich ins Kino.', es: 'Esta tarde voy al cine.' }, { de: 'Morgen treffe ich Freunde.', es: 'MaÃ±ana quedo con amigos.' }], fill: { prompt: 'Completa: Heute Abend ___ ich ins Kino.', answer: 'gehe', hint: 'Verbo gehen, 1Âª persona.' }, speak: { target: 'Heute Abend gehe ich ins Kino.' } }
+                      { title: 'Tiempo libre y planes', topic: 'tiempo_libre', grammarTip: 'Con «am Wochenende» y «mit Freunden» hablas de ocio.', phrases: [{ de: 'Am Wochenende spiele ich Fußball.', es: 'El fin de semana juego al fútbol.' }, { de: 'Heute Abend gehe ich ins Kino.', es: 'Esta tarde voy al cine.' }, { de: 'Morgen treffe ich Freunde.', es: 'Mañana quedo con amigos.' }], fill: { prompt: 'Completa: Heute Abend ___ ich ins Kino.', answer: 'gehe', hint: 'Verbo gehen, 1ª persona.' }, speak: { target: 'Heute Abend gehe ich ins Kino.' } }
                   ],
                   A2: [
                       { title: 'Narrar pasado con Perfekt', topic: 'gramatica', grammarTip: 'Combina auxiliares haben/sein y participio al final.', phrases: [{ de: 'Letztes Jahr habe ich in Berlin gearbeitet.', es: 'El año pasado trabajé en Berlín.' }, { de: 'Wir sind spät angekommen.', es: 'Llegamos tarde.' }, { de: 'Sie hat viel gelernt.', es: 'Ella ha estudiado mucho.' }], fill: { prompt: 'Completa: Wir sind spät ___.', answer: 'angekommen', hint: 'Participio de ankommen.' }, speak: { target: 'Wir sind spät angekommen.' } },
@@ -323,7 +323,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       { title: 'A2 oral práctico', topic: 'trabajo', grammarTip: 'Entrena respuestas completas de 2-3 frases.', phrases: [{ de: 'In meiner Firma arbeite ich im Team.', es: 'En mi empresa trabajo en equipo.' }, { de: 'Meine Aufgaben sind klar.', es: 'Mis tareas están claras.' }, { de: 'Ich möchte mich verbessern.', es: 'Quiero mejorar.' }], fill: { prompt: 'Completa: Ich arbeite ___ Team.', answer: 'im', hint: 'in + dem = im.' }, speak: { target: 'In meiner Firma arbeite ich im Team.' } }
                   ],
                   B1: [
-                      { title: 'OpiniÃ³n y argumentaciÃ³n', topic: 'conectores', grammarTip: 'Conecta ideas con auÃŸerdem, jedoch, deshalb.', phrases: [{ de: 'Meiner Meinung nach ist Homeoffice sinnvoll.', es: 'En mi opiniÃ³n, el teletrabajo tiene sentido.' }, { de: 'Einerseits spart man Zeit, andererseits fehlt Kontakt.', es: 'Por un lado ahorras tiempo, por otro falta contacto.' }, { de: 'Deshalb brauche ich einen Mix.', es: 'Por eso necesito un equilibrio.' }], fill: { prompt: 'Completa: Einerseits ..., ___ ...', answer: 'andererseits', hint: 'Conector correlativo.' }, speak: { target: 'Meiner Meinung nach ist Homeoffice sinnvoll.' } },
+                      { title: 'Opinión y argumentación', topic: 'conectores', grammarTip: 'Conecta ideas con außerdem, jedoch, deshalb.', phrases: [{ de: 'Meiner Meinung nach ist Homeoffice sinnvoll.', es: 'En mi opinión, el teletrabajo tiene sentido.' }, { de: 'Einerseits spart man Zeit, andererseits fehlt Kontakt.', es: 'Por un lado ahorras tiempo, por otro falta contacto.' }, { de: 'Deshalb brauche ich einen Mix.', es: 'Por eso necesito un equilibrio.' }], fill: { prompt: 'Completa: Einerseits ..., ___ ...', answer: 'andererseits', hint: 'Conector correlativo.' }, speak: { target: 'Meiner Meinung nach ist Homeoffice sinnvoll.' } },
                       { title: 'B1 trabajo y CV', topic: 'trabajo', grammarTip: 'Pasado relevante y logros concretos en frases breves.', phrases: [{ de: 'Ich habe drei Jahre im Kundenservice gearbeitet.', es: 'Trabajé tres años en atención al cliente.' }, { de: 'Ich bin zuverlässig und flexibel.', es: 'Soy fiable y flexible.' }, { de: 'Ich möchte mich beruflich weiterentwickeln.', es: 'Quiero desarrollarme profesionalmente.' }], fill: { prompt: 'Completa: Ich habe drei Jahre im Kundenservice ___.', answer: 'gearbeitet', hint: 'Participio regular.' }, speak: { target: 'Ich möchte mich beruflich weiterentwickeln.' } },
                       { title: 'Relativsätze útiles', topic: 'gramatica', grammarTip: 'der/die/das + verbo al final para añadir información.', phrases: [{ de: 'Das ist der Kollege, der mir hilft.', es: 'Ese es el compañero que me ayuda.' }, { de: 'Die Stadt, in der ich wohne, ist ruhig.', es: 'La ciudad donde vivo es tranquila.' }, { de: 'Ich suche ein Buch, das leicht ist.', es: 'Busco un libro que sea fácil.' }], fill: { prompt: 'Completa: Das ist der Kollege, ___ mir hilft.', answer: 'der', hint: 'Relativo masculino nominativo.' }, speak: { target: 'Die Stadt, in der ich wohne, ist ruhig.' } },
                       { title: 'B1 viajes e incidencias', topic: 'viajes', grammarTip: 'Describe problemas, pide solución y confirma pasos.', phrases: [{ de: 'Mein Flug wurde annulliert.', es: 'Mi vuelo fue cancelado.' }, { de: 'Können Sie mir eine Alternative anbieten?', es: '¿Puede ofrecerme una alternativa?' }, { de: 'Ich brauche eine Bestätigung per E-Mail.', es: 'Necesito una confirmación por correo.' }], fill: { prompt: 'Completa: Mein Flug wurde ___.', answer: 'annulliert', hint: 'Participio de annullieren.' }, speak: { target: 'Können Sie mir eine Alternative anbieten?' } },
@@ -331,14 +331,14 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   ],
                   B2: [
                       { title: 'Debate estructurado B2', topic: 'conectores', grammarTip: 'Estructura: tesis, argumentos, contraargumento, cierre.', phrases: [{ de: 'Ich vertrete die Auffassung, dass ...', es: 'Defiendo la postura de que...' }, { de: 'Zudem sprechen mehrere Gründe dafür.', es: 'Además hay varias razones a favor.' }, { de: 'Dennoch müssen Risiken berücksichtigt werden.', es: 'No obstante, deben considerarse riesgos.' }], fill: { prompt: 'Completa: ___ müssen Risiken berücksichtigt werden.', answer: 'Dennoch', hint: 'Conector concesivo.' }, speak: { target: 'Ich vertrete die Auffassung, dass digitale Bildung wichtig ist.' } },
-                      { title: 'Correo formal y registro', topic: 'tramites', grammarTip: 'Registro formal: Sehr geehrte..., ich mÃ¶chte..., mit freundlichen GrÃ¼ÃŸen.', phrases: [{ de: 'Ich mÃ¶chte mich Ã¼ber den Kurs informieren.', es: 'Quiero informarme sobre el curso.' }, { de: 'FÃ¼r eine RÃ¼ckmeldung wÃ¤re ich dankbar.', es: 'AgradecerÃ­a una respuesta.' }, { de: 'Mit freundlichen GrÃ¼ÃŸen', es: 'Atentamente' }], fill: { prompt: 'Completa: FÃ¼r eine RÃ¼ckmeldung wÃ¤re ich ___.', answer: 'dankbar', hint: 'Adjetivo tÃ­pico en carta formal.' }, speak: { target: 'Ich mÃ¶chte mich Ã¼ber den Kurs informieren.' } },
+                      { title: 'Correo formal y registro', topic: 'tramites', grammarTip: 'Registro formal: Sehr geehrte..., ich möchte..., mit freundlichen Grüßen.', phrases: [{ de: 'Ich möchte mich über den Kurs informieren.', es: 'Quiero informarme sobre el curso.' }, { de: 'Für eine Rückmeldung wäre ich dankbar.', es: 'Agradecería una respuesta.' }, { de: 'Mit freundlichen Grüßen', es: 'Atentamente' }], fill: { prompt: 'Completa: Für eine Rückmeldung wäre ich ___.', answer: 'dankbar', hint: 'Adjetivo típico en carta formal.' }, speak: { target: 'Ich möchte mich über den Kurs informieren.' } },
                       { title: 'Nominalización B2', topic: 'gramatica', grammarTip: 'Convierte verbos en sustantivos para estilo académico.', phrases: [{ de: 'Die Entscheidung wurde gestern getroffen.', es: 'La decisión se tomó ayer.' }, { de: 'Die Verbesserung der Prozesse ist notwendig.', es: 'La mejora de procesos es necesaria.' }, { de: 'Nach der Analyse folgte die Umsetzung.', es: 'Tras el análisis siguió la implementación.' }], fill: { prompt: 'Completa: Die ___ der Prozesse ist notwendig.', answer: 'Verbesserung', hint: 'Sustantivo de verbessern.' }, speak: { target: 'Die Entscheidung wurde gestern getroffen.' } },
-                      { title: 'ComprensiÃ³n de noticias', topic: 'trabajo', grammarTip: 'Extrae idea principal, datos y postura del autor.', phrases: [{ de: 'Laut dem Bericht steigt die Inflation.', es: 'SegÃºn el informe, sube la inflaciÃ³n.' }, { de: 'Die Experten fordern schnelle MaÃŸnahmen.', es: 'Los expertos piden medidas rÃ¡pidas.' }, { de: 'Die Folgen betreffen vor allem Haushalte.', es: 'Las consecuencias afectan sobre todo a los hogares.' }], fill: { prompt: 'Completa: Laut dem Bericht ___ die Inflation.', answer: 'steigt', hint: 'Verbo de la oraciÃ³n principal.' }, speak: { target: 'Die Experten fordern schnelle MaÃŸnahmen.' } }
+                      { title: 'Comprensión de noticias', topic: 'trabajo', grammarTip: 'Extrae idea principal, datos y postura del autor.', phrases: [{ de: 'Laut dem Bericht steigt die Inflation.', es: 'Según el informe, sube la inflación.' }, { de: 'Die Experten fordern schnelle Maßnahmen.', es: 'Los expertos piden medidas rápidas.' }, { de: 'Die Folgen betreffen vor allem Haushalte.', es: 'Las consecuencias afectan sobre todo a los hogares.' }], fill: { prompt: 'Completa: Laut dem Bericht ___ die Inflation.', answer: 'steigt', hint: 'Verbo de la oración principal.' }, speak: { target: 'Die Experten fordern schnelle Maßnahmen.' } }
                   ],
                   C1: [
                       { title: 'Matiz y precisión léxica', topic: 'gramatica', grammarTip: 'Selecciona verbo por intención: behaupten, erläutern, einräumen.', phrases: [{ de: 'Die Autorin räumt ein, dass die Daten begrenzt sind.', es: 'La autora reconoce que los datos son limitados.' }, { de: 'Der Bericht legt nahe, dass Reformen nötig sind.', es: 'El informe sugiere que las reformas son necesarias.' }, { de: 'Er erläutert die Ursachen differenziert.', es: 'Explica las causas de forma matizada.' }], fill: { prompt: 'Completa: Der Bericht ___ nahe, dass Reformen nötig sind.', answer: 'legt', hint: 'Expresión fija «nahelegen».' }, speak: { target: 'Die Autorin räumt ein, dass die Daten begrenzt sind.' } },
-                      { title: 'ArgumentaciÃ³n avanzada C1', topic: 'conectores', grammarTip: 'Conectores de alta precisiÃ³n: demzufolge, insofern, wohingegen.', phrases: [{ de: 'Die MaÃŸnahme ist teuer, demzufolge braucht sie klare Ziele.', es: 'La medida es costosa; por consiguiente, necesita metas claras.' }, { de: 'Insofern ist die Kritik nachvollziehbar.', es: 'En ese sentido, la crÃ­tica es comprensible.' }, { de: 'Wohingegen kurzfristige LÃ¶sungen selten nachhaltig sind.', es: 'Mientras que las soluciones a corto plazo rara vez son sostenibles.' }], fill: { prompt: 'Completa: Die MaÃŸnahme ist teuer, ___ braucht sie klare Ziele.', answer: 'demzufolge', hint: 'Conector de consecuencia formal.' }, speak: { target: 'Insofern ist die Kritik nachvollziehbar.' } },
-                      { title: 'PresentaciÃ³n profesional', topic: 'trabajo', grammarTip: 'Abrir, estructurar y cerrar exposiciÃ³n con naturalidad.', phrases: [{ de: 'Im Folgenden prÃ¤sentiere ich drei zentrale Punkte.', es: 'A continuaciÃ³n presento tres puntos centrales.' }, { de: 'AbschlieÃŸend lÃ¤sst sich festhalten, dass ...', es: 'Para concluir, puede sostenerse que...' }, { de: 'Gern beantworte ich anschlieÃŸend Ihre Fragen.', es: 'Con gusto respondo despuÃ©s sus preguntas.' }], fill: { prompt: 'Completa: ___ prÃ¤sentiere ich drei zentrale Punkte.', answer: 'Im Folgenden', hint: 'Inicio formal de exposiciÃ³n.' }, speak: { target: 'AbschlieÃŸend lÃ¤sst sich festhalten, dass nachhaltige Strategien nÃ¶tig sind.' } }
+                      { title: 'Argumentación avanzada C1', topic: 'conectores', grammarTip: 'Conectores de alta precisión: demzufolge, insofern, wohingegen.', phrases: [{ de: 'Die Maßnahme ist teuer, demzufolge braucht sie klare Ziele.', es: 'La medida es costosa; por consiguiente, necesita metas claras.' }, { de: 'Insofern ist die Kritik nachvollziehbar.', es: 'En ese sentido, la crítica es comprensible.' }, { de: 'Wohingegen kurzfristige Lösungen selten nachhaltig sind.', es: 'Mientras que las soluciones a corto plazo rara vez son sostenibles.' }], fill: { prompt: 'Completa: Die Maßnahme ist teuer, ___ braucht sie klare Ziele.', answer: 'demzufolge', hint: 'Conector de consecuencia formal.' }, speak: { target: 'Insofern ist die Kritik nachvollziehbar.' } },
+                      { title: 'Presentación profesional', topic: 'trabajo', grammarTip: 'Abrir, estructurar y cerrar exposición con naturalidad.', phrases: [{ de: 'Im Folgenden präsentiere ich drei zentrale Punkte.', es: 'A continuación presento tres puntos centrales.' }, { de: 'Abschließend lässt sich festhalten, dass ...', es: 'Para concluir, puede sostenerse que...' }, { de: 'Gern beantworte ich anschließend Ihre Fragen.', es: 'Con gusto respondo después sus preguntas.' }], fill: { prompt: 'Completa: ___ präsentiere ich drei zentrale Punkte.', answer: 'Im Folgenden', hint: 'Inicio formal de exposición.' }, speak: { target: 'Abschließend lässt sich festhalten, dass nachhaltige Strategien nötig sind.' } }
                   ]
               };
               const premiumTopicPlan = {
@@ -366,7 +366,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       A1: [{ de: 'Ich möchte im Restaurant bestellen.', es: 'Quiero pedir en el restaurante.' }, { de: 'Am Wochenende treffe ich Freunde.', es: 'El fin de semana quedo con amigos.' }, { de: 'Wir fahren morgen mit dem Zug.', es: 'Viajamos manana en tren.' }],
                       A2: [{ de: 'Letzte Woche habe ich viel gearbeitet.', es: 'La semana pasada trabaje mucho.' }, { de: 'Ich lerne Deutsch, weil ich umziehen möchte.', es: 'Aprendo aleman porque quiero mudarme.' }, { de: 'Können Sie mir bitte weiterhelfen?', es: 'Puede ayudarme, por favor?' }],
                       B1: [{ de: 'Meiner Meinung nach ist das sinnvoll.', es: 'En mi opinion eso tiene sentido.' }, { de: 'Wenn ich mehr Zeit hätte, würde ich reisen.', es: 'Si tuviera mas tiempo, viajaria.' }, { de: 'Das ist ein Punkt, den wir beachten müssen.', es: 'Es un punto que debemos considerar.' }],
-                      B2: [{ de: 'Die MaÃŸnahme sollte schrittweise umgesetzt werden.', es: 'La medida deberia aplicarse gradualmente.' }, { de: 'DarÃ¼ber hinaus sind die Kosten zu berÃ¼cksichtigen.', es: 'Ademas hay que considerar los costes.' }, { de: 'Ich beziehe mich auf die vorliegenden Daten.', es: 'Me refiero a los datos disponibles.' }],
+                      B2: [{ de: 'Die Maßnahme sollte schrittweise umgesetzt werden.', es: 'La medida deberia aplicarse gradualmente.' }, { de: 'Darüber hinaus sind die Kosten zu berücksichtigen.', es: 'Ademas hay que considerar los costes.' }, { de: 'Ich beziehe mich auf die vorliegenden Daten.', es: 'Me refiero a los datos disponibles.' }],
                       C1: [{ de: 'Insofern erscheint die Kritik nachvollziehbar.', es: 'En ese sentido, la critica resulta comprensible.' }, { de: 'Der Autor differenziert zwischen Ursache und Wirkung.', es: 'El autor diferencia entre causa y efecto.' }, { de: 'Nichtsdestotrotz bleibt die Kernfrage offen.', es: 'No obstante, la cuestion central sigue abierta.' }]
                   };
                   const sample = sentenceBank[levelKey] || sentenceBank.A1;
@@ -417,7 +417,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   const title = `${levelKey} · Verbos ${idx + 1}`;
                   const phrases = chunk.slice(0, 3).map((v) => ({
                       de: (v && v.examples && v.examples[0] && v.examples[0].de) || `Ich ${v.lemma}.`,
-                      es: (v && v.examples && v.examples[0] && v.examples[0].es) || (v.es || 'â€”')
+                      es: (v && v.examples && v.examples[0] && v.examples[0].es) || (v.es || '—')
                   }));
                   const p = chunk[0] || {};
                   return {
@@ -451,7 +451,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const connectorByLevel = {
                   A1: ['und', 'aber', 'oder', 'denn'],
                   A2: ['weil', 'dass', 'wenn', 'deshalb', 'deswegen'],
-                  B1: ['obwohl', 'damit', 'trotzdem', 'auÃŸerdem', 'danach'],
+                  B1: ['obwohl', 'damit', 'trotzdem', 'außerdem', 'danach'],
                   B2: ['während', 'sobald', 'falls', 'insofern', 'hingegen'],
                   C1: ['demzufolge', 'folglich', 'somit', 'nichtsdestotrotz', 'infolgedessen']
               };
@@ -1519,7 +1519,7 @@ const finishPlacementWithLevel = (finalLevel) => {
               const tol = Math.max(2, Math.floor(b.length / 5));
               if (a === b || dist <= tol) { window.__mullerNotifyExerciseOutcome && window.__mullerNotifyExerciseOutcome(true); setRutaSpeakErr(''); return true; }
               window.__mullerNotifyExerciseOutcome && window.__mullerNotifyExerciseOutcome(false);
-              setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Casi â€” prueba otra vez.');
+              setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Casi — prueba otra vez.');
               return false;
           };
 
@@ -1741,7 +1741,7 @@ const finishPlacementWithLevel = (finalLevel) => {
               setReadingSource('paste');
               setReadingTextInput(txt);
               setPdfStudyBusyMsg(`Página ${page.page} enviada a Lectura.`);
-              setPdfStudyLastApplied(`âœ“ PÃ¡gina ${page.page} cargada en Lectura`);
+              setPdfStudyLastApplied(`âœ“ Página ${page.page} cargada en Lectura`);
           }, [pdfStudyDoc]);
 
           const applyPdfStudyTextToWriting = useCallback((pageNumber) => {
@@ -1758,7 +1758,7 @@ const finishPlacementWithLevel = (finalLevel) => {
               setWritingTelcInputMode('keyboard');
               setWritingTelcTypedText(txt);
               setPdfStudyBusyMsg(`Página ${page.page} enviada a Escritura TELC.`);
-              setPdfStudyLastApplied(`âœ“ PÃ¡gina ${page.page} cargada en Escritura TELC`);
+              setPdfStudyLastApplied(`âœ“ Página ${page.page} cargada en Escritura TELC`);
           }, [pdfStudyDoc]);
 
           const updatePdfStudyPageMeta = useCallback((pageNumber, patch = {}) => {
@@ -2404,7 +2404,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                   const cleanWord = word.toLowerCase().replace(/[.,!?;:()]/g, '');
                   if (TEMPUS_DICT[cleanWord]) {
                       if (!processed.has(cleanWord)) { foundVerbs.push({ infinitive: cleanWord, forms: TEMPUS_DICT[cleanWord] }); processed.add(cleanWord); }
-                  } else if (cleanWord.match(/^(?:[a-zÃ¤Ã¶Ã¼ÃŸ]+)(?:en|eln|ern)$/i) && cleanWord.length > 3) {
+                  } else if (cleanWord.match(/^(?:[a-zäöüß]+)(?:en|eln|ern)$/i) && cleanWord.length > 3) {
                       const infinitive = cleanWord;
                       if (!processed.has(infinitive)) {
                           const base = infinitive.slice(0, -2);
@@ -2616,7 +2616,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                   return s.trim();
               };
               lines.forEach(line => {
-                  let text = line.trim().replace(/â€“/g, '-').replace(/â€”/g, '-');
+                  let text = line.trim().replace(/â€“/g, '-').replace(/—/g, '-');
                   if (!text) return;
                   let isDiff = false;
                   if (text.startsWith('1')) { isDiff = true; text = text.replace(/^1[.\-):\]]*\s*/, '').trim(); }
@@ -2688,7 +2688,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                 vocabPairs.forEach(pair => {
                     const parts = pair.split('-');
                     if (parts.length >= 2) {
-                        const cleanDe = parts[0].trim().replace(/[ðŸ”´ðŸ”µðŸŸ¢â€¢]/g, '');
+                        const cleanDe = parts[0].trim().replace(/[ðŸ”´ðŸ”µðŸŸ¢•]/g, '');
                         vocab.push({ de: cleanDe, es: parts[1].trim(), diff: 1 });
                     }
                 });
@@ -2737,9 +2737,9 @@ const finishPlacementWithLevel = (finalLevel) => {
 
           const handleBxDistribToLevels = (target) => {
               const text = (bxImportText || '').trim() || (scriptInput || '').trim();
-              if (!text) { alert('Pega texto en el cuadro de â€œDistribuir a B1/B2â€ o en el guion de arriba.'); return; }
+              if (!text) { alert('Pega texto en el cuadro de “Distribuir a B1/B2” o en el guion de arriba.'); return; }
               const flat = mullerBibliotecaFlatItems(text);
-              if (flat.length === 0) { alert('No se detectaron frases. Usa formato Nombre: AlemÃ¡n. (TraducciÃ³n) o listas â€œalemÃ¡n - espaÃ±olâ€ por lÃ­nea.'); return; }
+              if (flat.length === 0) { alert('No se detectaron frases. Usa formato Nombre: Alemán. (Traducción) o listas “alemán - español” por línea.'); return; }
               const z = () => ({ vocabulario: 0, verbos: 0, preposiciones: 0, conectores: 0, redemittel: 0 });
               let snap = null;
               setBxUserOverlay((prev) => {
@@ -2847,7 +2847,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                 .replace(/\bdennoch\b/gi, 'trotzdem')
                 .replace(/\baufgrund\b/gi, 'wegen')
                 .replace(/\bbeziehungsweise\b/gi, 'oder')
-                .replace(/\bauÃŸerdem\b/gi, 'auch')
+                .replace(/\baußerdem\b/gi, 'auch')
                 .replace(/\binsbesondere\b/gi, 'vor allem')
                 .replace(/\ballerdings\b/gi, 'aber')
                 .replace(/\bdaher\b/gi, 'deshalb');
@@ -2879,7 +2879,7 @@ const finishPlacementWithLevel = (finalLevel) => {
         const mullerStoryGlossary = (deText) => {
             const words = String(deText || '')
                 .toLowerCase()
-                .replace(/[^a-zÃ¤Ã¶Ã¼ÃŸ\s-]/gi, ' ')
+                .replace(/[^a-zäöüß\s-]/gi, ' ')
                 .split(/\s+/)
                 .map((w) => w.trim())
                 .filter((w) => w.length >= 6 && !/^\d+$/.test(w));
@@ -3150,7 +3150,7 @@ const finishPlacementWithLevel = (finalLevel) => {
           const runChromeLocalSummarize = async () => {
               const text = (chromeAiText || '').trim();
               if (text.length < 40) {
-                  alert('Pega un texto mÃ¡s largo o usa â€œCargar escena actualâ€.');
+                  alert('Pega un texto más largo o usa “Cargar escena actual”.');
                   return;
               }
               if (!('Summarizer' in self)) {
@@ -3254,7 +3254,7 @@ const finishPlacementWithLevel = (finalLevel) => {
               setTimeout(() => {
                   let wordsArray = aiCustomWords.split(',').map(w => w.trim()).filter(w => w);
                   let mockLongStory = [
-                      { speaker: 'ErzÃ¤hler', text: 'Es war ein kalter Morgen in der groÃŸen Stadt.', translation: 'Era una frÃ­a maÃ±ana en la gran ciudad.' },
+                      { speaker: 'Erzähler', text: 'Es war ein kalter Morgen in der großen Stadt.', translation: 'Era una fría mañana en la gran ciudad.' },
                       { speaker: 'Lukas', text: 'Ich muss heute so viel erledigen. Wo fange ich an?', translation: 'Tengo tanto que hacer hoy. ¿Por dónde empiezo?' },
                       { speaker: 'Anna', text: 'Vergiss nicht, dass wir später zusammen essen gehen.', translation: 'No olvides que luego vamos a comer juntos.' },
                       { speaker: 'Lukas', text: 'Natürlich nicht! Ich habe den Tisch schon reserviert.', translation: '¡Por supuesto que no! Ya he reservado la mesa.' },
@@ -3270,7 +3270,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                           let i = (index + 1) * 2; 
                           if (i >= mockLongStory.length) i = mockLongStory.length - 1;
                           mockLongStory.splice(i, 0, {
-                              speaker: 'Anna', text: `Ãœbrigens, erinnerst du dich an ${word}? Das war eine interessante Erfahrung.`,
+                              speaker: 'Anna', text: `Übrigens, erinnerst du dich an ${word}? Das war eine interessante Erfahrung.`,
                               translation: `Por cierto, ¿te acuerdas de ${word}? Fue una experiencia interesante.`,
                               vocab: [{ de: word, es: 'Palabra Custom', diff: 1 }]
                           });
@@ -3369,19 +3369,19 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
           const generateTutorFeedback = (text) => {
               let feedback = [];
               const tLower = text.toLowerCase();
-              if (tLower.match(/\b(weil|dass|obwohl|wenn|als|damit|ob|bevor|nachdem)\b/i)) feedback.push("ðŸŸ£ **Nebensatz (Subordinada):** Has usado un conector subordinante. El verbo conjugado va a la Ãºltima posiciÃ³n de la frase.");
-              if (tLower.match(/\b(deshalb|deswegen|darum|trotzdem|dann|danach|auÃŸerdem)\b/i)) feedback.push("ðŸŸ  **Hauptsatz (InversiÃ³n):** Conector en PosiciÃ³n 1. Inmediatamente despuÃ©s tiene que ir el verbo (Pos 2), y luego el sujeto.");
-              if (tLower.match(/\b(und|aber|oder|denn|sondern)\b/i)) feedback.push("ðŸŸ¢ **Conector ADUSO (PosiciÃ³n 0):** Une dos frases sin alterar el orden normal (Sujeto + Verbo).");
-              if (tLower.match(/\b(habe|hast|hat|haben|habt|bin|bist|ist|sind|seid)\b.*\b(ge[a-zÃ¤Ã¶Ã¼ÃŸ]+t|ge[a-zÃ¤Ã¶Ã¼ÃŸ]+en|.+[ie]rt)\b/i)) feedback.push("ðŸ•°ï¸ **Perfekt:** Auxiliar (haben/sein) en PosiciÃ³n 2 y Participio al final.");
-              if (tLower.match(/\b(wurde|wurdest|wurden|wurdet|war|warst|waren|wart|hatte|hattest|hatten|hattet|gab|musste|konnte|wollte|sollte|durfte)\b/i) && !tLower.match(/\b(worden)\b/i)) feedback.push("ðŸ“– **PrÃ¤teritum:** Pasado simple. Usado para verbos auxiliares, modales o narraciÃ³n.");
-              if (tLower.match(/\b(wurde|worden)\b/i) || (tLower.match(/\b(werden|wird|werden|werdet)\b/i) && tLower.match(/\b(ge[a-zÃ¤Ã¶Ã¼ÃŸ]+t|ge[a-zÃ¤Ã¶Ã¼ÃŸ]+en)\b/i))) feedback.push("ðŸ›ï¸ **Passiv:** 'Werden' + Participio II. Lo importante es la acciÃ³n, no el sujeto.");
-              if (tLower.match(/\b(muss|musst|mÃ¼ssen|kann|kannst|kÃ¶nnen|darf|darfst|dÃ¼rfen|soll|sollst|sollen|will|willst|wollen|mÃ¶chte|mÃ¶chtest|mÃ¶chten)\b/i)) feedback.push("ðŸ’ª **Modalverben:** Verbo modal en Pos 2, obliga al verbo principal en Infinitivo al final.");
+              if (tLower.match(/\b(weil|dass|obwohl|wenn|als|damit|ob|bevor|nachdem)\b/i)) feedback.push("ðŸŸ£ **Nebensatz (Subordinada):** Has usado un conector subordinante. El verbo conjugado va a la última posición de la frase.");
+              if (tLower.match(/\b(deshalb|deswegen|darum|trotzdem|dann|danach|außerdem)\b/i)) feedback.push("ðŸŸ  **Hauptsatz (Inversión):** Conector en Posición 1. Inmediatamente después tiene que ir el verbo (Pos 2), y luego el sujeto.");
+              if (tLower.match(/\b(und|aber|oder|denn|sondern)\b/i)) feedback.push("ðŸŸ¢ **Conector ADUSO (Posición 0):** Une dos frases sin alterar el orden normal (Sujeto + Verbo).");
+              if (tLower.match(/\b(habe|hast|hat|haben|habt|bin|bist|ist|sind|seid)\b.*\b(ge[a-zäöüß]+t|ge[a-zäöüß]+en|.+[ie]rt)\b/i)) feedback.push("ðŸ•°ï¸ **Perfekt:** Auxiliar (haben/sein) en Posición 2 y Participio al final.");
+              if (tLower.match(/\b(wurde|wurdest|wurden|wurdet|war|warst|waren|wart|hatte|hattest|hatten|hattet|gab|musste|konnte|wollte|sollte|durfte)\b/i) && !tLower.match(/\b(worden)\b/i)) feedback.push("ðŸ“– **Präteritum:** Pasado simple. Usado para verbos auxiliares, modales o narración.");
+              if (tLower.match(/\b(wurde|worden)\b/i) || (tLower.match(/\b(werden|wird|werden|werdet)\b/i) && tLower.match(/\b(ge[a-zäöüß]+t|ge[a-zäöüß]+en)\b/i))) feedback.push("ðŸ›ï¸ **Passiv:** 'Werden' + Participio II. Lo importante es la acción, no el sujeto.");
+              if (tLower.match(/\b(muss|musst|müssen|kann|kannst|können|darf|darfst|dürfen|soll|sollst|sollen|will|willst|wollen|möchte|möchtest|möchten)\b/i)) feedback.push("ðŸ’ª **Modalverben:** Verbo modal en Pos 2, obliga al verbo principal en Infinitivo al final.");
               if (tLower.match(/\b(an|ein|auf|zu|mit|aus|vor|nach|ab|her|hin|los|teil)\s*[.,!?]*$/i)) feedback.push("âœ‚ï¸ **Trennbare Verben:** El prefijo del verbo se ha separado al final de la frase.");
-              if (tLower.match(/\b(aus|bei|mit|nach|seit|von|zu|ab)\b/i)) feedback.push("ðŸ”µ **Dativo (PreposiciÃ³n):** PreposiciÃ³n que rige Dativo estricto.");
-              if (tLower.match(/\b(durch|fÃ¼r|gegen|ohne|um)\b/i)) feedback.push("ðŸ”´ **Acusativo (PreposiciÃ³n):** PreposiciÃ³n que rige Acusativo estricto.");
-              if (tLower.match(/\b(in|an|auf|neben|hinter|Ã¼ber|unter|vor|zwischen)\b/i)) feedback.push("ðŸŸ¡ **WechselprÃ¤position:** Rige Dativo (Wo?) o Acusativo (Wohin?).");
-              GRAMMAR_PATTERNS.forEach(p => { if (text.match(p.regex)) feedback.push(`ðŸŒŸ **Verbo con PreposiciÃ³n Fija:** ${p.tooltip}.`); });
-              return feedback.join("\n\n") || "ðŸŸ¢ **Hauptsatz:** Estructura estÃ¡ndar perfecta.";
+              if (tLower.match(/\b(aus|bei|mit|nach|seit|von|zu|ab)\b/i)) feedback.push("ðŸ”µ **Dativo (Preposición):** Preposición que rige Dativo estricto.");
+              if (tLower.match(/\b(durch|für|gegen|ohne|um)\b/i)) feedback.push("ðŸ”´ **Acusativo (Preposición):** Preposición que rige Acusativo estricto.");
+              if (tLower.match(/\b(in|an|auf|neben|hinter|über|unter|vor|zwischen)\b/i)) feedback.push("ðŸŸ¡ **Wechselpräposition:** Rige Dativo (Wo?) o Acusativo (Wohin?).");
+              GRAMMAR_PATTERNS.forEach(p => { if (text.match(p.regex)) feedback.push(`ðŸŒŸ **Verbo con Preposición Fija:** ${p.tooltip}.`); });
+              return feedback.join("\n\n") || "ðŸŸ¢ **Hauptsatz:** Estructura estándar perfecta.";
           };
 
           const showAITutor = () => {
@@ -3574,8 +3574,8 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
               if(vocabDisplayList.length === 0) return;
               window.speechSynthesis.cancel();
               const currentVocab = vocabDisplayList[vocabReviewIndex];
-              const cleanDeAudio = currentVocab.de.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZÃ¤Ã¶Ã¼ÃŸÃ„Ã–Ãœ]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
-              const cleanEsAudio = currentVocab.es.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZÃ±Ã‘Ã¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“Ãš]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
+              const cleanDeAudio = currentVocab.de.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZäöüßÄÖÜ]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
+              const cleanEsAudio = currentVocab.es.replace(/^[0-9]+[.\-):\]]*\s*/g, '').replace(/^[a-zA-ZñÃ‘áéíóúÃÃ‰ÃÓÃš]{1,10}\s*[.:]\s*/g, '').replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{2B50}]|\u{FE0F}/gu, '').trim();
               const utterDe = new SpeechSynthesisUtterance(cleanDeAudio);
               utterDe.lang = 'de-DE'; utterDe.voice = getVoice('de', 'female'); utterDe.rate = 0.85;
               utterDe.onend = () => {
@@ -3656,7 +3656,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 sortedVocab.forEach(v => {
                    let searchWord = v.de.replace(/^(der|die|das|sich)\s/i, '').trim();
                    const safeWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                   const regex = new RegExp(`(?![^<]*>)(^|[^a-zÃ¤Ã¶Ã¼ÃŸA-ZÃ„Ã–Ãœáºž])(${safeWord})([^a-zÃ¤Ã¶Ã¼ÃŸA-ZÃ„Ã–Ãœáºž]|$)`, 'gi');
+                   const regex = new RegExp(`(?![^<]*>)(^|[^a-zäöüßA-ZÄÖÜáºž])(${safeWord})([^a-zäöüßA-ZÄÖÜáºž]|$)`, 'gi');
                    if (lueckentextMode) htmlText = htmlText.replace(regex, `$1<span class="bg-gray-800 text-transparent border-b border-yellow-500/70 rounded px-3 mx-1 select-none" title="${v.es}">[ ??? ]</span>$3`);
                    else htmlText = htmlText.replace(regex, `$1<span class="bg-amber-500/20 text-amber-100 border-b border-amber-400/60 px-1 mx-0.5 rounded-sm font-bold shadow-sm" title="Traducción: ${v.es}">$2</span>$3`);
                 });
@@ -3668,7 +3668,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                     const regex = new RegExp(`(?![^<]*>)\\b(${safeVerb})\\b`, 'gi');
                     htmlText = htmlText.replace(regex, `<span class="tempus-clickable text-blue-100 font-bold underline decoration-blue-400/70 decoration-2 underline-offset-4 cursor-pointer px-0.5 rounded" data-tempus-verb="$1" title="Toca para ver infinitivo y tiempos">$1</span>`);
                 });
-                const genericInfRegex = /(?![^<]*>)\b([a-zÃ¤Ã¶Ã¼ÃŸ]{4,}(?:en|eln|ern))\b/gi;
+                const genericInfRegex = /(?![^<]*>)\b([a-zäöüß]{4,}(?:en|eln|ern))\b/gi;
                 htmlText = htmlText.replace(genericInfRegex, `<span class="tempus-clickable text-blue-100 font-bold underline decoration-blue-400/70 decoration-2 underline-offset-4 cursor-pointer px-0.5 rounded" data-tempus-verb="$1" title="Toca para ver infinitivo y tiempos">$1</span>`);
             }
             const connRegex = new RegExp(`(?![^<]*>)\\b(${CONN_LIST.join('|')})\\b`, 'gi');
@@ -3794,7 +3794,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                     sortedVocab.forEach(v => {
                         let searchWord = v.de.replace(/^(der|die|das|sich)\s/i, '').trim();
                         const safeWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const regex = new RegExp(`(?![^<]*>)(^|[^a-zÃ¤Ã¶Ã¼ÃŸA-ZÃ„Ã–Ãœáºž])(${safeWord})([^a-zÃ¤Ã¶Ã¼ÃŸA-ZÃ„Ã–Ãœáºž]|$)`, 'gi');
+                        const regex = new RegExp(`(?![^<]*>)(^|[^a-zäöüßA-ZÄÖÜáºž])(${safeWord})([^a-zäöüßA-ZÄÖÜáºž]|$)`, 'gi');
                         deText = deText.replace(regex, `$1<span class="hl-vocab">$2</span>$3`);
                     });
                 }
@@ -3815,9 +3815,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 const tr = scene.translation && String(scene.translation).trim();
                 const trBlock = tr
                     ? `<div class="block-es"><div class="label-row label-es">Español · traducción</div><p class="text-es">${escPdf(tr)}</p></div>`
-                    : `<div class="block-es"><div class="label-row label-es">EspaÃ±ol Â· traducciÃ³n</div><p class="text-es text-es-empty">(Sin traducciÃ³n en esta lÃ­nea del guion â€” puedes aÃ±adirla en Biblioteca al editar.)</p></div>`;
+                    : `<div class="block-es"><div class="label-row label-es">Español · traducción</div><p class="text-es text-es-empty">(Sin traducción en esta línea del guion — puedes añadirla en Biblioteca al editar.)</p></div>`;
                 const vocabHtml = scene.vocab && scene.vocab.length > 0
-                    ? `<div class="vocab-box">ðŸ“– Vocabulario: ${scene.vocab.map((v) => `${escPdf(v.de)} â†’ ${escPdf(v.es)}`).join(' Â· ')}</div>`
+                    ? `<div class="vocab-box">ðŸ“– Vocabulario: ${scene.vocab.map((v) => `${escPdf(v.de)} → ${escPdf(v.es)}`).join(' · ')}</div>`
                     : '';
                 htmlContent += `
                     <div class="scene">
@@ -3836,7 +3836,7 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
                 `;
             });
             if (uniqueGrammarRules.size > 0) {
-                htmlContent += `<div class="grammar-summary"><h2>ðŸ§  AnÃ¡lisis Gramatical del Guion</h2><ul>`;
+                htmlContent += `<div class="grammar-summary"><h2>ðŸ§  Análisis Gramatical del Guion</h2><ul>`;
                 uniqueGrammarRules.forEach(rule => { let cleanRule = rule.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); htmlContent += `<li>${cleanRule}</li>`; });
                 htmlContent += `</ul></div>`;
             }
@@ -3862,9 +3862,9 @@ const sentenceUtterance = playSceneAudio(audioCleanText, currentScene.speaker);
             const htmlContent = `
                 <html><head><title>Mi Resumen de Alemán - Profesor Müller</title><style>body { font-family: 'Segoe UI', sans-serif; color: #1e293b; padding: 40px; line-height: 1.6; } h1 { color: #2563eb; text-align: center; border-bottom: 3px solid #2563eb; padding-bottom: 15px; } h2 { color: #0f172a; margin-top: 40px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; } th, td { border: 1px solid #94a3b8; padding: 12px; } th { background-color: #f1f5f9; } .diff { color: #dc2626; font-weight: bold; } .norm { color: #2563eb; } .grammar-base { color: #0891b2; }</style></head><body>
                 <h1>ðŸ“š Resumen de Estudio - B1/B2</h1>
-                <div><h2>ðŸ”´ Vocabulario DifÃ­cil</h2>${userStats.difficultVocab?.length ? `<table><tr><th>AlemÃ¡n</th><th>EspaÃ±ol</th></tr>${userStats.difficultVocab.map(v => `<tr><td class="diff">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>VacÃ­o.</p>'}</div>
-                <div><h2>ðŸ”µ Vocabulario Normal</h2>${userStats.normalVocab?.length ? `<table><tr><th>AlemÃ¡n</th><th>EspaÃ±ol</th></tr>${userStats.normalVocab.map(v => `<tr><td class="norm">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>VacÃ­o.</p>'}</div>
-                <div><h2>ðŸ§  Reglas Gramaticales</h2>${userStats.difficultGrammar?.length ? `<table><tr><th>Regla</th><th>Ejemplo</th><th>TraducciÃ³n</th></tr>${userStats.difficultGrammar.map(g => `<tr><td class="grammar-base">${g.base}</td><td><i>"${g.exampleDe}"</i></td><td>${g.exampleEs}</td></tr>`).join('')}</table>` : '<p>VacÃ­o.</p>'}</div>
+                <div><h2>ðŸ”´ Vocabulario Difícil</h2>${userStats.difficultVocab?.length ? `<table><tr><th>Alemán</th><th>Español</th></tr>${userStats.difficultVocab.map(v => `<tr><td class="diff">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
+                <div><h2>ðŸ”µ Vocabulario Normal</h2>${userStats.normalVocab?.length ? `<table><tr><th>Alemán</th><th>Español</th></tr>${userStats.normalVocab.map(v => `<tr><td class="norm">${v.de}</td><td>${v.es}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
+                <div><h2>ðŸ§  Reglas Gramaticales</h2>${userStats.difficultGrammar?.length ? `<table><tr><th>Regla</th><th>Ejemplo</th><th>Traducción</th></tr>${userStats.difficultGrammar.map(g => `<tr><td class="grammar-base">${g.base}</td><td><i>"${g.exampleDe}"</i></td><td>${g.exampleEs}</td></tr>`).join('')}</table>` : '<p>Vacío.</p>'}</div>
                 <script>window.onload = function() { window.print(); }<\/script></body></html>
             `;
             printWindow.document.write(htmlContent);
