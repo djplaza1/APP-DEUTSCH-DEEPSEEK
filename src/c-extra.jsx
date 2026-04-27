@@ -547,7 +547,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
         }
         return (
         <div className="flex flex-col items-center justify-center p-4 h-full w-full max-w-4xl mx-auto animate-in fade-in">
-            <button onClick={onBack} className="absolute top-4 left-4 bg-gray-800 p-2 rounded text-white hover:bg-gray-700">⬅ Volver</button>
+            <button onClick={onBack} className="absolute top-2 left-2 md:top-4 md:left-4 bg-slate-800/90 p-2 rounded-lg text-gray-300 text-sm hover:bg-slate-700 z-10">⬅ Volver</button>
             <h2 className="text-3xl font-bold mb-2 text-blue-300">Artículos Müller</h2>
             <p className="text-gray-400 mb-8 font-bold">⭐ {masteredArticles.length} palabras en tu "Memoria de Oro"</p>
             <div className="bg-black/30 border border-blue-800/50 rounded-xl p-3 mb-5 w-full text-sm text-gray-200">
@@ -574,7 +574,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
     }
 
     if (loading) return <div className="p-10"><div className="muller-skeleton h-6 w-64 rounded mb-4" /><div className="muller-skeleton h-36 w-full max-w-xl rounded-2xl" /></div>;
-    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
+    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-slate-800/90 px-3 py-2 rounded-lg text-gray-200 text-sm font-bold hover:bg-slate-700">Volver</button></div>;
 
     const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
     const examHideEs = !!(examCtx && !showTranslation && !feedback);
@@ -724,7 +724,7 @@ function CloudPracticeFinal({ onBack, type, examCtx, setExamCtx }) {
     };
 
     if (loading) return <div className="p-10"><div className="muller-skeleton h-5 w-64 rounded mb-4 mx-auto" /><div className="muller-skeleton h-36 w-full max-w-2xl rounded-2xl mx-auto" /></div>;
-    if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
+    if (queue.length === 0) return <div className="text-center p-20"><h2 className="text-3xl font-bold text-green-400">¡Mazo Completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-slate-800/90 px-3 py-2 rounded-lg text-gray-200 text-sm font-bold hover:bg-slate-700">Volver</button></div>;
 
     const current = queue[0];
     const options = type === 'verbos' 
@@ -960,7 +960,7 @@ function TelcMixedExamFinal({ onBack, examCtx, setExamCtx }) {
     if (queue.length === 0) return (
         <div className="text-center p-20">
             <h2 className="text-2xl font-bold text-amber-200 mb-4">No hay tarjetas para mezclar (revisa la conexión).</h2>
-            <button type="button" onClick={onBack} className="bg-gray-800 p-2 rounded text-white">Volver</button>
+            <button type="button" onClick={onBack} className="bg-slate-800/90 px-3 py-2 rounded-lg text-gray-200 text-sm font-bold hover:bg-slate-700">Volver</button>
         </div>
     );
 
