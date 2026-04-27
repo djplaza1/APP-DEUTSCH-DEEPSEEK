@@ -3396,16 +3396,25 @@
                                   : (levelVisualKey === 'A2' || levelVisualKey === 'B1')
                                       ? 'Modo intermedio'
                                       : 'Modo avanzado';
+                              const RUTA_MAX_ATT = 3;
                               const handleOptionAnswer = (opt) => {
                                   if (!ex) return;
                                   const ok = String(opt || '').trim().toLowerCase() === String(ex.answer || '').trim().toLowerCase();
                                   if (window.__mullerNotifyExerciseOutcome) window.__mullerNotifyExerciseOutcome(ok);
                                   if (ok) {
                                       setRutaSpeakErr('');
-                                      setRutaRun({ ...rutaRun, step: 2 });
-                                  } else {
-                                      setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Casi — prueba otra vez.');
+                                      setRutaRun({ ...rutaRun, step: 2, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: false });
+                                      return;
                                   }
+                                  const attempts = (rutaRun.exerciseAttempts || 0) + 1;
+                                  if (attempts >= RUTA_MAX_ATT) {
+                                      setRutaSpeakErr('');
+                                      setRutaRun({ ...rutaRun, step: 2, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: true });
+                                      return;
+                                  }
+                                  const lastHint = attempts === 2 ? (ex.hint || `Último intento: la respuesta correcta empieza por «${String(ex.answer || '').slice(0, 2)}…».`) : '';
+                                  setRutaRun({ ...rutaRun, exerciseAttempts: attempts, rutaLastChanceHint: lastHint, forcedReveal: false });
+                                  setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Casi — prueba otra vez.');
                               };
                               const advanceExercise = (wasCorrect) => {
                                   if (!ex) return;
@@ -3415,16 +3424,59 @@
                                       reviewCorrect: (score.reviewCorrect || 0) + (ex.fromReview && wasCorrect ? 1 : 0),
                                       reviewTotal: (score.reviewTotal || 0) + (ex.fromReview ? 1 : 0),
                                   };
-                                  const nextIdx = exerciseIdx + 1;
-                                  if (nextIdx >= plan.length) {
+                                  let newPlan = plan;
+                                  let nextIdx = exerciseIdx + 1;
+                                  if (!wasCorrect && ex && !ex._isRetryClone) {
+                                      newPlan = [...plan];
+                                      newPlan.splice(nextIdx, 0, {
+                                          ...ex,
+                                          id: `${ex.id}-retry-${exerciseIdx}-${Date.now()}`,
+                                          _isRetryClone: true,
+                                          fromReview: true
+                                      });
+                                  }
+                                  if (nextIdx >= newPlan.length) {
                                       completeRutaLesson(rutaRun.levelIdx, rutaRun.lessonIdx, nextScore);
                                       return;
                                   }
-                                  setRutaRun({ ...rutaRun, step: 0, exerciseIdx: nextIdx, score: nextScore });
+                                  setRutaRun({
+                                      ...rutaRun,
+                                      step: 0,
+                                      exerciseIdx: nextIdx,
+                                      score: nextScore,
+                                      exercisePlan: newPlan,
+                                      exerciseAttempts: 0,
+                                      rutaLastChanceHint: '',
+                                      forcedReveal: false
+                                  });
                                   setRutaFillInput('');
                                   setRutaTranscript('');
                                   setRutaSpeakErr('');
                                   window.__mullerPlaySfx && window.__mullerPlaySfx('tick');
+                              };
+                              const submitRutaTypedExercise = () => {
+                                  if (!ex) return;
+                                  let ok = false;
+                                  if (ex.type === 'fill') ok = checkRutaFillAnswer(ex);
+                                  else if (ex.type === 'translate_de' || ex.type === 'translate_es') {
+                                      ok = checkRutaTranslateClose(rutaFillInput, ex.answer, ex.type === 'translate_de' ? 'de' : 'es');
+                                      if (ok && window.__mullerNotifyExerciseOutcome) window.__mullerNotifyExerciseOutcome(true);
+                                  }
+                                  if (ok) {
+                                      setRutaSpeakErr('');
+                                      setRutaRun({ ...rutaRun, step: 2, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: false });
+                                      return;
+                                  }
+                                  if ((ex.type === 'translate_de' || ex.type === 'translate_es') && window.__mullerNotifyExerciseOutcome) window.__mullerNotifyExerciseOutcome(false);
+                                  const attempts = (rutaRun.exerciseAttempts || 0) + 1;
+                                  if (attempts >= RUTA_MAX_ATT) {
+                                      setRutaSpeakErr('');
+                                      setRutaRun({ ...rutaRun, step: 2, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: true });
+                                      return;
+                                  }
+                                  const lastHint = attempts === 2 ? (ex.hint || `Último intento: la solución tiene ${String(ex.answer || '').length} caracteres y empieza por «${String(ex.answer || '').slice(0, 2)}…».`) : '';
+                                  setRutaRun({ ...rutaRun, exerciseAttempts: attempts, rutaLastChanceHint: lastHint, forcedReveal: false });
+                                  setRutaSpeakErr(typeof window.__mullerRandomMotivation === 'function' ? window.__mullerRandomMotivation() : 'Inténtalo de nuevo.');
                               };
                               return (
                                   <div className="rounded-2xl border border-fuchsia-500/30 bg-black/40 p-5 md:p-8">
@@ -3457,14 +3509,29 @@
                                               {ex.type === 'read' ? (
                                                   <div className="mb-4 rounded-xl border border-white/10 bg-slate-900/60 p-4">
                                                       <p className="text-lg font-bold text-white">{ex.de}</p>
-                                                      <p className="text-sm text-gray-400">{ex.es}</p>
+                                                      {ex.esDisplay ? (
+                                                          <p className="text-sm text-slate-300 mt-2"><span className="text-slate-500 font-bold">Sentido (español de España): </span>{ex.esDisplay}</p>
+                                                      ) : null}
                                                       <button type="button" onClick={() => speakRutaDe(ex.de)} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-fuchsia-300 hover:text-white"><Icon name="volume-2" className="w-4 h-4" /> Escuchar</button>
                                                   </div>
                                               ) : ex.type === 'fill' ? (
                                                   <div className="mb-4 rounded-xl border border-emerald-500/25 bg-emerald-950/20 p-4">
                                                       <p className="text-white font-bold mb-3">{ex.prompt}</p>
-                                                      {ex.promptEs ? <p className="text-xs text-emerald-200/85 mb-2">Traducción: {ex.promptEs}</p> : null}
+                                                      {ex.promptEs ? <p className="text-xs text-emerald-200/85 mb-2"><span className="font-bold text-emerald-300/90">Sentido (español de España): </span>{ex.promptEs}</p> : null}
                                                       {ex.hint ? <p className="text-xs text-gray-500 mb-2">Pista: {ex.hint}</p> : null}
+                                                  </div>
+                                              ) : ex.type === 'translate_de' ? (
+                                                  <div className="mb-4 rounded-xl border border-violet-500/30 bg-violet-950/25 p-4">
+                                                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-300 mb-2">Español → alemán</p>
+                                                      <p className="text-white text-base leading-relaxed mb-2">{ex.prompt}</p>
+                                                      <p className="text-[11px] text-violet-200/80">Escribe en alemán la frase completa equivalente (sin mezclar palabras en español dentro del alemán).</p>
+                                                  </div>
+                                              ) : ex.type === 'translate_es' ? (
+                                                  <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-950/25 p-4">
+                                                      <p className="text-[11px] font-black uppercase tracking-wide text-amber-300 mb-2">Alemán → español</p>
+                                                      <p className="text-lg font-bold text-white mb-2">{ex.promptDe}</p>
+                                                      <p className="text-[11px] text-amber-200/85">Escribe en español de España la traducción natural de la frase.</p>
+                                                      <button type="button" onClick={() => speakRutaDe(ex.promptDe)} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-amber-300 hover:text-white"><Icon name="volume-2" className="w-4 h-4" /> Escuchar alemán</button>
                                                   </div>
                                               ) : ex.type === 'order' || ex.type === 'connector' ? (
                                                   <div className="mb-4 rounded-xl border border-cyan-500/25 bg-cyan-950/20 p-4">
@@ -3489,19 +3556,30 @@
                                                       <p className="text-xl font-bold text-white leading-snug">{ex.target}</p>
                                                   </div>
                                               )}
-                                              <button type="button" onClick={() => { setRutaRun({ ...rutaRun, step: 1 }); setRutaFillInput(''); setRutaSpeakErr(''); window.__mullerPlaySfx && window.__mullerPlaySfx('tick'); }} className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg">
-                                                  {ex.type === 'read' ? 'Marcar como leído y continuar' : ex.type === 'fill' ? 'Ir a respuesta' : ex.type === 'order' || ex.type === 'connector' || ex.type === 'podcast' || ex.type === 'audio_story' ? 'Responder ahora' : 'Ir a validación'}
+                                              <button type="button" onClick={() => { setRutaRun({ ...rutaRun, step: 1, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: false }); setRutaFillInput(''); setRutaSpeakErr(''); window.__mullerPlaySfx && window.__mullerPlaySfx('tick'); }} className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg">
+                                                  {ex.type === 'read' ? 'Marcar como leído y continuar' : ex.type === 'fill' || ex.type === 'translate_de' || ex.type === 'translate_es' ? 'Ir a respuesta' : ex.type === 'order' || ex.type === 'connector' || ex.type === 'podcast' || ex.type === 'audio_story' ? 'Responder ahora' : 'Ir a validación'}
                                               </button>
                                           </>
                                       )}
-                                      {st === 1 && ex && ex.type === 'fill' && (
+                                      {st === 1 && ex && (ex.type === 'fill' || ex.type === 'translate_de' || ex.type === 'translate_es') && (
                                           <>
-                                              <p className="text-white font-bold mb-3">{ex.prompt}</p>
-                                              {ex.promptEs ? <p className="text-xs text-emerald-200/85 mb-2">Traducción: {ex.promptEs}</p> : null}
-                                              {ex.hint ? <p className="text-xs text-gray-500 mb-2">Pista: {ex.hint}</p> : null}
-                                              <input value={rutaFillInput} onChange={(e) => setRutaFillInput(e.target.value)} onKeyDown={(e) => handleExerciseEnterSubmit(e, 'ruta-fill-submit', () => { if (checkRutaFillAnswer(ex)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } })} className="w-full rounded-xl bg-black/50 border border-fuchsia-500/40 px-4 py-3 text-white text-lg mb-3 outline-none focus:border-fuchsia-400" placeholder="Tu respuesta" autoComplete="off" />
+                                              {ex.type === 'fill' ? (
+                                                  <p className="text-white font-bold mb-3">{ex.prompt}</p>
+                                              ) : ex.type === 'translate_de' ? (
+                                                  <p className="text-white text-base mb-3 leading-relaxed">{ex.prompt}</p>
+                                              ) : (
+                                                  <>
+                                                      <p className="text-gray-400 text-sm mb-1">Frase en alemán:</p>
+                                                      <p className="text-white font-bold mb-3">{ex.promptDe}</p>
+                                                  </>
+                                              )}
+                                              {ex.type === 'fill' && ex.promptEs ? <p className="text-xs text-emerald-200/85 mb-2"><span className="font-bold text-emerald-300/90">Sentido (español de España): </span>{ex.promptEs}</p> : null}
+                                              {ex.hint && ex.type === 'fill' ? <p className="text-xs text-gray-500 mb-2">Pista: {ex.hint}</p> : null}
+                                              {rutaRun.rutaLastChanceHint ? <p className="text-sm text-amber-200 mb-2 font-bold border border-amber-500/40 rounded-lg px-3 py-2 bg-amber-950/40">{rutaRun.rutaLastChanceHint}</p> : null}
+                                              <input value={rutaFillInput} onChange={(e) => setRutaFillInput(e.target.value)} onKeyDown={(e) => handleExerciseEnterSubmit(e, 'ruta-fill-submit', () => { submitRutaTypedExercise(); })} className="w-full rounded-xl bg-black/50 border border-fuchsia-500/40 px-4 py-3 text-white text-lg mb-3 outline-none focus:border-fuchsia-400" placeholder={ex.type === 'translate_es' ? 'Escribe en español' : 'Escribe en alemán'} autoComplete="off" />
                                               {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
-                                              <button type="button" onClick={() => runSingleSubmitAction('ruta-fill-submit', () => { if (checkRutaFillAnswer(ex)) { setRutaRun({ ...rutaRun, step: 2 }); setRutaTranscript(''); setRutaSpeakErr(''); } })} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black py-3 text-white">Comprobar y continuar</button>
+                                              <p className="text-[11px] text-gray-500 mb-2">Intentos: {Math.min(RUTA_MAX_ATT, (rutaRun.exerciseAttempts || 0) + 1)} / {RUTA_MAX_ATT}</p>
+                                              <button type="button" onClick={() => runSingleSubmitAction('ruta-fill-submit', () => { submitRutaTypedExercise(); })} className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 font-black py-3 text-white">Comprobar</button>
                                           </>
                                       )}
                                       {st === 1 && ex && ex.type === 'read' && (
@@ -3517,6 +3595,8 @@
                                                       <p className="text-sm text-white">{ex.prompt}</p>
                                                   </div>
                                               ) : null}
+                                              {rutaRun.rutaLastChanceHint ? <p className="text-sm text-amber-200 mb-2 font-bold border border-amber-500/40 rounded-lg px-3 py-2 bg-amber-950/40">{rutaRun.rutaLastChanceHint}</p> : null}
+                                              <p className="text-[11px] text-gray-500 mb-2">Intentos: {Math.min(RUTA_MAX_ATT, (rutaRun.exerciseAttempts || 0) + 1)} / {RUTA_MAX_ATT}</p>
                                               <div className="grid grid-cols-1 gap-2 mb-3">
                                                   {(ex.options || []).map((opt, idx) => (
                                                       <button key={`${ex.id}-opt-${idx}`} type="button" onClick={() => handleOptionAnswer(opt)} className="text-left rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/15 px-4 py-3 text-white font-bold text-sm">
@@ -3537,14 +3617,27 @@
                                               </div>
                                               {rutaTranscript ? <p className="text-sm text-emerald-200/90 mb-2">Detectado: {rutaTranscript}</p> : null}
                                               {rutaSpeakErr ? <p className="text-amber-200 text-sm mb-2">{rutaSpeakErr}</p> : null}
+                                              {rutaRun.rutaLastChanceHint ? <p className="text-sm text-amber-200 mb-2 font-bold border border-amber-500/40 rounded-lg px-3 py-2 bg-amber-950/40">{rutaRun.rutaLastChanceHint}</p> : null}
+                                              <p className="text-[11px] text-gray-500 mb-2">Intentos: {Math.min(RUTA_MAX_ATT, (rutaRun.exerciseAttempts || 0) + 1)} / {RUTA_MAX_ATT}</p>
                                               <button
                                                   type="button"
                                                   onClick={() => runSingleSubmitAction('ruta-speak-validate', () => {
-                                                      if (checkRutaSpeakAnswer(ex.target, rutaRun.levelKey)) advanceExercise(true);
+                                                      if (checkRutaSpeakAnswer(ex.target, rutaRun.levelKey)) {
+                                                          advanceExercise(true);
+                                                          return;
+                                                      }
+                                                      const attempts = (rutaRun.exerciseAttempts || 0) + 1;
+                                                      if (attempts >= RUTA_MAX_ATT) {
+                                                          setRutaSpeakErr('');
+                                                          setRutaRun({ ...rutaRun, step: 2, exerciseAttempts: 0, rutaLastChanceHint: '', forcedReveal: true });
+                                                          return;
+                                                      }
+                                                      const lastHint = attempts === 2 ? `Último intento: la frase empieza por «${String(ex.target || '').slice(0, 6)}…».` : '';
+                                                      setRutaRun({ ...rutaRun, exerciseAttempts: attempts, rutaLastChanceHint: lastHint, forcedReveal: false });
                                                   })}
                                                   className="w-full rounded-xl bg-fuchsia-600 hover:bg-fuchsia-500 font-black py-3 text-white shadow-lg"
                                               >
-                                                  Validar y continuar
+                                                  Validar
                                               </button>
                                               <button
                                                   type="button"
@@ -3559,10 +3652,21 @@
                                               <p className="text-[11px] text-gray-500 mt-2">Si hoy no puedes usar micrófono, puedes avanzar igualmente y practicar voz después.</p>
                                           </>
                                       )}
-                                      {st === 2 && ex && (ex.type === 'fill' || ex.type === 'order' || ex.type === 'connector' || ex.type === 'podcast' || ex.type === 'audio_story') && (
+                                      {st === 2 && ex && (ex.type === 'fill' || ex.type === 'translate_de' || ex.type === 'translate_es' || ex.type === 'order' || ex.type === 'connector' || ex.type === 'podcast' || ex.type === 'audio_story' || ex.type === 'speak') && (
                                           <div className="space-y-3">
-                                              <p className="text-sm text-gray-300">Respuesta correcta: <strong className="text-emerald-300">{ex.answer}</strong></p>
-                                              <button type="button" onClick={() => advanceExercise(true)} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 font-black py-3 text-white">Siguiente ejercicio</button>
+                                              {rutaRun.forcedReveal ? (
+                                                  <p className="text-sm text-amber-200">Has agotado los {RUTA_MAX_ATT} intentos. Esta es la solución:</p>
+                                              ) : (
+                                                  <p className="text-sm text-emerald-200/90">¡Correcto!</p>
+                                              )}
+                                              <p className="text-sm text-gray-300">
+                                                  {ex.type === 'speak' ? 'Frase modelo: ' : 'Respuesta correcta: '}
+                                                  <strong className="text-emerald-300">{ex.type === 'speak' ? ex.target : ex.answer}</strong>
+                                              </p>
+                                              {ex.type === 'speak' && rutaRun.forcedReveal ? (
+                                                  <button type="button" onClick={() => speakRutaDe(ex.target)} className="inline-flex items-center gap-1 text-xs font-bold text-fuchsia-300 hover:text-white"><Icon name="volume-2" className="w-4 h-4" /> Escuchar modelo</button>
+                                              ) : null}
+                                              <button type="button" onClick={() => advanceExercise(!rutaRun.forcedReveal)} className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 font-black py-3 text-white">{rutaRun.forcedReveal ? 'Seguir (se repetirá este ejercicio al final)' : 'Siguiente ejercicio'}</button>
                                           </div>
                                       )}
                                   </div>
