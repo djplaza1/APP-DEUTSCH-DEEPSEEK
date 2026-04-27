@@ -784,6 +784,8 @@
     <!-- App partida en 4 chunks (<500KB c/u) para red; se concatenan antes de Babel -->
     <script>
       (function() {
+        // Cambia este valor en cada despliegue para forzar recarga real de chunks/SW.
+        var APP_VERSION = '20260427-anti-cache-1';
         var CHUNKS = ['src/a-core.jsx', 'src/b-app1.jsx', 'src/b-app2.jsx', 'src/c-extra.jsx'];
         var idx = 0;
         var parts = [];
@@ -807,10 +809,15 @@
             }
             return;
           }
-          var url = CHUNKS[idx];
+          var url = CHUNKS[idx] + '?v=' + encodeURIComponent(APP_VERSION);
           idx++;
           var xhr = new XMLHttpRequest();
           xhr.open('GET', url, true);
+          try {
+            xhr.setRequestHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            xhr.setRequestHeader('Pragma', 'no-cache');
+            xhr.setRequestHeader('Expires', '0');
+          } catch (e) {}
           xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
               parts.push(xhr.responseText);
@@ -838,7 +845,7 @@
                     })
                     .catch(function () {})
                     .finally(function () {
-                        navigator.serviceWorker.register('./sw.js').catch(function () {});
+                        navigator.serviceWorker.register('./sw.js?v=20260427-anti-cache-1', { updateViaCache: 'none' }).catch(function () {});
                     });
             });
         }

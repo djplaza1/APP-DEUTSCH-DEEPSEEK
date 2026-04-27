@@ -1,5 +1,5 @@
 /* Müller — Service Worker: red primero; caché de app + metadatos offline (último guion vía Cache API) */
-const CACHE = 'muller-sw-v5';
+const CACHE = 'muller-sw-v6';
 const PRECACHE_URLS = [
     './',
     './index.html',
