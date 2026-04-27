@@ -1,4 +1,4 @@
-�        const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
+﻿        const { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } = React;
 
         class MullerErrorBoundary extends React.Component {
             constructor(props) {
@@ -35,22 +35,22 @@
             }
         }
 
-        /** Supabase (gratis): Dashboard �  Project Settings �  API �  Project URL y anon public key */
+        /** Supabase (gratis): Dashboard â†’ Project Settings â†’ API â†’ Project URL y anon public key */
         window.MULLER_SUPABASE_URL = window.MULLER_SUPABASE_URL || 'https://mrimappoycvfujzegxdt.supabase.co';
         window.MULLER_SUPABASE_ANON_KEY = window.MULLER_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaW1hcHBveWN2ZnVqemVneGR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2MzI1MDMsImV4cCI6MjA5MjIwODUwM30.L_5Lk3S_TgiaSe8jAAhTcQTbUsQiTjxA9pWq0ZDayBY';
         window.MULLER_CREATOR_EMAIL = window.MULLER_CREATOR_EMAIL || 'djplaza1@gmail.com';
         window.MULLER_REWARDED_AD_URL = window.MULLER_REWARDED_AD_URL || '';
         window.MULLER_PREMIUM_CHECKOUT_URL = window.MULLER_PREMIUM_CHECKOUT_URL || '';
 
-        // --- COMPONENTE AISLANTE DE ICONOS (Lucide + contenedor �Spremium⬝ opcional) ---
+        // --- COMPONENTE AISLANTE DE ICONOS (Lucide + contenedor â€œpremiumâ€ opcional) ---
         const Icon = ({ name, className, nav = false }) => {
             const inner = <span className="lucide-wrapper" dangerouslySetInnerHTML={{ __html: `<i data-lucide="${name}" class="${className || ''}"></i>` }} />;
             return nav ? <span className="nav-tab-icon">{inner}</span> : inner;
         };
 
-        // --- BASES DE DATOS Y CONFIGURACI�N INICIAL (sin cambios) ---
+        // --- BASES DE DATOS Y CONFIGURACIÃ“N INICIAL (sin cambios) ---
         const DEFAULT_GUION = [
-            { speaker: 'Lukas', text: 'Hallo Elena! Heute ist ein gro�xer Tag.', translation: '¡Hola Elena! Hoy es un gran día.', vocab: [{ de: 'der Tag', es: 'el día', diff: 0 }] },
+            { speaker: 'Lukas', text: 'Hallo Elena! Heute ist ein groÃŸer Tag.', translation: 'Â¡Hola Elena! Hoy es un gran dÃ­a.', vocab: [{ de: 'der Tag', es: 'el dÃ­a', diff: 0 }] },
             { speaker: 'Lukas', text: 'Ich bin nervös, weil wir Bilder ausstellen.', translation: 'Estoy nervioso porque exponemos cuadros.', vocab: [{ de: 'ausstellen', es: 'exponer', diff: 0 }] },
             { speaker: 'Elena', text: 'Keine Sorge. Du bist ein toller Künstler.', translation: 'No te preocupes. Eres un gran artista.', isRedemittel: true, vocab: [{ de: 'der Künstler', es: 'el artista', diff: 0 }] },
             { speaker: 'Elena', text: 'Du wirst heute viel Anerkennung bekommen.', translation: 'Hoy recibirás mucho reconocimiento.', vocab: [{ de: 'die Anerkennung', es: 'el reconocimiento', diff: 1 }, { de: 'bekommen', es: 'recibir', diff: 0 }] },
@@ -91,7 +91,7 @@
             "sterben": "Prät: starb | Perf: ist gestorben",
             "gestorben": "Prät: starb | Perf: ist gestorben",
             "einsetzen": "Prät: setzte ein | Perf: hat eingesetzt",
-            "essen": "Prät: a�x | Perf: hat gegessen",
+            "essen": "PrÃ¤t: aÃŸ | Perf: hat gegessen",
             "trinken": "Prät: trank | Perf: hat getrunken",
             "fahren": "Prät: fuhr | Perf: ist gefahren",
             "gehen": "Prät: ging | Perf: ist gegangen",
@@ -154,7 +154,7 @@
             { regex: /(wart[en|e|et]+\s+(?:.*?\s+)?auf)/gi, tooltip: "warten auf + Akk", base: "warten auf" }
         ];
 
-        const CONN_LIST = ["weil", "dass", "obwohl", "wenn", "als", "damit", "ob", "bevor", "nachdem", "deshalb", "deswegen", "darum", "trotzdem", "dann", "danach", "au�xerdem", "und", "aber", "oder", "denn", "sondern"];
+        const CONN_LIST = ["weil", "dass", "obwohl", "wenn", "als", "damit", "ob", "bevor", "nachdem", "deshalb", "deswegen", "darum", "trotzdem", "dann", "danach", "auÃŸerdem", "und", "aber", "oder", "denn", "sondern"];
         const PREP_DAT = ["aus", "bei", "mit", "nach", "seit", "von", "zu", "ab"];
         const PREP_AKK = ["durch", "für", "gegen", "ohne", "um"];
         const PREP_WECHSEL = ["in", "an", "auf", "neben", "hinter", "über", "unter", "vor", "zwischen"];
@@ -178,7 +178,7 @@
             { id: 'bot_aylin', name: 'Aylin Demir', tag: 'Düsseldorf', lvl: 'B2' },
             { id: 'bot_felix', name: 'Felix Werner', tag: 'Nürnberg', lvl: 'B1' },
             { id: 'bot_mira', name: 'Mira Popov', tag: 'Wien', lvl: 'B2' },
-            { id: 'bot_oscar', name: '�scar Prieto', tag: 'Barcelona', lvl: 'B1' },
+            { id: 'bot_oscar', name: 'Ã“scar Prieto', tag: 'Barcelona', lvl: 'B1' },
         ];
 
         function mullerHash32(str) {
@@ -199,7 +199,7 @@
         function mullerMaskEmail(email) {
             const e = String(email || '');
             const at = e.indexOf('@');
-            if (at < 1) return e || '�';
+            if (at < 1) return e || 'â€”';
             return e.slice(0, 2) + '***' + e.slice(at);
         }
 
@@ -450,7 +450,7 @@
         }
 
         /** Conectores típicos al inicio de frase (no incluimos und/oder/aber para reducir falsos positivos). */
-        const MULLER_BX_CONN_START = ['weil', 'dass', 'obwohl', 'wenn', 'als', 'damit', 'ob', 'bevor', 'nachdem', 'deshalb', 'deswegen', 'darum', 'trotzdem', 'dann', 'danach', 'au�xerdem', 'denn', 'sondern', 'falls', 'sobald', 'solange', 'während', 'zuerst', 'anschlie�xend', 'schlie�xlich', 'zunächst', 'inzwischen', 'allerdings', 'jedoch', 'hingegen', 'folglich', 'trotz', 'au�xer', 'indem'];
+        const MULLER_BX_CONN_START = ['weil', 'dass', 'obwohl', 'wenn', 'als', 'damit', 'ob', 'bevor', 'nachdem', 'deshalb', 'deswegen', 'darum', 'trotzdem', 'dann', 'danach', 'auÃŸerdem', 'denn', 'sondern', 'falls', 'sobald', 'solange', 'wÃ¤hrend', 'zuerst', 'anschlieÃŸend', 'schlieÃŸlich', 'zunÃ¤chst', 'inzwischen', 'allerdings', 'jedoch', 'hingegen', 'folglich', 'trotz', 'auÃŸer', 'indem'];
 
         function mullerClassifyBibliotecaLine(german, meta) {
             if (!german || typeof german !== 'string') return 'vocabulario';
@@ -461,18 +461,18 @@
             const firstTok = lower.split(/[\s,.;:]+/).filter(Boolean)[0] || '';
             if (MULLER_BX_CONN_START.includes(firstTok)) return 'conectores';
 
-            const connMulti = ['zuerst', 'danach', 'später', 'schlie�xlich', 'zunächst', 'anschlie�xend', 'inzwischen', 'deswegen', 'trotzdem', 'allerdings', 'hingegen', 'folglich', 'au�xerdem', 'jedoch', 'dafür', 'dagegen', 'dabei', 'sonst'];
+            const connMulti = ['zuerst', 'danach', 'spÃ¤ter', 'schlieÃŸlich', 'zunÃ¤chst', 'anschlieÃŸend', 'inzwischen', 'deswegen', 'trotzdem', 'allerdings', 'hingegen', 'folglich', 'auÃŸerdem', 'jedoch', 'dafÃ¼r', 'dagegen', 'dabei', 'sonst'];
             if (connMulti.some((c) => lower.startsWith(c + ' '))) return 'conectores';
 
             if (/^(können|könnte|könnten|dürfte|dürfen|entschuldigung|vielen dank|danke|herzlichen|guten tag|guten morgen|guten abend|bis bald|auf wiedersehen|wie bitte|kein problem|ich möchte|ich hätte gerne|ich würde gerne|lass uns|wir könnten|ich bin der meinung)/i.test(lower) && g.length < 140) return 'redemittel';
 
-            if (/^(sich\s+[a-zäöü�x]+\s+(an|auf|für|von|über|mit|zu)\b)/i.test(g)) return 'verbos';
+            if (/^(sich\s+[a-zÃ¤Ã¶Ã¼ÃŸ]+\s+(an|auf|fÃ¼r|von|Ã¼ber|mit|zu)\b)/i.test(g)) return 'verbos';
             if (/\b(freuen|erinnern|halten|denken|sorgen|interessieren|vorbereiten|kümmern|verlassen|verzichten|bewerben|verabreden|entscheiden|einigen|bemühen|verstehen|bedanken)\s+(mich|dich|sich|uns|euch)?\s*(an|auf|für|von|über|mit|zu|in)\b/i.test(lower)) return 'verbos';
 
             const words = g.split(/\s+/).filter(Boolean);
             if (meta && meta.isPair && words.length <= 5) return 'vocabulario';
 
-            if (words.length <= 3 && /^[a-zäöü�x]+(en|eln|ern)$/i.test(words[0])) return 'verbos';
+            if (words.length <= 3 && /^[a-zÃ¤Ã¶Ã¼ÃŸ]+(en|eln|ern)$/i.test(words[0])) return 'verbos';
 
             if (/^(an|auf|in|mit|für|zu|von|über|unter|vor|nach|aus|bei|gegen|ohne|um|anstatt|trotz|während)\s+(dem|der|den|das|die|ein|eine|mich|dir|mir|sich|ihm|ihr|uns|euch)/i.test(g)) return 'preposiciones';
 
@@ -514,14 +514,14 @@
                         content = content.replace(transMatch[0], '').trim();
                     }
 
-                    const germanText = content.replace(/[�x��x��xx�⬢]/g, '').replace(/\s+/g, ' ').trim();
+                    const germanText = content.replace(/[ðŸ”´ðŸ”µðŸŸ¢â€¢]/g, '').replace(/\s+/g, ' ').trim();
                     if (germanText) out.push({ german: germanText, es: translation, isRedemittel });
 
                     if (vocabInner) {
                         vocabInner.split(',').forEach((piece) => {
                             const parts = piece.split('-');
                             if (parts.length >= 2) {
-                                const de = parts[0].trim().replace(/[�x��x��xx�⬢]/g, '');
+                                const de = parts[0].trim().replace(/[ðŸ”´ðŸ”µðŸŸ¢â€¢]/g, '');
                                 const es = parts.slice(1).join('-').trim();
                                 if (de) out.push({ german: de, es: es, isRedemittel: false, isPair: true });
                             }
@@ -530,11 +530,11 @@
                     continue;
                 }
 
-                const pairMatch = line.match(/^(.+?)\s*[-��]\s*(.+)$/);
+                const pairMatch = line.match(/^(.+?)\s*[-â€“â€”]\s*(.+)$/);
                 if (pairMatch && !line.includes(':')) {
                     const de = pairMatch[1].replace(/^[⬢\-\d.)\]]+\s*/, '').trim();
                     const es = pairMatch[2].trim();
-                    const looksDe = /[äöü�x���S]/.test(de) || /^(der|die|das|ein|eine|ich|du|sich|und|nicht)\b/i.test(de);
+                    const looksDe = /[Ã¤Ã¶Ã¼ÃŸÃ„Ã–Ãœ]/.test(de) || /^(der|die|das|ein|eine|ich|du|sich|und|nicht)\b/i.test(de);
                     if (de && es && looksDe) {
                         out.push({ german: de, es: es, isRedemittel: false, isPair: true });
                         continue;
@@ -579,7 +579,7 @@
 
             if (seg && seg.isPair && w <= 5) return 'b1';
 
-            if (/\b(Herausforderung|Bedeutung|Ma�xnahmen|entsprechend|voraussichtlich|gleichwohl|insofern|hinsichtlich|bezüglich|unabhängig davon|im Hinblick auf|von gro�xer)\b/i.test(g)) return 'b2';
+            if (/\b(Herausforderung|Bedeutung|MaÃŸnahmen|entsprechend|voraussichtlich|gleichwohl|insofern|hinsichtlich|bezÃ¼glich|unabhÃ¤ngig davon|im Hinblick auf|von groÃŸer)\b/i.test(g)) return 'b2';
             if (/\b(sodass|sofern|sobald|solange|anstatt dass|ohne dass|wobei|wodurch|weshalb)\b/i.test(lower)) return 'b2';
             if (/\b(dessen|deren|wessen)\b/i.test(lower) && w > 4) return 'b2';
             if (g.length > 115) return 'b2';
@@ -651,7 +651,7 @@
                     'ich schreibe dir, weil ...',
                     'Am ... um ... treffen wir uns in/bei ...',
                     'Kannst du mir bitte bis ... antworten?',
-                    'Liebe Grü�xe',
+                    'Liebe GrÃ¼ÃŸe',
                     'Dein/Deine ...'
                 ],
                 checklist: ['Anrede + saludo', 'Motivo claro', '2 datos concretos', 'Petición/pregunta', 'Despedida']
@@ -666,7 +666,7 @@
                     'am ... habe ich ... bestellt.',
                     'Leider habe ich folgendes Problem: ...',
                     'Ich bitte Sie um ... (Ersatz/Rückerstattung).',
-                    'Mit freundlichen Grü�xen'
+                    'Mit freundlichen GrÃ¼ÃŸen'
                 ],
                 checklist: ['Registro formal (Sie)', 'Problema descrito', 'Solicitud explícita', 'Cierre formal']
             },
@@ -681,7 +681,7 @@
                     'Aus folgenden Gründen ist der ursprüngliche Termin schwierig: ...',
                     'Als Alternative schlage ich ... vor.',
                     'Für Ihr Verständnis bedanke ich mich im Voraus.',
-                    'Mit freundlichen Grü�xen'
+                    'Mit freundlichen GrÃ¼ÃŸen'
                 ],
                 checklist: ['Objetivo claro', 'Justificación desarrollada', 'Alternativa concreta', 'Registro B2 formal']
             },
@@ -696,15 +696,15 @@
                     'Meiner Meinung nach ...',
                     'Erstens ... / Zweitens ...',
                     'Zusammenfassend bin ich der Auffassung, dass ...',
-                    'Mit freundlichen Grü�xen'
+                    'Mit freundlichen GrÃ¼ÃŸen'
                 ],
                 checklist: ['Introducción referida al tema', 'Opinión explícita', '2 argumentos conectados', 'Conclusión clara']
             }
         ];
         const LETTER_DRILLS = [
-            { title: "Umlaute � � �S und �x", sample: "�pfel · �l · �Sber · Stra�xe", practice: "�pfel �l �Sber Stra�xe" },
-            { title: "Alltag", sample: "schön · müde · hören · gro�x", practice: "Schön müde hören gro�x" },
-            { title: "Satzanfang", sample: "Gro�xschreibung: Ich, Du, Der, Die", practice: "Ich lerne Deutsch jeden Tag." }
+            { title: "Umlaute Ã„ Ã– Ãœ und ÃŸ", sample: "Ã„pfel Â· Ã–l Â· Ãœber Â· StraÃŸe", practice: "Ã„pfel Ã–l Ãœber StraÃŸe" },
+            { title: "Alltag", sample: "schÃ¶n Â· mÃ¼de Â· hÃ¶ren Â· groÃŸ", practice: "SchÃ¶n mÃ¼de hÃ¶ren groÃŸ" },
+            { title: "Satzanfang", sample: "GroÃŸschreibung: Ich, Du, Der, Die", practice: "Ich lerne Deutsch jeden Tag." }
         ];
 
         const levenshteinDistance = (a, b) => {
@@ -725,7 +725,7 @@
             return matrix[b.length][a.length];
         };
 
-        /** Quita repeticiones consecutivas de la misma palabra (STT móvil suele duplicar 5�20 veces). */
+        /** Quita repeticiones consecutivas de la misma palabra (STT mÃ³vil suele duplicar 5â€“20 veces). */
         const dedupeConsecutiveWords = (s) => {
             if (!s || typeof s !== 'string') return '';
             const parts = s.trim().split(/\s+/).filter(Boolean);
@@ -789,13 +789,13 @@
             return dedupeConsecutiveWords(t);
         };
 
-        /** Normaliza texto alemán para comparar lo que dicta el STT con el guion (umlauts, �x, puntuación). */
+        /** Normaliza texto alemÃ¡n para comparar lo que dicta el STT con el guion (umlauts, ÃŸ, puntuaciÃ³n). */
         const normalizeGermanSpeechText = (s) => {
             if (!s || typeof s !== 'string') return '';
             let t = s.toLowerCase().trim();
-            t = t.replace(/\u00df/g, 'ss').replace(/�x/g, 'ss');
+            t = t.replace(/\u00df/g, 'ss').replace(/ÃŸ/g, 'ss');
             t = t.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue');
-            t = t.replace(/[�"'`´]/g, "'");
+            t = t.replace(/[â€™'`Â´]/g, "'");
             t = t.replace(/[^a-z0-9\s']/g, ' ');
             t = t.replace(/\s+/g, ' ').trim();
             return t;
@@ -809,8 +809,8 @@
             .trim();
         const mullerPdfGuessUnitLesson = (s) => {
             const txt = String(s || '');
-            const unitHit = txt.match(/\b(?:Lektion|Einheit|Unidad|Unit)\s*[:\-]?\s*([A-Z0-9���Sa-zäöü�x]+)/i);
-            const lessonHit = txt.match(/\b(?:Thema|Tema|Kapitel|Lecci[oó]n)\s*[:\-]?\s*([A-Z0-9���Sa-zäöü�x]+)/i);
+            const unitHit = txt.match(/\b(?:Lektion|Einheit|Unidad|Unit)\s*[:\-]?\s*([A-Z0-9Ã„Ã–Ãœa-zÃ¤Ã¶Ã¼ÃŸ]+)/i);
+            const lessonHit = txt.match(/\b(?:Thema|Tema|Kapitel|Lecci[oÃ³]n)\s*[:\-]?\s*([A-Z0-9Ã„Ã–Ãœa-zÃ¤Ã¶Ã¼ÃŸ]+)/i);
             return {
                 unit: unitHit ? String(unitHit[1] || '').trim() : '',
                 lesson: lessonHit ? String(lessonHit[1] || '').trim() : ''
@@ -825,7 +825,7 @@
         const mullerClamp = (n, min, max) => Math.max(min, Math.min(max, n));
         const mullerNormalizeGermanWordToken = (raw) => String(raw || '')
             .toLowerCase()
-            .replace(/[����]/g, function(m) { return {�:'ae',�:'oe',�:'ue',�:'ss'}[m]; })
+            .replace(/[äöüß]/g, function(m) { return {ä:'ae',ö:'oe',ü:'ue',ß:'ss'}[m]; })
             .replace(/^[^a-z]+|[^a-z]+$/gi, '')
             .trim();
         const mullerReadingTokenizeText = (text) => String(text || '')
@@ -969,7 +969,7 @@
             return { ...map, [key]: { ...prev, viewCount, lastViewed: todayStr } };
         }
 
-        /** Racha �Shonesta⬝: el día cuenta solo si hay actividad mínima (umbrales fijos en código). */
+        /** Racha â€œhonestaâ€: el dÃ­a cuenta solo si hay actividad mÃ­nima (umbrales fijos en cÃ³digo). */
         const MULLER_STREAK_QUAL_KEY = 'muller_streak_qualifying_days_v1';
         const MULLER_STREAK_TODAY_KEY = 'muller_streak_today_stats_v1';
         const MULLER_STREAK_MIN_VOCAB_RATINGS = 8;
@@ -1068,7 +1068,7 @@
             }
         }
 
-        /** Simulacro oral B1 � plantillas ampliadas (solo front). */
+        /** Simulacro oral B1 â€” plantillas ampliadas (solo front). */
         const MULLER_ORAL_B1_QUESTIONS = [
             { de: 'Was halten Sie von Kunst in der modernen Gesellschaft?', es: '¿Qué opina del arte en la sociedad moderna?', model: 'Ich finde, dass Kunst wichtig ist, weil sie die Kultur bereichert.' },
             { de: 'Wie wichtig ist Ihnen Umweltschutz im Alltag?', es: '¿Qué importancia tiene para usted la protección del medio ambiente?', model: 'Für mich ist Umweltschutz sehr wichtig, deshalb trenne ich Müll.' },
@@ -1125,55 +1125,55 @@
             nav_escritura: { title: 'Escritura', what: 'Lienzo para tableta: caligrafía, dictados, temas y OCR opcional. Pensado para escribir a mano como en el papel del examen.', tips: ['Activa líneas de cuaderno si te ayuda la alineación.', 'En dictado, escucha dos veces antes de mirar la solución.', 'En tableta, apoya la mano: el lienzo usa pointer capture para no perder trazos.'] },
             nav_vocab: { title: 'Vocabulario', what: 'Tarjetas de la lista activa (guion o lección propia): escuchas alemán, revelas español y calificas. El SRS programa el repaso.', tips: ['Di la palabra en voz alta antes de revelar.', 'Usa Fácil/Normal/Difícil con honestidad: el calendario depende de ello.', 'Mezcla lecciones en Biblioteca para sesiones largas.'] },
             nav_b1: { title: 'B1 Fundamentos', what: 'Banco de frases modelo (JSON) por categorías: vocabulario, verbos, preposiciones, conectores, Redemittel y modo mix.', tips: ['Alterna MIX con categorías débiles.', 'Escucha la frase varias veces antes de leer la traducción.', 'Anota en Escritura las que quieras fijar.'] },
-            nav_b2: { title: 'B2 Meisterklasse', what: 'Misma estructura que B1 pero con estructuras más altas; útil para subir registro y conectores complejos.', tips: ['Lee en voz alta la versión �Salta⬝ para automatizar.', 'Compara con la línea básica si el JSON la trae.', 'Lleva un cuaderno de frases copiadas a mano.'] },
+            nav_b2: { title: 'B2 Meisterklasse', what: 'Misma estructura que B1 pero con estructuras mÃ¡s altas; Ãºtil para subir registro y conectores complejos.', tips: ['Lee en voz alta la versiÃ³n â€œaltaâ€ para automatizar.', 'Compara con la lÃ­nea bÃ¡sica si el JSON la trae.', 'Lleva un cuaderno de frases copiadas a mano.'] },
             nav_progreso: { title: 'Progreso', what: 'Resumen de racha, mazos difícil/normal, gramática, gráfico semanal y exportación PDF/Anki.', tips: ['Exporta PDF antes de examen para revisar en papel.', 'Los mazos se alimentan desde Vocab y gramática guardada en Historia.', 'SRS de vocabulario tiene su propio contador en la pantalla de ayuda.'] },
-            nav_biblioteca: { title: 'Biblioteca', what: 'Guardas guiones pegados desde la IA y listas de vocabulario personalizadas; puedes enviar un texto pegado a B1 o B2 (vocabulario, verbos, etc.) con nivel automático por frase o forzando un nivel.', tips: ['Revisa el formato del prompt de IA antes de pegar.', '�SDistribuir⬝ estima B1/B2 por heurística local (no es IA); puedes forzar todo a B1 o B2.', 'Las tarjetas del archivo b1-b2-database.json no son �Stuyas⬝: �SBorrar aportaciones⬝ solo quita lo añadido desde Distribuir.', 'Las lecciones de vocab se practican con el botón Practicar.'] },
-            nav_lexikon: { title: 'Lexikon', what: 'Traducción de palabras o frases (detección automática de idioma hacia alemán o español que elijas); opción aparte para solo Wiktionary; guardar pares en las mismas lecciones que en Biblioteca �  Vocab.', tips: ['En �SPalabra �  traducción⬝ elige ES� DE si buscas cómo se dice en alemán una palabra en español.', 'En el traductor usa �S�  Alemán⬝ o �S�  Español⬝ para forzar el sentido (incluye palabras malsonantes: el servicio puede devolver equivalentes o censura según el motor).', 'Si el desplegable de lecciones está vacío, crea lecciones en Biblioteca �  Vocab; al abrir Lexikon se vuelve a leer el almacenamiento local.'] },
-            nav_telc: { title: 'TELC por nivel', what: 'Orientación por nivel CEFR: estructura típica de examen (lectura, escucha, escritura, oral), checklist del día y enlaces oficiales. No sustituye modelos de examen ni convocatoria.', tips: ['Elige tu nivel arriba (A1�C2).', 'Los tiempos reales los marca tu centro; confirma en tu hoja de inscripción.', 'Para modelos oficiales usa telc.de / el centro examinador.', 'Combina con la pestaña Entrenamiento para práctica tipo test.'] },
+            nav_biblioteca: { title: 'Biblioteca', what: 'Guardas guiones pegados desde la IA y listas de vocabulario personalizadas; puedes enviar un texto pegado a B1 o B2 (vocabulario, verbos, etc.) con nivel automÃ¡tico por frase o forzando un nivel.', tips: ['Revisa el formato del prompt de IA antes de pegar.', 'â€œDistribuirâ€ estima B1/B2 por heurÃ­stica local (no es IA); puedes forzar todo a B1 o B2.', 'Las tarjetas del archivo b1-b2-database.json no son â€œtuyasâ€: â€œBorrar aportacionesâ€ solo quita lo aÃ±adido desde Distribuir.', 'Las lecciones de vocab se practican con el botÃ³n Practicar.'] },
+            nav_lexikon: { title: 'Lexikon', what: 'TraducciÃ³n de palabras o frases (detecciÃ³n automÃ¡tica de idioma hacia alemÃ¡n o espaÃ±ol que elijas); opciÃ³n aparte para solo Wiktionary; guardar pares en las mismas lecciones que en Biblioteca â†’ Vocab.', tips: ['En â€œPalabra â†’ traducciÃ³nâ€ elige ESâ†’DE si buscas cÃ³mo se dice en alemÃ¡n una palabra en espaÃ±ol.', 'En el traductor usa â€œâ†’ AlemÃ¡nâ€ o â€œâ†’ EspaÃ±olâ€ para forzar el sentido (incluye palabras malsonantes: el servicio puede devolver equivalentes o censura segÃºn el motor).', 'Si el desplegable de lecciones estÃ¡ vacÃ­o, crea lecciones en Biblioteca â†’ Vocab; al abrir Lexikon se vuelve a leer el almacenamiento local.'] },
+            nav_telc: { title: 'TELC por nivel', what: 'OrientaciÃ³n por nivel CEFR: estructura tÃ­pica de examen (lectura, escucha, escritura, oral), checklist del dÃ­a y enlaces oficiales. No sustituye modelos de examen ni convocatoria.', tips: ['Elige tu nivel arriba (A1â€“C2).', 'Los tiempos reales los marca tu centro; confirma en tu hoja de inscripciÃ³n.', 'Para modelos oficiales usa telc.de / el centro examinador.', 'Combina con la pestaÃ±a Entrenamiento para prÃ¡ctica tipo test.'] },
             nav_ia: { title: 'IA Story Builder', what: 'Genera un guion nuevo con nivel y tema; útil cuando quieres vocabulario fresco sin pegar texto manual.', tips: ['Indica bien el nivel (B1/B2) y el tema.', 'Tras generar, guarda y estudia en Historia.', 'Combina con vocab propio en el campo de palabras si existe.'] },
-            nav_comunidad: { title: 'Comunidad', what: 'Opción A: cuenta solo en el navegador (PBKDF2 local). Opción B (gratis): Supabase � mismo registro pero con sesión en la nube, directorio de perfiles y tabla de liga semanal compartida; bots siguen siendo simulados en tu ranking.', tips: ['Pega URL y anon key de Supabase en index.html (Project Settings �  API) y ejecuta supabase/schema.sql en el SQL Editor.', 'El plan gratuito de Supabase suele bastar para estudio; revisa límites en el dashboard.', 'Si no configuras Supabase, todo sigue funcionando en modo local.', 'Tecla O para abrir Comunidad.'] },
-            historia_base: { title: 'Historia � vista general', what: 'Escuchas y lees escenas; el vocabulario resaltado enlaza con las tarjetas. Abajo tienes play, escenas y velocidad.', tips: ['Primero escucha, luego muestra traducción.', 'Sube o baja la velocidad según el nivel del día.', 'PDF del guion sirve para repaso offline.'] },
-            historia_podcast: { title: 'Modo Podcast', what: 'Reproduce el guion actual escena a escena sin tener que pulsar �Ssiguiente⬝. Con �STodos los guiones⬝ (barra superior) pasa al siguiente guion guardado al terminar el actual � útil en coche para encadenar varios.', tips: ['Elige el guion en el menú �SGuion en Historia⬝ (arriba a la izquierda).', 'Podcast solo afecta al guion cargado; �STodos los guiones⬝ encadena tus guiones de Biblioteca en orden.', 'Combina con Solo audio y velocidad para manos libres.'] },
+            nav_comunidad: { title: 'Comunidad', what: 'OpciÃ³n A: cuenta solo en el navegador (PBKDF2 local). OpciÃ³n B (gratis): Supabase â€” mismo registro pero con sesiÃ³n en la nube, directorio de perfiles y tabla de liga semanal compartida; bots siguen siendo simulados en tu ranking.', tips: ['Pega URL y anon key de Supabase en index.html (Project Settings â†’ API) y ejecuta supabase/schema.sql en el SQL Editor.', 'El plan gratuito de Supabase suele bastar para estudio; revisa lÃ­mites en el dashboard.', 'Si no configuras Supabase, todo sigue funcionando en modo local.', 'Tecla O para abrir Comunidad.'] },
+            historia_base: { title: 'Historia â€” vista general', what: 'Escuchas y lees escenas; el vocabulario resaltado enlaza con las tarjetas. Abajo tienes play, escenas y velocidad.', tips: ['Primero escucha, luego muestra traducciÃ³n.', 'Sube o baja la velocidad segÃºn el nivel del dÃ­a.', 'PDF del guion sirve para repaso offline.'] },
+            historia_podcast: { title: 'Modo Podcast', what: 'Reproduce el guion actual escena a escena sin tener que pulsar â€œsiguienteâ€. Con â€œTodos los guionesâ€ (barra superior) pasa al siguiente guion guardado al terminar el actual â€” Ãºtil en coche para encadenar varios.', tips: ['Elige el guion en el menÃº â€œGuion en Historiaâ€ (arriba a la izquierda).', 'Podcast solo afecta al guion cargado; â€œTodos los guionesâ€ encadena tus guiones de Biblioteca en orden.', 'Combina con Solo audio y velocidad para manos libres.'] },
             historia_interview: { title: 'Simulación oral (Teil 2)', what: 'Pregunta tipo examen; mantienes pulsado el micrófono para responder y recibes feedback por palabras.', tips: ['Responde en frases completas, no solo sí/no.', 'Mira el feedback de palabras para afinar pronunciación.', 'Relájate: es entrenamiento, no evaluación oficial.'] },
             historia_roleplay: { title: 'Roleplay / tu turno', what: 'La app silencia voces para que leas o digas tú la réplica; puedes escuchar modelo, grabar y ver puntuación.', tips: ['Haz primero play del modelo y luego imita.', 'Comprueba la traducción solo después de intentar.', 'Pasa de escena cuando estés satisfecho con tu toma.'] },
             historia_puzzle: { title: 'Satzbau (puzzle)', what: 'Reconstruye la frase arrastrando trozos en orden. Refuerza orden de palabras en alemán.', tips: ['Escucha la pista de audio antes de mirar la solución.', 'Piensa en el verbo en segunda posición en main clauses.', 'Comprueba solo cuando hayas colocado todas las piezas.'] },
-            historia_diktat: { title: 'Diktat', what: 'Dictado: escribes lo que oyes y comparas con el modelo. Refuerza ortografía y oído.', tips: ['No mires el texto hasta corregir.', 'Repite el audio varias veces; el TELC permite escuchar.', 'Presta atención a umlauts y �x.'] },
+            historia_diktat: { title: 'Diktat', what: 'Dictado: escribes lo que oyes y comparas con el modelo. Refuerza ortografÃ­a y oÃ­do.', tips: ['No mires el texto hasta corregir.', 'Repite el audio varias veces; el TELC permite escuchar.', 'Presta atenciÃ³n a umlauts y ÃŸ.'] },
             historia_huecos: { title: 'Huecos (Lückentext)', what: 'Palabras clave ocultas en el texto; piensa significado y forma antes de seguir.', tips: ['Lee la frase entera en silencio primero.', 'Fíjate en colocaciones del vocabulario marcado.', 'Si bloqueas, revela traducción y vuelve a intentar.'] },
             historia_artikel: { title: 'Artículos (Sniper)', what: 'Los artículos aparecen ocultos: debes decidir der/die/das o forma casuada al leer.', tips: ['Revisa género en las tarjetas de vocabulario de la escena.', 'Di en voz alta la palabra con artículo correcto antes de continuar.', 'Combina con entrenamiento avanzado de artículos para más volumen.'] },
             historia_declinar: { title: 'Declinación', what: 'Se ocultan terminaciones de artículos/adjetivos: piensa caso (Nom/Akk/Dat/Gen).', tips: ['Identifica primero qué sustantivo gobierna el verbo/preposición.', 'Repasa la tabla corta en cabeza antes de mostrar.', 'Enlaza con el modo de preposiciones en Entrenamiento.'] },
             historia_tempus: { title: 'Tempus', what: 'Panel extra con formas verbales del texto para repasar Präteritum/Perfekt y familia.', tips: ['Di en voz alta las tres formas que propone el panel.', 'Compara con la frase original en contexto.', 'Anota verbos irregulares en tu lista.'] },
             historia_blind: { title: 'Modo oído (blur)', what: 'El texto aparece borroso hasta que te acercas: fuerzas escucha primero.', tips: ['Escucha el audio completo una vez con ojos en blur.', 'Quita blur solo para palabras concretas.', 'Ideal para reducir dependencia de la lectura.'] },
             historia_dialogue: { title: 'Diálogo estándar', what: 'Ves la escena, reproduces audio y puedes mostrar traducción. Es el modo por defecto sin dictado ni puzzle.', tips: ['Alterna lectura en voz alta y solo escucha.', 'Pulsa Tutor IA si una estructura no te encaja.', 'Guarda gramática con el botón de guardar si quieres repasarla después.'] },
-            historia_herramientas: { title: 'Barra de herramientas (Historia)', what: 'Flüstern: voz más baja; Ruido: ambiente; Diktat/Huecos/Artículos/Declinar/Tempus/Satzbau/Oído y selector de personajes mudos cambian cómo interactúas con la misma escena.', tips: ['Activa solo una herramienta �Sfuerte⬝ a la vez (dictado, puzzle⬦).', 'Mutear personajes sirve para practicar solo tus líneas.', 'Satzbau y Diktat son los más lentos: reserva tiempo.'] },
+            historia_herramientas: { title: 'Barra de herramientas (Historia)', what: 'FlÃ¼stern: voz mÃ¡s baja; Ruido: ambiente; Diktat/Huecos/ArtÃ­culos/Declinar/Tempus/Satzbau/OÃ­do y selector de personajes mudos cambian cÃ³mo interactÃºas con la misma escena.', tips: ['Activa solo una herramienta â€œfuerteâ€ a la vez (dictado, puzzleâ€¦).', 'Mutear personajes sirve para practicar solo tus lÃ­neas.', 'Satzbau y Diktat son los mÃ¡s lentos: reserva tiempo.'] },
             historia_quiz: { title: 'Quiz / examen rápido', what: 'Modo pregunta-respuesta cuando esté activo en tu flujo.', tips: ['Lee el enunciado dos veces.', 'Gestiona el tiempo como en examen.', 'Repasa errores en Historia normal después.'] },
-            shadowing_main: { title: 'Shadowing � cómo practicar', what: 'Escuchas la frase del guion con voz preferida, luego la repites al unísono o justo después. El micrófono opcional da feedback por palabra.', tips: ['No traduzcas mentalmente palabra a palabra: imita sonido.', 'Si el texto es largo, divide en mitades.', 'Ajusta la velocidad shadow si la app lo permite.'] },
-            escritura_free: { title: 'Escritura � libre', what: 'Hoja en blanco para apuntes, conjugaciones o lo que necesites.', tips: ['Goma con varios anchos borra sin vaciar el lienzo; Deshacer trazo quita el último gesto.', 'Marcador y subrayado ayudan a marcar errores o énfasis como en papel.', 'Guarda PNG o usa OCR cuando quieras revisar el texto.'] },
-            escritura_copy: { title: 'Escritura � copia', what: 'Copias frases modelo para caligrafía y ortografía.', tips: ['Mira la frase completa, luego escribe de memoria en el lienzo.', 'Repite la misma línea varias veces.', 'Compara tu escritura con la fuente al final.'] },
-            escritura_dictation: { title: 'Escritura � dictado', what: 'Escuchas un dictado por TTS y escribes; puedes ver la solución para autocorregir.', tips: ['Dos escuchas antes de revelar.', 'Anota en borrador mental la puntuación.', 'Pasa a otro dictado cuando domines el actual.'] },
-            escritura_prompt: { title: 'Escritura � tema', what: 'Recibes un tema B1/B2 para escribir un mini texto a mano.', tips: ['Escribe un esquema de 3 ideas en el lienzo.', 'No pares en la primera frase: busca 5�8 líneas.', 'Lee en voz alta lo escrito para detectar errores.'] },
-            escritura_letters: { title: 'Escritura � letras alemanas', what: 'Practicas �, �, �S, �x y ligaduras típicas.', tips: ['Haz filas enteras de una letra antes de mezclar.', 'Pronuncia en voz alta mientras escribes.', 'Pasa al siguiente bloque cuando salgan uniformes.'] },
-            escritura_guion: { title: 'Escritura � guion', what: 'Copias líneas del guion cargado en Historia/Biblioteca.', tips: ['Avanza escena a escena como en shadowing lento.', 'Tapar traducción hasta haber escrito.', '�atil como dictado propio: léete la frase y escribe sin mirar.'] },
-            escritura_vocab: { title: 'Escritura � vocabulario', what: 'Escribes a mano la palabra activa de tu lista de vocabulario.', tips: ['Di la palabra en voz alta antes de trazar.', 'Si la lista está vacía, abre Vocab o carga guion.', 'Combina con OCR si quieres comparar trazo con modelo.'] },
-            vocab_active_recall: { title: 'Vocabulario � active recall', what: 'Escuchas alemán, intentas recordar español, revelas y calificas. El SRS ordena la lista automáticamente.', tips: ['No marques �Sfácil⬝ si solo reconoces: hay que recordar.', 'Usa escritura a mano si necesitas refuerzo motor.', 'Mezcla lecciones para variedad.'] },
-            bx_mix: { title: 'B1/B2 � modo MIX', what: 'Baraja frases de todas las categorías del JSON activo.', tips: ['Ideal cuando ya dominas categorías sueltas.', 'Marca mentalmente las que fallas y vuelve en modo categoría.', 'Escucha primero, lee después.'] },
-            bx_vocabulario: { title: 'B1/B2 � vocabulario', what: 'Frases cortas con léxico clave por nivel.', tips: ['Lee en voz alta ambas columnas.', 'Copia 3 que te cuesten a Escritura.', 'Relaciona con Historia buscando palabras en guion.'] },
-            bx_verbos: { title: 'B1/B2 � verbos', what: 'Patrones verbales y colocaciones frecuentes.', tips: ['En voz alta: infinitivo + ejemplo.', 'Crea una mini frase tuya con cada verbo.', 'Cruza con preposiciones si el verbo las pide.'] },
-            bx_preposiciones: { title: 'B1/B2 � preposiciones', what: 'Uso de Kasus con preposiciones típicas.', tips: ['Memoriza verbo + preposición como bloque.', 'Haz dos frases: una Dativo otra Akkusativ si aplica.', 'Repasa en Entrenamiento para más ítems.'] },
-            bx_conectores: { title: 'B1/B2 � conectores', what: 'Conectores lógicos para escritura oral y Redemittel.', tips: ['Clasifica: oposición, causa, consecuencia, tiempo.', 'Escribe un minipárrafo usando solo conectores nuevos.', '�asalos en Historia al improvisar respuestas.'] },
-            bx_redemittel: { title: 'B1/B2 � Redemittel', what: 'Fórmulas listas para examen oral/escrito.', tips: ['Aprende de memoria 5 por semana.', 'Dílas en voz alta con buena entonación.', 'Inserta una por respuesta en simulación oral.'] },
-            progreso_dashboard: { title: 'Progreso � panel', what: 'Ves racha, monedas, mazos y exportaciones; el bloque de Entrenamiento resume práctica avanzada si lo usas.', tips: ['Haz PDF antes de vacaciones para no perder la foto.', 'Revisa mazos difícil cada pocos días.', 'Combina con backup JSON flotante para copia total.'] },
-            guiones_import: { title: 'Biblioteca � guiones', what: 'Pegas texto de la IA con título y lo guardas; al cargarlo se vuelve tu Historia activa.', tips: ['Comprueba títulos para encontrar lecciones rápido.', 'Borra versiones viejas para no confundirte.', 'El prompt sugerido está arriba: cópialo tal cual a ChatGPT/Gemini.'] },
-            guiones_vocab_custom: { title: 'Biblioteca � vocabulario propio', what: 'Pegas listas �Salemán � español⬝ y guardas lecciones; luego Practicar o mezcla.', tips: ['Una línea por palabra facilita el parseo.', 'Mezcla varias lecciones para simular examen amplio.', 'Exporta a Anki desde Progreso si usas mazos allí.'] },
-            guiones_bx_distrib: { title: 'Biblioteca �  B1 / B2 (subpestañas)', what: 'Desde un texto pegado se extraen frases y se clasifican por tipo (vocabulario, verbos, etc.); cada frase se coloca en B1 o B2 según reglas locales o en un solo nivel si lo fuerzas.', tips: ['Si tenías un guion guardado cargado en Historia al pulsar Distribuir, esas tarjetas quedan vinculadas: al borrar ese guion puedes quitar también esas entradas en B1/B2.', 'El nivel automático es una estimación: revisa en B1/B2 y mueve o borra tarjetas con �STu biblioteca⬝.', 'Frases antiguas sin vincular: usa �SBorrar mis aportaciones⬝ o borra tarjeta a tarjeta. El archivo b1-b2-database.json del proyecto no se borra desde aquí.'] },
-            guiones_mix: { title: 'Mezclar lecciones de vocabulario', what: 'Seleccionas varias lecciones guardadas y generas una sesión única en la pestaña Vocab.', tips: ['Marca al menos dos lecciones si quieres variedad.', 'Las tarjetas difíciles se suelen repetir al final.', '�asalo antes de un examen para repaso amplio.'] },
+            shadowing_main: { title: 'Shadowing â€” cÃ³mo practicar', what: 'Escuchas la frase del guion con voz preferida, luego la repites al unÃ­sono o justo despuÃ©s. El micrÃ³fono opcional da feedback por palabra.', tips: ['No traduzcas mentalmente palabra a palabra: imita sonido.', 'Si el texto es largo, divide en mitades.', 'Ajusta la velocidad shadow si la app lo permite.'] },
+            escritura_free: { title: 'Escritura â€” libre', what: 'Hoja en blanco para apuntes, conjugaciones o lo que necesites.', tips: ['Goma con varios anchos borra sin vaciar el lienzo; Deshacer trazo quita el Ãºltimo gesto.', 'Marcador y subrayado ayudan a marcar errores o Ã©nfasis como en papel.', 'Guarda PNG o usa OCR cuando quieras revisar el texto.'] },
+            escritura_copy: { title: 'Escritura â€” copia', what: 'Copias frases modelo para caligrafÃ­a y ortografÃ­a.', tips: ['Mira la frase completa, luego escribe de memoria en el lienzo.', 'Repite la misma lÃ­nea varias veces.', 'Compara tu escritura con la fuente al final.'] },
+            escritura_dictation: { title: 'Escritura â€” dictado', what: 'Escuchas un dictado por TTS y escribes; puedes ver la soluciÃ³n para autocorregir.', tips: ['Dos escuchas antes de revelar.', 'Anota en borrador mental la puntuaciÃ³n.', 'Pasa a otro dictado cuando domines el actual.'] },
+            escritura_prompt: { title: 'Escritura â€” tema', what: 'Recibes un tema B1/B2 para escribir un mini texto a mano.', tips: ['Escribe un esquema de 3 ideas en el lienzo.', 'No pares en la primera frase: busca 5â€“8 lÃ­neas.', 'Lee en voz alta lo escrito para detectar errores.'] },
+            escritura_letters: { title: 'Escritura â€” letras alemanas', what: 'Practicas Ã„, Ã–, Ãœ, ÃŸ y ligaduras tÃ­picas.', tips: ['Haz filas enteras de una letra antes de mezclar.', 'Pronuncia en voz alta mientras escribes.', 'Pasa al siguiente bloque cuando salgan uniformes.'] },
+            escritura_guion: { title: 'Escritura â€” guion', what: 'Copias lÃ­neas del guion cargado en Historia/Biblioteca.', tips: ['Avanza escena a escena como en shadowing lento.', 'Tapar traducciÃ³n hasta haber escrito.', 'Ãštil como dictado propio: lÃ©ete la frase y escribe sin mirar.'] },
+            escritura_vocab: { title: 'Escritura â€” vocabulario', what: 'Escribes a mano la palabra activa de tu lista de vocabulario.', tips: ['Di la palabra en voz alta antes de trazar.', 'Si la lista estÃ¡ vacÃ­a, abre Vocab o carga guion.', 'Combina con OCR si quieres comparar trazo con modelo.'] },
+            vocab_active_recall: { title: 'Vocabulario â€” active recall', what: 'Escuchas alemÃ¡n, intentas recordar espaÃ±ol, revelas y calificas. El SRS ordena la lista automÃ¡ticamente.', tips: ['No marques â€œfÃ¡cilâ€ si solo reconoces: hay que recordar.', 'Usa escritura a mano si necesitas refuerzo motor.', 'Mezcla lecciones para variedad.'] },
+            bx_mix: { title: 'B1/B2 â€” modo MIX', what: 'Baraja frases de todas las categorÃ­as del JSON activo.', tips: ['Ideal cuando ya dominas categorÃ­as sueltas.', 'Marca mentalmente las que fallas y vuelve en modo categorÃ­a.', 'Escucha primero, lee despuÃ©s.'] },
+            bx_vocabulario: { title: 'B1/B2 â€” vocabulario', what: 'Frases cortas con lÃ©xico clave por nivel.', tips: ['Lee en voz alta ambas columnas.', 'Copia 3 que te cuesten a Escritura.', 'Relaciona con Historia buscando palabras en guion.'] },
+            bx_verbos: { title: 'B1/B2 â€” verbos', what: 'Patrones verbales y colocaciones frecuentes.', tips: ['En voz alta: infinitivo + ejemplo.', 'Crea una mini frase tuya con cada verbo.', 'Cruza con preposiciones si el verbo las pide.'] },
+            bx_preposiciones: { title: 'B1/B2 â€” preposiciones', what: 'Uso de Kasus con preposiciones tÃ­picas.', tips: ['Memoriza verbo + preposiciÃ³n como bloque.', 'Haz dos frases: una Dativo otra Akkusativ si aplica.', 'Repasa en Entrenamiento para mÃ¡s Ã­tems.'] },
+            bx_conectores: { title: 'B1/B2 â€” conectores', what: 'Conectores lÃ³gicos para escritura oral y Redemittel.', tips: ['Clasifica: oposiciÃ³n, causa, consecuencia, tiempo.', 'Escribe un minipÃ¡rrafo usando solo conectores nuevos.', 'Ãšsalos en Historia al improvisar respuestas.'] },
+            bx_redemittel: { title: 'B1/B2 â€” Redemittel', what: 'FÃ³rmulas listas para examen oral/escrito.', tips: ['Aprende de memoria 5 por semana.', 'DÃ­las en voz alta con buena entonaciÃ³n.', 'Inserta una por respuesta en simulaciÃ³n oral.'] },
+            progreso_dashboard: { title: 'Progreso â€” panel', what: 'Ves racha, monedas, mazos y exportaciones; el bloque de Entrenamiento resume prÃ¡ctica avanzada si lo usas.', tips: ['Haz PDF antes de vacaciones para no perder la foto.', 'Revisa mazos difÃ­cil cada pocos dÃ­as.', 'Combina con backup JSON flotante para copia total.'] },
+            guiones_import: { title: 'Biblioteca â€” guiones', what: 'Pegas texto de la IA con tÃ­tulo y lo guardas; al cargarlo se vuelve tu Historia activa.', tips: ['Comprueba tÃ­tulos para encontrar lecciones rÃ¡pido.', 'Borra versiones viejas para no confundirte.', 'El prompt sugerido estÃ¡ arriba: cÃ³pialo tal cual a ChatGPT/Gemini.'] },
+            guiones_vocab_custom: { title: 'Biblioteca â€” vocabulario propio', what: 'Pegas listas â€œalemÃ¡n â€” espaÃ±olâ€ y guardas lecciones; luego Practicar o mezcla.', tips: ['Una lÃ­nea por palabra facilita el parseo.', 'Mezcla varias lecciones para simular examen amplio.', 'Exporta a Anki desde Progreso si usas mazos allÃ­.'] },
+            guiones_bx_distrib: { title: 'Biblioteca â†’ B1 / B2 (subpestaÃ±as)', what: 'Desde un texto pegado se extraen frases y se clasifican por tipo (vocabulario, verbos, etc.); cada frase se coloca en B1 o B2 segÃºn reglas locales o en un solo nivel si lo fuerzas.', tips: ['Si tenÃ­as un guion guardado cargado en Historia al pulsar Distribuir, esas tarjetas quedan vinculadas: al borrar ese guion puedes quitar tambiÃ©n esas entradas en B1/B2.', 'El nivel automÃ¡tico es una estimaciÃ³n: revisa en B1/B2 y mueve o borra tarjetas con â€œTu bibliotecaâ€.', 'Frases antiguas sin vincular: usa â€œBorrar mis aportacionesâ€ o borra tarjeta a tarjeta. El archivo b1-b2-database.json del proyecto no se borra desde aquÃ­.'] },
+            guiones_mix: { title: 'Mezclar lecciones de vocabulario', what: 'Seleccionas varias lecciones guardadas y generas una sesiÃ³n Ãºnica en la pestaÃ±a Vocab.', tips: ['Marca al menos dos lecciones si quieres variedad.', 'Las tarjetas difÃ­ciles se suelen repetir al final.', 'Ãšsalo antes de un examen para repaso amplio.'] },
             storybuilder: { title: 'IA Story Builder', what: 'Pides a la app/IA integrada un guion según nivel y tema; luego lo estudias como cualquier Historia.', tips: ['Sé concreto en el tema (trabajo, medio ambiente⬦).', 'Revisa que el vocabulario coincida con tus metas.', 'Guarda siempre en Biblioteca para no perderlo.'] },
             practice_mazos: { title: 'Entrenamiento rápido (mazos)', what: 'Repasas tarjetas guardadas como difícil, normal o gramática: audio, revelar traducción, siguiente.', tips: ['No mires revelar hasta haber intentado recordar.', 'Haz lotes cortos varias veces al día.', 'Cuando vacíe un mazo, vuelve a Historia para añadir nuevas frases.'] },
             advanced_menu: { title: 'Entrenamiento avanzado', what: 'Práctica guiada de artículos, verbos con preposición, preposiciones puras, conectores y simulacro tipo examen con cronómetro.', tips: ['Empieza por la categoría con peor porcentaje en el dashboard.', 'El modo examen entrena gestión de tiempo, no solo aciertos.', 'Cierra sesiones cortas para fijar mejor.', 'Artículos (JSON): usa "levels": ["A1","A2","B1"] para que la misma palabra salga en varios mazos; si repites la misma "de" con otro "level", la app une los niveles automáticamente.'] },
-            advanced_exam: { title: 'Simulacro TELC (avanzado)', what: 'Cronómetro orientativo, pistas limitadas y mezcla de ítems según lo que elijas.', tips: ['Elige duración realista (20�30 min al principio).', 'Usa pistas solo cuando lleves bloqueado más de un minuto.', 'Al terminar, repasa solo los fallos en modo categoría.'] },
-            nav_ruta: { title: 'Ruta A0 �  C1', what: 'Camino guiado desde cero real: lecciones con frases, huecos, lectura en voz alta y recompensas. Pestaña Gramática resume reglas por nivel. Test de nivel sugiere por dónde empezar.', tips: ['Tecla R para abrir Ruta.', 'Elige mentor (voz) arriba: Frau Lena, Herr Tom o Lina.', 'Cada 3 lecciones completadas hay bonus extra de monedas.', 'El contenido se ampliará por niveles hasta C1.'] },
-            ruta_gramatica: { title: 'Ruta � Gramática', what: 'Resumen por niveles (A1, A2, B1) con explicaciones claras. No sustituye un libro de texto: combínalo con Historia y ejercicios.', tips: ['Abre el bloque del nivel que estudies en el camino.', 'Copia un ejemplo a Escritura para fijarlo.', 'Si algo no cuadra, pregunta a tu tutor o al foro.'] },
+            advanced_exam: { title: 'Simulacro TELC (avanzado)', what: 'CronÃ³metro orientativo, pistas limitadas y mezcla de Ã­tems segÃºn lo que elijas.', tips: ['Elige duraciÃ³n realista (20â€“30 min al principio).', 'Usa pistas solo cuando lleves bloqueado mÃ¡s de un minuto.', 'Al terminar, repasa solo los fallos en modo categorÃ­a.'] },
+            nav_ruta: { title: 'Ruta A0 â†’ C1', what: 'Camino guiado desde cero real: lecciones con frases, huecos, lectura en voz alta y recompensas. PestaÃ±a GramÃ¡tica resume reglas por nivel. Test de nivel sugiere por dÃ³nde empezar.', tips: ['Tecla R para abrir Ruta.', 'Elige mentor (voz) arriba: Frau Lena, Herr Tom o Lina.', 'Cada 3 lecciones completadas hay bonus extra de monedas.', 'El contenido se ampliarÃ¡ por niveles hasta C1.'] },
+            ruta_gramatica: { title: 'Ruta â€” GramÃ¡tica', what: 'Resumen por niveles (A1, A2, B1) con explicaciones claras. No sustituye un libro de texto: combÃ­nalo con Historia y ejercicios.', tips: ['Abre el bloque del nivel que estudies en el camino.', 'Copia un ejemplo a Escritura para fijarlo.', 'Si algo no cuadra, pregunta a tu tutor o al foro.'] },
             nav_inicio: { title: 'Inicio', what: 'Pantalla principal con accesos rápidos y pendientes de repaso (SRS). Desde aquí saltas a Historia, vocab, shadowing, etc.', tips: ['Tecla I para volver al Inicio.', 'El número en Vocab indica tarjetas prioritarias del SRS.', 'Tras la bienvenida (banderas), eliges qué practicar.'] },
-            hub_centro: { title: 'Centro Müller', what: 'Voces del sistema, ayuda, IA Chrome local; el plan del día y el resumen rápido están en Progreso.', tips: ['Configura voces antes de sesiones largas.', 'Pestaña �SIA Chrome⬝: resumen local con Gemini Nano si tu Chrome lo permite.', 'Esc para cerrar el panel.', 'Repite el tour si te pierdes.'] },
+            hub_centro: { title: 'Centro MÃ¼ller', what: 'Voces del sistema, ayuda, IA Chrome local; el plan del dÃ­a y el resumen rÃ¡pido estÃ¡n en Progreso.', tips: ['Configura voces antes de sesiones largas.', 'PestaÃ±a â€œIA Chromeâ€: resumen local con Gemini Nano si tu Chrome lo permite.', 'Esc para cerrar el panel.', 'Repite el tour si te pierdes.'] },
             hub_chrome_ai: { title: 'IA local (Chrome / Gemini Nano)', what: 'Usa la API Summarizer del navegador: el modelo se descarga en tu PC y el resumen se genera en local sin API key. Requiere Chrome de escritorio reciente y requisitos de hardware.', tips: ['Si no aparece la API, activa las funciones de IA en chrome://flags y reinicia.', 'Edge puede llevar APIs similares detrás de flags; Firefox/Safari no suelen soportarlo aún.', 'No sustituye un profesor: revisa los resúmenes.'] },
         };
 
@@ -1325,7 +1325,7 @@
                         phrases: [
                             { de: 'Das ist ein Buch.', es: 'Eso es un libro.' },
                             { de: 'Die Tür ist offen.', es: 'La puerta está abierta.' },
-                            { de: 'Der Tisch ist gro�x.', es: 'La mesa es grande.' }
+                            { de: 'Der Tisch ist groÃŸ.', es: 'La mesa es grande.' }
                         ],
                         fill: { prompt: 'Completa: Das ist ___ Buch.', answer: 'ein', hint: 'Artículo indefinido neutro.' },
                         speak: { target: 'Das ist ein Buch.' }
@@ -1343,9 +1343,9 @@
                         topic: 'presentacion',
                         rewardCoins: 15,
                         rewardXp: 20,
-                        grammarTip: 'En frases declarativas el verbo conjugado va en 2.ª posición: sujeto � verbo � resto.',
+                        grammarTip: 'En frases declarativas el verbo conjugado va en 2.Âª posiciÃ³n: sujeto â€“ verbo â€“ resto.',
                         phrases: [
-                            { de: 'Guten Tag! Ich hei�xe Maria.', es: '¡Buenos días! Me llamo María.' },
+                            { de: 'Guten Tag! Ich heiÃŸe Maria.', es: 'Â¡Buenos dÃ­as! Me llamo MarÃ­a.' },
                             { de: 'Wie geht es dir?', es: '¿Cómo estás?' },
                             { de: 'Ich komme aus Spanien.', es: 'Vengo de España.' },
                         ],
@@ -1457,7 +1457,7 @@
                 level: 'A2',
                 title: 'Oraciones compuestas',
                 blocks: [
-                    { t: 'Subordinadas con «dass/weil/obwohl»', b: 'El verbo conjugado va al final: «Ich wei�x, dass du kommst.»' },
+                    { t: 'Subordinadas con Â«dass/weil/obwohlÂ»', b: 'El verbo conjugado va al final: Â«Ich weiÃŸ, dass du kommst.Â»' },
                     { t: 'Perfekt', b: 'Auxiliar haben/sein + participio II. Muchos verbos de movimiento usan «sein» (sein, bleiben, passieren⬦ contexto).' },
                     { t: 'Preposiciones y Kasus', b: 'Aprende bloques: «mit» + Dat., «für» + Akk., preposiciones de lugar «Wo?/Wohin?» con Dat./Akk.' },
                 ],
@@ -1467,8 +1467,8 @@
                 title: 'Matices',
                 blocks: [
                     { t: 'Konjunktiv II (politez)', b: '«Ich hätte gern⬦», «Könnten Sie⬦?» para peticiones suaves.' },
-                    { t: 'Pasiva y alternativas', b: '«Es wird gemacht» / «Man macht» � reconocer sujeto impersonal.' },
-                    { t: 'Conectores', b: '«trotzdem», «deshalb», «au�xerdem» � practica posición del verbo en cada tipo.' },
+                    { t: 'Pasiva y alternativas', b: 'Â«Es wird gemachtÂ» / Â«Man machtÂ» â€” reconocer sujeto impersonal.' },
+                    { t: 'Conectores', b: 'Â«trotzdemÂ», Â«deshalbÂ», Â«auÃŸerdemÂ» â€” practica posiciÃ³n del verbo en cada tipo.' },
                 ],
             },
             {
@@ -1495,7 +1495,7 @@
   // A1 (7 preguntas)
   { level: 'A1', q: 'Ich ___ aus Spanien.', opts: ['bin', 'habe', 'werde'], ok: 0 },
   { level: 'A1', q: '___ Buch liegt auf dem Tisch.', opts: ['Der', 'Die', 'Das'], ok: 2 },
-  { level: 'A1', q: 'Wie ___ du?', opts: ['hei�xen', 'hei�xt', 'hei�xe'], ok: 1 },
+  { level: 'A1', q: 'Wie ___ du?', opts: ['heiÃŸen', 'heiÃŸt', 'heiÃŸe'], ok: 1 },
   { level: 'A1', q: 'Wir ___ müde.', opts: ['sind', 'seid', 'ist'], ok: 0 },
   { level: 'A1', q: '___ ist dein Name?', opts: ['Was', 'Wie', 'Wo'], ok: 1 },
   { level: 'A1', q: 'Ich ___ gern Pizza.', opts: ['esse', 'isst', 'esst'], ok: 0 },
@@ -1528,7 +1528,7 @@
   { level: 'B2', q: 'Die Diskussion, ___ wir gestern geführt haben, war sehr interessant.', opts: ['die', 'der', 'das'], ok: 0 },
   { level: 'B2', q: 'Er gilt ___ einer der besten Experten.', opts: ['als', 'für', 'wie'], ok: 0 },
   { level: 'B2', q: '___ ich mich rechtzeitig beworben habe, wurde ich nicht eingeladen.', opts: ['Obwohl', 'Weil', 'Da'], ok: 0 },
-  { level: 'B2', q: 'Die Ma�xnahmen ___ nur langsam ___.', opts: ['werden ... umgesetzt', 'wurden ... umgesetzt', 'sind ... umgesetzt'], ok: 0 },
+  { level: 'B2', q: 'Die MaÃŸnahmen ___ nur langsam ___.', opts: ['werden ... umgesetzt', 'wurden ... umgesetzt', 'sind ... umgesetzt'], ok: 0 },
 ];
 
         /** Contenido orientativo TELC / marcos similares (no texto de examen oficial). */
@@ -1553,20 +1553,20 @@
                 label: 'B1 · TELC Deutsch B1 / Zertifikat B1',
                 summary: 'Nivel independiente: textos auténticos moderados y producción conectada.',
                 sections: [
-                    { title: 'Estructura habitual (4 competencias)', items: ['Lesen: varios textos (periodístico, opinión, práctico) con preguntas globales y detalle.', 'Hören: entrevistas, reportajes; una sola emisión en muchos centros � lee antes las preguntas.', 'Schreiben: dos tareas (p. ej. correo + texto argumentativo o foro); respeta extensión y registro.', 'Sprechen: interacción (información, opiniones); a veces preparación previa.'] },
-                    { title: 'Estrategia', items: ['Marca tiempo por bloque al inicio.', 'En escritura: plan de 5 minutos + párrafos con conectores (jedoch, deshalb, au�xerdem).', 'En oral: no solo vocabulario: claridad y turnos.'] },
+                    { title: 'Estructura habitual (4 competencias)', items: ['Lesen: varios textos (periodÃ­stico, opiniÃ³n, prÃ¡ctico) con preguntas globales y detalle.', 'HÃ¶ren: entrevistas, reportajes; una sola emisiÃ³n en muchos centros â€” lee antes las preguntas.', 'Schreiben: dos tareas (p. ej. correo + texto argumentativo o foro); respeta extensiÃ³n y registro.', 'Sprechen: interacciÃ³n (informaciÃ³n, opiniones); a veces preparaciÃ³n previa.'] },
+                    { title: 'Estrategia', items: ['Marca tiempo por bloque al inicio.', 'En escritura: plan de 5 minutos + pÃ¡rrafos con conectores (jedoch, deshalb, auÃŸerdem).', 'En oral: no solo vocabulario: claridad y turnos.'] },
                 ],
             },
             B2: {
                 label: 'B2 · TELC Deutsch B2 / Zertifikat B2',
                 summary: 'Textos más largos y matizados; producción argumentativa y registro elevado.',
                 sections: [
-                    { title: 'Pruebas típicas', items: ['Lectura: artículos, comentarios; inferencias y opiniones del autor.', 'Escucha: ritmo más natural; notas y detalles.', 'Escritura: carta formal / texto de opinión con estructura clara (Einleitung � Hauptteil � Schluss).', 'Oral: debate, ventajas/desventajas, matizar posiciones.'] },
+                    { title: 'Pruebas tÃ­picas', items: ['Lectura: artÃ­culos, comentarios; inferencias y opiniones del autor.', 'Escucha: ritmo mÃ¡s natural; notas y detalles.', 'Escritura: carta formal / texto de opiniÃ³n con estructura clara (Einleitung â€“ Hauptteil â€“ Schluss).', 'Oral: debate, ventajas/desventajas, matizar posiciones.'] },
                     { title: 'Errores frecuentes', items: ['Confundir registro (du/Sie, coloquial vs académico).', 'Subordinadas sin verbo al final.', 'Tiempo insuficiente en la última parte escrita.'] },
                 ],
             },
             C1: {
-                label: 'C1 · TELC Deutsch C1 / Kleines / Gro�xes Deutsch',
+                label: 'C1 Â· TELC Deutsch C1 / Kleines / GroÃŸes Deutsch',
                 summary: 'Comprensión sutil; producción estructurada y variación léxica.',
                 sections: [
                     { title: 'Enfoque', items: ['Lectura: textos complejos (ironía, matices, estructura implícita).', 'Escucha: conferencias, entrevistas densas.', 'Escritura: textos formales extensos (informe, ensayo breve) con cohesión fuerte.', 'Oral: argumentación fina, reformulación, concesión (zwar ⬦ aber).'] },
@@ -1578,7 +1578,7 @@
                 summary: 'Comprensión casi total; producción precisa y estilísticamente variada.',
                 sections: [
                     { title: 'Pruebas típicas', items: ['Lectura: textos literarios o especializados; reformulación y síntesis.', 'Escucha: velocidad y ambiente natural.', 'Escritura: resúmenes, estilo y precisión léxica.', 'Oral: presentación estructurada y discusión abierta.'] },
-                    { title: 'Nota', items: ['C2 no es �Smás vocabulario⬝: es precisión, registro y estilo.'] },
+                    { title: 'Nota', items: ['C2 no es â€œmÃ¡s vocabularioâ€: es precisiÃ³n, registro y estilo.'] },
                 ],
             },
         };
