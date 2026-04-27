@@ -1362,11 +1362,66 @@ const [placementFinished, setPlacementFinished] = useState(false);
               return false;
           };
 
+          const rutaLexiconByLevel = {
+              A0: {
+                  connectors: ['und', 'aber', 'oder', 'denn'],
+                  adverbs: ['heute', 'morgen', 'hier', 'dort'],
+                  adjectives: ['gut', 'klein', 'groß', 'neu']
+              },
+              A1: {
+                  connectors: ['weil', 'deshalb', 'und', 'aber'],
+                  adverbs: ['heute', 'morgen', 'oft', 'gern'],
+                  adjectives: ['wichtig', 'einfach', 'schnell', 'langsam']
+              },
+              A2: {
+                  connectors: ['weil', 'obwohl', 'deshalb', 'trotzdem'],
+                  adverbs: ['gestern', 'immer', 'manchmal', 'bereits'],
+                  adjectives: ['praktisch', 'nützlich', 'kompliziert', 'klar']
+              },
+              B1: {
+                  connectors: ['obwohl', 'damit', 'außerdem', 'dennoch'],
+                  adverbs: ['regelmäßig', 'kürzlich', 'zunächst', 'danach'],
+                  adjectives: ['zuverlässig', 'flexibel', 'relevant', 'effektiv']
+              },
+              B2: {
+                  connectors: ['während', 'hingegen', 'insofern', 'folglich'],
+                  adverbs: ['grundsätzlich', 'zunehmend', 'teilweise', 'vorwiegend'],
+                  adjectives: ['nachhaltig', 'präzise', 'komplex', 'wesentlich']
+              },
+              C1: {
+                  connectors: ['nichtsdestotrotz', 'demzufolge', 'infolgedessen', 'hingegen'],
+                  adverbs: ['überwiegend', 'folglich', 'durchaus', 'insbesondere'],
+                  adjectives: ['differenziert', 'belastbar', 'kohärent', 'fundiert']
+              }
+          };
+
+          const rutaStopWords = new Set(['ich', 'du', 'er', 'sie', 'wir', 'ihr', 'und', 'oder', 'aber', 'der', 'die', 'das', 'ein', 'eine', 'ist', 'sind', 'bin', 'im', 'in', 'zu', 'mit', 'von', 'am', 'an']);
+          const chooseGapWord = (sentence) => {
+              const words = String(sentence || '').replace(/[.,!?;:()"]/g, ' ').split(/\s+/).map((w) => w.trim()).filter(Boolean);
+              const candidates = words.filter((w) => w.length >= 4 && !rutaStopWords.has(w.toLowerCase()));
+              return (candidates[0] || words.find((w) => w.length >= 2) || '').trim();
+          };
+          const makeGapExercise = (sentence, hintBase, fromReview, id) => {
+              const answer = chooseGapWord(sentence);
+              if (!answer) return null;
+              const escaped = answer.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const prompt = sentence.replace(new RegExp(`\\b${escaped}\\b`), '_____');
+              return {
+                  id,
+                  type: 'fill',
+                  prompt,
+                  answer,
+                  hint: hintBase || '',
+                  fromReview: !!fromReview
+              };
+          };
+
           const buildRutaExercisePlan = useCallback((levels, levelIdx, lessonIdx) => {
               const lv = levels && levels[levelIdx];
               const lesson = lv && lv.lessons && lv.lessons[lessonIdx];
               if (!lesson) return [];
               const levelKey = normalizeRutaLevelKey((lv && lv.badge) || (lv && lv.title) || '');
+              const levelLexicon = rutaLexiconByLevel[levelKey] || rutaLexiconByLevel.A2;
               const safePhrases = Array.isArray(lesson.phrases) && lesson.phrases.length
                   ? lesson.phrases
                   : [{ de: 'Ich lerne Deutsch.', es: 'Aprendo alemán.' }];
@@ -1383,6 +1438,42 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   }
               }
               const reviewPool = previousLessons.filter((l) => Array.isArray(l.phrases) && l.phrases.length);
+              const levelVerbSamples = (rutaVerbDb && Array.isArray(rutaVerbDb.verbs) ? rutaVerbDb.verbs : [])
+                  .filter((v) => normalizeRutaLevelKey(v.level || '') === levelKey)
+                  .slice(0, 24);
+              const levelArticleSamples = (Array.isArray(rutaArticleDb) ? rutaArticleDb : [])
+                  .filter((a) => {
+                      const one = normalizeRutaLevelKey(a && a.level);
+                      const many = Array.isArray(a && a.levels) ? a.levels.map((x) => normalizeRutaLevelKey(x)) : [];
+                      return one === levelKey || many.includes(levelKey);
+                  })
+                  .slice(0, 24);
+
+              const phrasePool = [];
+              const pushUniquePhrase = (de, es, sourceTag) => {
+                  const txt = String(de || '').trim();
+                  if (!txt) return;
+                  if (phrasePool.some((p) => p.de === txt)) return;
+                  phrasePool.push({ de: txt, es: String(es || ''), source: sourceTag || 'lesson' });
+              };
+              safePhrases.forEach((p) => pushUniquePhrase(p.de, p.es, 'lesson'));
+              reviewPool.forEach((l) => (l.phrases || []).forEach((p) => pushUniquePhrase(p.de, p.es, 'review')));
+              levelVerbSamples.forEach((v, idx) => {
+                  const ex = v && Array.isArray(v.examples) && v.examples.length ? v.examples[0] : null;
+                  if (ex && ex.de) pushUniquePhrase(ex.de, ex.es || '', 'verb');
+                  else if (v && v.lemma) {
+                      const adv = levelLexicon.adverbs[idx % levelLexicon.adverbs.length];
+                      pushUniquePhrase(`Ich ${v.lemma} ${adv}.`, v.es || '', 'verb');
+                  }
+              });
+              levelArticleSamples.forEach((a, idx) => {
+                  const conn = levelLexicon.connectors[idx % levelLexicon.connectors.length];
+                  const adj = levelLexicon.adjectives[idx % levelLexicon.adjectives.length];
+                  const noun = String(a.de || '').trim();
+                  if (!noun) return;
+                  pushUniquePhrase(`${noun} ist ${adj}, ${conn} wir es oft benutzen.`, a.es || noun, 'article');
+              });
+              if (phrasePool.length === 0) pushUniquePhrase('Ich lerne Deutsch.', 'Aprendo alemán.', 'fallback');
 
               const total = RUTA_SECTION_EXERCISES;
               const reviewCount = Math.max(0, Math.round(total * RUTA_REVIEW_RATIO));
@@ -1394,10 +1485,13 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   const mode = typeSequence[i % typeSequence.length];
                   const useReview = reviewPool.length > 0 && reviewSlots.has(i);
                   const srcLesson = useReview ? reviewPool[i % reviewPool.length] : lesson;
-                  const srcPhrases = Array.isArray(srcLesson.phrases) && srcLesson.phrases.length ? srcLesson.phrases : safePhrases;
+                  const srcPhrases = useReview
+                      ? ((Array.isArray(srcLesson.phrases) && srcLesson.phrases.length ? srcLesson.phrases : safePhrases))
+                      : phrasePool;
                   const srcPhrase = srcPhrases[i % srcPhrases.length] || safePhrases[0];
+                  const sourceSentence = String(srcPhrase.de || '').trim() || 'Ich lerne Deutsch.';
                   const srcFill = srcLesson.fill || safeFill;
-                  const srcSpeak = srcLesson.speak || { target: (srcPhrase && srcPhrase.de) || safeSpeak.target };
+                  const srcSpeak = srcLesson.speak || { target: sourceSentence || safeSpeak.target };
                   const connectorPool = levelKey === 'C1'
                       ? ['demzufolge', 'folglich', 'nichtsdestotrotz', 'insofern']
                       : levelKey === 'B2'
@@ -1408,22 +1502,32 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       plan.push({
                           id: `${srcLesson.id || lesson.id}-read-${i}`,
                           type: 'read',
-                          de: srcPhrase.de,
+                          de: sourceSentence,
                           es: srcPhrase.es || '',
                           fromReview: useReview
                       });
                   } else if (mode === 'fill') {
-                      plan.push({
-                          id: `${srcLesson.id || lesson.id}-fill-${i}`,
-                          type: 'fill',
-                          prompt: srcFill.prompt || safeFill.prompt,
-                          answer: srcFill.answer || safeFill.answer,
-                          hint: shouldShowHintForLevel(levelKey, i) ? (srcFill.hint || '') : '',
-                          fromReview: useReview
-                      });
+                      const gap = makeGapExercise(
+                          sourceSentence,
+                          shouldShowHintForLevel(levelKey, i) ? (srcFill.hint || safeFill.hint || '') : '',
+                          useReview,
+                          `${srcLesson.id || lesson.id}-fill-${i}`
+                      );
+                      if (gap) {
+                          plan.push(gap);
+                      } else {
+                          plan.push({
+                              id: `${srcLesson.id || lesson.id}-fill-fallback-${i}`,
+                              type: 'fill',
+                              prompt: srcFill.prompt || safeFill.prompt,
+                              answer: srcFill.answer || safeFill.answer,
+                              hint: shouldShowHintForLevel(levelKey, i) ? (srcFill.hint || safeFill.hint || '') : '',
+                              fromReview: useReview
+                          });
+                      }
                   } else {
                       if (mode === 'order') {
-                          const base = (srcPhrase && srcPhrase.de) || 'Ich lerne Deutsch.';
+                          const base = sourceSentence;
                           const distractorA = base.replace(/\bich\b/i, 'wir');
                           const distractorB = base.split(' ').reverse().join(' ');
                           const opts = [base, distractorA, distractorB].sort(() => Math.random() - 0.5);
@@ -1439,7 +1543,8 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       }
                       if (mode === 'connector') {
                           const connector = connectorPool[i % connectorPool.length];
-                          const sentence = `Ich lerne täglich, ${connector} ich besser sprechen will.`;
+                          const core = sourceSentence.replace(/[.?!]$/, '').trim();
+                          const sentence = `${core}, ${connector} ich besser sprechen will.`;
                           const options = [...new Set([connector, ...connectorPool.filter((c) => c !== connector).slice(0, 3)])].sort(() => Math.random() - 0.5);
                           plan.push({
                               id: `${srcLesson.id || lesson.id}-connector-${i}`,
@@ -1454,7 +1559,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
                       plan.push({
                           id: `${srcLesson.id || lesson.id}-speak-${i}`,
                           type: 'speak',
-                          target: (srcSpeak && srcSpeak.target) || srcPhrase.de || safeSpeak.target,
+                          target: (srcSpeak && srcSpeak.target) || sourceSentence || safeSpeak.target,
                           fromReview: useReview
                       });
                   }
