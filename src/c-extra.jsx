@@ -428,7 +428,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
             if (finalQueue.length === 0) {
                 alert(`¡Increíble! Ya dominas todo el mazo ${selectedMode}. 🏆`);
                 if (examCtx) onBack();
-                else setMode(null);
+                else onBack();
             } else {
                 const getId = (item) => `articulos::${item.de}`;
                 const adaptive = buildAdaptiveQueue(finalQueue, progressMap, getId);
@@ -449,7 +449,7 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
                 alert("Error de conexión con la base de datos Müller.");
                 if (examCtx) onBack();
                 else {
-                    setMode(null);
+                    onBack();
                     setLoading(false);
                 }
             });
@@ -574,14 +574,14 @@ function ArticlePracticeFinal({ onBack, examCtx, setExamCtx, examAutoLevel }) {
     }
 
     if (loading) return <div className="p-10"><div className="muller-skeleton h-6 w-64 rounded mb-4" /><div className="muller-skeleton h-36 w-full max-w-xl rounded-2xl" /></div>;
-    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={() => setMode(null)} className="mt-4 bg-gray-800 p-2 rounded text-white">Elegir otro</button></div>;
+    if (queue.length === 0) return <div className="p-20 text-center"><h2 className="text-2xl text-green-400">¡Mazo completado! 🏆</h2><button onClick={onBack} className="mt-4 bg-gray-800 p-2 rounded text-white">Volver</button></div>;
 
     const wordWithoutArticle = queue[0].de.split(' ').slice(1).join(' ');
     const examHideEs = !!(examCtx && !showTranslation && !feedback);
 
     return (
         <div className="flex flex-col items-center justify-center p-4 h-full relative">
-            {examCtx && <button type="button" onClick={onBack} className="absolute top-2 left-2 md:top-4 md:left-4 bg-slate-800/90 p-2 rounded-lg text-gray-300 text-sm hover:bg-slate-700 z-10">⬅ Salir del examen</button>}
+            <button type="button" onClick={onBack} className="absolute top-2 left-2 md:top-4 md:left-4 bg-slate-800/90 p-2 rounded-lg text-gray-300 text-sm hover:bg-slate-700 z-10">{examCtx ? '⬅ Salir del examen' : '⬅ Volver'}</button>
             <div className={`bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full border ${examCtx ? 'border-amber-600/35 shadow-[0_0_40px_rgba(245,158,11,0.06)]' : 'border-slate-700'}`}>
                 {examCtx && (
                     <TelcExamHud examCtx={examCtx} onUseTranslationHint={handleTranslationHint} answered={!!feedback} translationVisible={showTranslation} />
