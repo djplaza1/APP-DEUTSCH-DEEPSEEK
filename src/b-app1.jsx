@@ -1366,32 +1366,38 @@ const [placementFinished, setPlacementFinished] = useState(false);
               A0: {
                   connectors: ['und', 'aber', 'oder', 'denn'],
                   adverbs: ['heute', 'morgen', 'hier', 'dort'],
-                  adjectives: ['gut', 'klein', 'groß', 'neu']
+                  adjectives: ['gut', 'klein', 'groß', 'neu'],
+                  verbs: ['sein', 'haben', 'heißen', 'kommen']
               },
               A1: {
                   connectors: ['weil', 'deshalb', 'und', 'aber'],
                   adverbs: ['heute', 'morgen', 'oft', 'gern'],
-                  adjectives: ['wichtig', 'einfach', 'schnell', 'langsam']
+                  adjectives: ['wichtig', 'einfach', 'schnell', 'langsam'],
+                  verbs: ['sein', 'haben', 'heißen', 'kommen', 'lernen', 'wohnen', 'arbeiten', 'spielen']
               },
               A2: {
                   connectors: ['weil', 'obwohl', 'deshalb', 'trotzdem'],
                   adverbs: ['gestern', 'immer', 'manchmal', 'bereits'],
-                  adjectives: ['praktisch', 'nützlich', 'kompliziert', 'klar']
+                  adjectives: ['praktisch', 'nützlich', 'kompliziert', 'klar'],
+                  verbs: ['gehen', 'fahren', 'lesen', 'schreiben', 'kaufen', 'treffen']
               },
               B1: {
                   connectors: ['obwohl', 'damit', 'außerdem', 'dennoch'],
                   adverbs: ['regelmäßig', 'kürzlich', 'zunächst', 'danach'],
-                  adjectives: ['zuverlässig', 'flexibel', 'relevant', 'effektiv']
+                  adjectives: ['zuverlässig', 'flexibel', 'relevant', 'effektiv'],
+                  verbs: ['verstehen', 'erklären', 'verbessern', 'weiterentwickeln']
               },
               B2: {
                   connectors: ['während', 'hingegen', 'insofern', 'folglich'],
                   adverbs: ['grundsätzlich', 'zunehmend', 'teilweise', 'vorwiegend'],
-                  adjectives: ['nachhaltig', 'präzise', 'komplex', 'wesentlich']
+                  adjectives: ['nachhaltig', 'präzise', 'komplex', 'wesentlich'],
+                  verbs: ['umsetzen', 'analysieren', 'berücksichtigen', 'differenzieren']
               },
               C1: {
                   connectors: ['nichtsdestotrotz', 'demzufolge', 'infolgedessen', 'hingegen'],
                   adverbs: ['überwiegend', 'folglich', 'durchaus', 'insbesondere'],
-                  adjectives: ['differenziert', 'belastbar', 'kohärent', 'fundiert']
+                  adjectives: ['differenziert', 'belastbar', 'kohärent', 'fundiert'],
+                  verbs: ['behaupten', 'erläutern', 'einräumen', 'konkretisieren']
               }
           };
 
@@ -1434,7 +1440,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
               return { de: fullDe, es: fullEs, conj, person };
           };
 
-          const buildRutaExercisePlan = useCallback((levels, levelIdx, lessonIdx) => {
+          const buildRutaExercisePlan = useCallback((levels, levelIdx, lessonIdx, bxDb) => {
               const lv = levels && levels[levelIdx];
               const lesson = lv && lv.lessons && lv.lessons[lessonIdx];
               if (!lesson) return [];
@@ -1508,6 +1514,78 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   const artVerb = artPerson === 'er_sie_es' || artPerson === 'sie_Sie' ? 'benutzt' : artPerson === 'ich' ? 'benutze' : artPerson === 'du' ? 'benutzt' : artPerson === 'wir' ? 'benutzen' : artPerson === 'ihr' ? 'benutzt' : 'benutzt';
                   pushUniquePhrase(`${noun} ist ${adj}, ${conn} ${artSubj} es ${artVerb}.`, a.es || noun, 'article');
               });
+
+              /* ── Inyectar vocabulario desde los bancos editables (bxDb) ── */
+              if (bxDb && typeof bxDb === 'object') {
+                  const bxLevel = levelKey === 'A0' || levelKey === 'A1' || levelKey === 'A2' ? 'b1' : 'b2';
+                  const bank = bxDb[bxLevel];
+                  if (bank && typeof bank === 'object') {
+                      const bxWords = new Set();
+                      /* vocabulario → frases completas */
+                      (bank.vocabulario || []).forEach((item) => {
+                          const de = String(item.b1 || item.b2 || '').trim();
+                          const es = String(item.es || '').trim();
+                          const trick = String(item.trick || '').trim();
+                          if (de && de.length > 3 && !de.includes('geladen') && !de.includes('fehlt') && !de.includes('Coloca') && !de.includes('Amplía')) {
+                              bxWords.add(de);
+                              const whole = es || trick ? `${de} — ${es || trick}` : de;
+                              pushUniquePhrase(whole, es || trick || '', 'bx-vocab');
+                              if (de.includes('(') && de.includes(')')) {
+                                  const clean = de.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+                                  if (clean && clean.length > 3) pushUniquePhrase(clean, es || trick || '', 'bx-vocab');
+                              }
+                          }
+                      });
+                      /* verbos → frases conjugadas variando persona */
+                      (bank.verbos || []).forEach((item, idx) => {
+                          const infinitive = String(item.b1 || item.b2 || '').trim();
+                          const es = String(item.es || '').trim();
+                          if (!infinitive || bxWords.has(infinitive)) return;
+                          bxWords.add(infinitive);
+                          const person = personCycle(idx);
+                          const subj = person === 'ich' ? 'Ich' : person === 'du' ? 'Du' : person === 'er_sie_es' ? 'Er' : person === 'wir' ? 'Wir' : person === 'ihr' ? 'Ihr' : 'Sie';
+                          const adv = levelLexicon.adverbs[idx % levelLexicon.adverbs.length];
+                          const conj = person === 'ich' ? infinitive.replace(/en$/, 'e') : person === 'du' ? infinitive.replace(/en$/, 'st') : person === 'er_sie_es' ? infinitive.replace(/en$/, 't') : person === 'wir' ? infinitive : person === 'ihr' ? infinitive.replace(/en$/, 't') : infinitive;
+                          const phraseDe = adv ? `${subj} ${conj} ${adv}.` : `${subj} ${conj}.`;
+                          pushUniquePhrase(phraseDe, es ? `${es} (${person})` : '', 'bx-verb');
+                          if (!phraseDe.includes('_____')) {
+                              const gapSentence = phraseDe.replace(conj, '_____');
+                              if (gapSentence !== phraseDe) {
+                                  pushUniquePhrase(gapSentence + ' (' + person + ')', es + ' (persona: ' + person + ')', 'bx-verb-gap');
+                              }
+                          }
+                      });
+                      /* preposiciones → frases cortas */
+                      (bank.preposiciones || []).forEach((item, idx) => {
+                          const de = String(item.b1 || item.b2 || '').trim();
+                          const es = String(item.es || '').trim();
+                          if (!de || bxWords.has(de)) return;
+                          bxWords.add(de);
+                          const person = personCycle(idx + 1);
+                          const subj2 = person === 'ich' ? 'Ich' : person === 'du' ? 'Du' : 'Man';
+                          const conj2 = person === 'ich' ? 'denke' : person === 'du' ? 'denkst' : 'denkt';
+                          pushUniquePhrase(`${subj2} ${conj2} ${de}.`, es || '', 'bx-prep');
+                      });
+                      /* conectores → frases */
+                      (bank.conectores || []).forEach((item, idx) => {
+                          const de = String(item.b1 || item.b2 || '').trim();
+                          const es = String(item.es || '').trim();
+                          if (!de || bxWords.has(de)) return;
+                          bxWords.add(de);
+                          const adj2 = levelLexicon.adjectives[idx % levelLexicon.adjectives.length];
+                          pushUniquePhrase(`Das ist wichtig, ${de} ${adj2}.`, es || '', 'bx-conn');
+                      });
+                      /* redemittel → frases útiles */
+                      (bank.redemittel || []).forEach((item) => {
+                          const de = String(item.b1 || item.b2 || '').trim();
+                          const es = String(item.es || '').trim();
+                          if (!de || de.length < 4 || bxWords.has(de)) return;
+                          bxWords.add(de);
+                          pushUniquePhrase(de, es || '', 'bx-redemittel');
+                      });
+                  }
+              }
+              /* ── Fin inyección bxDb ── */
               if (phrasePool.length === 0) pushUniquePhrase('Ich lerne Deutsch.', 'Aprendo alemán.', 'fallback');
 
               const total = RUTA_SECTION_EXERCISES;
@@ -1606,7 +1684,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const levels = rutaLevels || [];
               const lesson = levels[levelIdx] && levels[levelIdx].lessons && levels[levelIdx].lessons[lessonIdx];
               if (!lesson) return;
-              const plan = buildRutaExercisePlan(levels, levelIdx, lessonIdx);
+              const plan = buildRutaExercisePlan(levels, levelIdx, lessonIdx, bxEffectiveDatabases);
               if (!plan.length) return;
               setRutaRun({
                   levelIdx,
