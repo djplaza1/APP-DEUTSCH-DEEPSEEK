@@ -1336,7 +1336,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           };
 
           const RUTA_SECTION_EXERCISES = 14;
-          const RUTA_REVIEW_RATIO = 0.1;
+          const RUTA_REVIEW_RATIO = 0.07;
           const RUTA_MIN_ACCURACY_TO_UNLOCK_NEXT_LEVEL = 0.7;
           const normalizeRutaLevelKey = (value) => {
               const s = String(value || '').toUpperCase();
@@ -2219,6 +2219,14 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   } else if (mode === 'translate_es') {
                       if (answerEsClean) {
                           const esAcc = new Set([answerEsClean, answerEsClean.toLowerCase(), answerEsClean.replace(/^¿/, '').replace(/\?$/, '').trim()]);
+                          /* Expandir "/" en la respuesta española: si contiene "/", aceptar cada parte por separado */
+                          if (answerEsClean.includes('/')) {
+                              answerEsClean.split('/').map(p => p.trim()).filter(Boolean).forEach(p => {
+                                  esAcc.add(p);
+                                  esAcc.add(p.toLowerCase());
+                                  esAcc.add(p.replace(/^¿/, '').replace(/\?$/, '').trim());
+                              });
+                          }
                           plan.push({
                               id: `${srcLesson.id || lesson.id}-tr-es-${i}`,
                               type: 'translate_es',
@@ -2567,8 +2575,25 @@ const finishPlacementWithLevel = (finalLevel) => {
               const b = normalizeRutaTypedLine(expectedRaw);
               if (!a || !b) return false;
               if (a === b) return true;
+              /* Si la respuesta contiene "/", aceptar cualquiera de las partes */
+              if (b.includes('/')) {
+                  const parts = b.split('/').map(p => p.trim()).filter(Boolean);
+                  for (const part of parts) {
+                      if (a === normalizeRutaTypedLine(part)) return true;
+                      const dPart = levenshteinDistance(a, normalizeRutaTypedLine(part));
+                      const tolPart = mode === 'de' ? Math.max(1, Math.floor(part.length / 7)) : Math.max(2, Math.floor(part.length / 5));
+                      if (dPart <= tolPart) return true;
+                  }
+              }
+              /* También expandir "/" en la respuesta del usuario (por si escribe ambas separadas por /) */
+              if (a.includes('/')) {
+                  const aParts = a.split('/').map(p => p.trim()).filter(Boolean);
+                  for (const aPart of aParts) {
+                      if (checkRutaTranslateClose(aPart, b, mode)) return true;
+                  }
+              }
               const dist = levenshteinDistance(a, b);
-              const tol = mode === 'de' ? Math.max(1, Math.floor(b.length / 7)) : Math.max(2, Math.floor(b.length / 6));
+              const tol = mode === 'de' ? Math.max(1, Math.floor(b.length / 7)) : Math.max(3, Math.floor(b.length / 5));
               return dist <= tol;
           };
 
@@ -2603,6 +2628,14 @@ const finishPlacementWithLevel = (finalLevel) => {
               if (!exercise) return false;
               const got = (rutaFillInput || '').trim().toLowerCase().replace(/\s+/g, ' ');
               const bag = new Set([String(exercise.answer || '').trim().toLowerCase(), ...(Array.isArray(exercise.acceptedAnswers) ? exercise.acceptedAnswers.map((x) => String(x).trim().toLowerCase()) : [])].filter(Boolean));
+              /* Expandir "/" en el bag: si una respuesta contiene "/", aceptar cualquiera de las partes */
+              const expandSlash = (w) => {
+                  const out = new Set([w]);
+                  if (w.includes('/')) {
+                      w.split('/').map(p => p.trim()).filter(Boolean).forEach(p => out.add(p));
+                  }
+                  return out;
+              };
               /* Añadir variantes umlaut para cada palabra del bag */
               const expandUmlaut = (w) => {
                   const out = new Set([w]);
@@ -2617,7 +2650,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                   return out;
               };
               const expandedBag = new Set();
-              bag.forEach((w) => { expandUmlaut(w).forEach((v) => expandedBag.add(v)); });
+              bag.forEach((w) => { expandSlash(w).forEach((v) => { expandUmlaut(v).forEach((u) => expandedBag.add(u)); }); });
               let hit = false;
               let fuzzy = false;
               for (const x of expandedBag) {
@@ -2627,7 +2660,7 @@ const finishPlacementWithLevel = (finalLevel) => {
                   for (const x of expandedBag) {
                       if (!x) continue;
                       const d = levenshteinDistance(got, x);
-                      if (d <= Math.max(1, Math.floor(x.length / 8))) { hit = true; fuzzy = true; break; }
+                      if (d <= Math.max(1, Math.floor(x.length / 7))) { hit = true; fuzzy = true; break; }
                   }
               }
               if (hit) {
@@ -2648,7 +2681,7 @@ const finishPlacementWithLevel = (finalLevel) => {
               if (!a || !b) { setRutaSpeakErr('Graba de nuevo con el micrófono.'); return false; }
               const dist = levenshteinDistance(a, b);
               const key = normalizeRutaLevelKey(levelKey || '');
-              const factor = (key === 'A0' || key === 'A1') ? 4 : (key === 'A2' ? 5 : (key === 'B1' ? 6 : 7));
+              const factor = (key === 'A0' || key === 'A1') ? 5 : (key === 'A2' ? 6 : (key === 'B1' ? 7 : 8));
               const tol = Math.max(1, Math.floor(b.length / factor));
               if (a === b || dist <= tol) { window.__mullerNotifyExerciseOutcome && window.__mullerNotifyExerciseOutcome(true); setRutaSpeakErr(''); return true; }
               window.__mullerNotifyExerciseOutcome && window.__mullerNotifyExerciseOutcome(false);

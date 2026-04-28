@@ -1,0 +1,63 @@
+# MAPA TÉCNICO MULLER - RUTA A0→C1
+# Versión: 1.0
+# Fecha: 2026-04-28
+
+## ARCHIVOS CLAVE
+- src/b-app1.jsx (5159 líneas) - App principal con toda la lógica
+- src/features/ruta/ruta-panel.jsx (493 líneas) - Panel UI de Ruta
+- src/features/ruta/ruta-data.jsx (236 líneas) - Datos estáticos (niveles, preguntas placement)
+- src/features/ruta/ruta-core.jsx (27 líneas) - Core (load/save progress)
+
+## FUNCIONES CRÍTICAS EN b-app1.jsx
+
+### GENERADOR FANTASMA (líneas ~1915-1936)
+- window.__RUTA_USED_PHRASES: Set global para evitar repeticiones
+- generateUniquePhrasesForLevel(levelKey, count, usedSet): genera frases únicas
+- generatedCount = Math.max(100, 200 - phrasePool.length): controla cuántas generar
+- Sobreescribe lesson.phrases, lesson.fill, lesson.speak con frases generadas
+
+### checkRutaFillAnswer (líneas ~2602-2643)
+- Verifica respuestas de huecos (fill)
+- Usa expandUmlaut para variantes con diéresis
+- Tiene fuzzy matching con levenshteinDistance
+
+### checkRutaSpeakAnswer (líneas ~2645-2657)
+- Verifica respuestas de voz
+- Normaliza texto alemán
+- Tolerancia según nivel (A0/A1=4, A2=5, B1=6, B2/C1=7)
+
+### completeRutaLesson (líneas ~2378-2429)
+- Completa lección, calcula XP/coins
+- Guarda progreso
+
+### buildRutaExercisePlan (líneas ~1768-2349)
+- Construye plan de ejercicios (14 ejercicios por lección)
+- Inyecta vocabulario desde bxDb
+- Llama al generador fantasma
+
+### checkRutaTranslateClose (líneas ~2565-2573)
+- Verifica traducciones con fuzzy matching
+- Tolerancia: de=len/7, es=len/6
+
+### checkRutaMcAnswer (líneas ~2587-2600)
+- Verifica respuestas multiple choice
+- Tolerancia: len/9
+
+## CONSTANTES IMPORTANTES
+- RUTA_SECTION_EXERCISES = 14 (línea ~1338)
+- RUTA_REVIEW_RATIO = 0.07 (7%) (línea ~1339)
+- RUTA_MIN_ACCURACY_TO_UNLOCK_NEXT_LEVEL = 0.7 (línea ~1340)
+- RUTA_MAX_EXERCISE_ATTEMPTS = 3 (línea ~1352)
+
+## EJERCICIOS POR NIVEL (rutaExerciseTypeByLevel, líneas ~1354-1361)
+- A0: read, translate_de, fill, read, fill, speak, read, fill, translate_es, fill, speak, fill, podcast, audio_story
+- A1: read, fill, order, translate_de, speak, read, fill, order, fill, speak, translate_es, read, podcast, audio_story
+- A2: read, fill, speak, order, translate_de, speak, read, fill, speak, order, read, translate_es, podcast, audio_story
+- B1: fill, speak, order, fill, translate_de, fill, read, speak, fill, order, read, translate_es, podcast, audio_story
+- B2: fill, speak, connector, read, translate_de, fill, connector, fill, read, speak, fill, translate_es, podcast, audio_story
+- C1: speak, connector, speak, fill, read, translate_de, fill, speak, fill, read, speak, translate_es, podcast, audio_story
+
+## LOG DE AVERÍAS Y CAMBIOS
+[2026-04-28] | RUTA_REVIEW_RATIO | Problema: review al 10% generaba demasiadas repeticiones | Solución: bajado a 7% (0.07) | Líneas: ~1339 | Estado: OK
+[2026-04-28] | checkRutaTranslateClose | Problema: respuestas con "/" (ej: "llamarse/apellidarse") no se expandían para el usuario | Solución: añadida expansión de "/" también en la respuesta del usuario (a.includes('/')) | Líneas: ~2565-2573 | Estado: OK
+[2026-04-28] | translate_es acceptedAnswers | Problema: respuestas españolas con "/" no se expandían en acceptedAnswers | Solución: añadido split de "/" en acceptedAnswers de translate_es | Líneas: ~1560-1570 | Estado: OK
