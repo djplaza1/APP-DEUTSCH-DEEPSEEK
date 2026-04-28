@@ -77,6 +77,14 @@ function RutaPanel(rawProps) {
     { id: 'hans',  name: 'Hans',          bg: '#ea580c',  fg: '#fdba74', emoji: '👨' },
     { id: 'maria', name: 'Maria',         bg: '#7c3aed',  fg: '#c4b5fd', emoji: '👩‍🦳' },
   ], []);
+  /* Exponer avatares globalmente para b-app2.jsx */
+  if (typeof window !== 'undefined') {
+    window.__RUTA_AVATARS = RUTA_AVATARS;
+    window.__randomExerciseAvatar = () => {
+      const ids = ['plaza', 'laura', 'anna', 'hans', 'maria'];
+      return ids[Math.floor(Math.random() * ids.length)];
+    };
+  }
   const [currentAvatarId, setCurrentAvatarId] = useState('plaza');
   const [avatarSpeaking, setAvatarSpeaking] = useState(false);
   const avatarRef = useRef(null);
