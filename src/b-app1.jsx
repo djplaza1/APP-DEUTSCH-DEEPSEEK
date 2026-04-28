@@ -3675,7 +3675,6 @@ const finishPlacementWithLevel = (finalLevel) => {
                       if (cp) {
                           rutaPodcastPlaybackRef.current.line = next;
                           setRutaPodcastUI({ phase: 'question', checkpoint: cp });
-                          speakRutaEs(cp.promptEs, {});
                           return;
                       }
                       rutaPodcastPlaybackRef.current.line = next;
