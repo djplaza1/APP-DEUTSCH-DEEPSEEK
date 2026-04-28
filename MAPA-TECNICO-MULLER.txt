@@ -1,13 +1,77 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║            MAPA TÉCNICO - PROFESOR PLAZA MÜLLER (ARQUITECTURA)            ║
 ║            Generado: 2026-04-28  ─  Versión: 20260427-anti-cache-1        ║
+║            ⚠ ÚNICA FUENTE DE VERDAD — NO ESCANEAR SIN CONSULTAR ESTO ⚠   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+🔴 REGLAS DE ORO (INCUMPLIMIENTO = ERROR CRÍTICO)
+================================================================================
+
+1. Prohibido reescribir archivos completos:
+   Cualquier cambio debe hacerse mediante apply_diff o edición de líneas
+   específicas. Reescribir +3000 líneas es un desperdicio de tokens de salida.
+
+2. Prohibido el escaneo redundante:
+   Usa las coordenadas de este mapa para ir directo a la función. Si la línea
+   ha cambiado ligeramente, usa Select-String acotado, nunca leas el archivo
+   entero "para ver qué hay".
+
+3. Entorno Windows:
+   Usa estrictamente PowerShell. Prohibido comandos Bash/Linux.
+
+4. Babel Depth Bug:
+   Ignora los avisos de "minDepth=-1" o profundidad de paréntesis. Son falsos
+   positivos causados por Template Literals complejos. No intentes "arreglarlos".
+
+================================================================================
+🔵 MAPA DE COORDENADAS ESTRUCTURAL
+================================================================================
+
+src/a-core.jsx:
+  - Lógica de puntuación, precisión (umbral 70%), persistencia de niveles
+  - mullerRutaDefaultProgress (L:1274)
+  - mullerRutaLoad (L:1277)
+  - mullerRutaSave (L:1283)
+  - mullerRutaIsLessonUnlocked (L:1286)
+  - MULLER_RUTA_LEVELS (L:1296)
+
+src/b-app1.jsx:
+  - Generación: buildRutaExercisePlan (L:1503)
+  - Audio TTS Alemán: speakRutaDe (L:3139)
+  - Audio TTS Español: speakRutaEs (L:3165) — Forzar es-ES
+  - Playback Podcast: playRutaPodcastLine (L:3195)
+  - Reanudar Checkpoint: resumeRutaPodcastAfterCheckpoint (L:3234)
+  - Iniciar Podcast: beginRutaPodcastFromExercise (L:3226)
+  - Limpiar Podcast: clearRutaPodcastPlayback (L:3190)
+  - Validación: checkRutaMcAnswer (L:2125), checkRutaFillAnswer (L:2140)
+  - Finalizar lección: completeRutaLesson (L:1916)
+
+src/b-app2.jsx:
+  - Vista: RutaPanel (Componente principal, ~L:3200-3800)
+  - UI Podcast: Renderizado de Checkpoints (L:3614)
+  - Handlers: handlePodcastCheckpointAnswer (L:3400)
+  - Avance: advanceExercise (L:3444)
+  - Envío escrito: submitRutaTypedExercise (L:3485)
+
+================================================================================
+🟢 ESTADO DE PERSISTENCIA
+================================================================================
+
+El estado rutaPodcastUI debe sincronizarse siempre con
+rutaPodcastPlaybackRef para no perder el progreso al navegar por la PWA.
+
+- rutaPodcastUI es un useState local del componente RutaPanel (b-app2.jsx).
+- Al cambiar de pestaña en la SPA, el componente se desmonta y el estado se pierde.
+- Solución: persistir en rutaPodcastPlaybackRef (useRef sobrevive al desmontaje).
+- [CORREGIDO] resumeRutaPodcastAfterCheckpoint ahora incluye
+  line: rutaPodcastPlaybackRef.current.line en el estado.
 
 ================================================================================
 1. ESTRUCTURA DE CHUNKS (Concatenación en index.html)
 ================================================================================
 
-El index.html (línea 784-837) carga 4 chunks JSX vía XHR secuencial,
+El index.html (línea 787-837) carga 4 chunks JSX vía XHR secuencial,
 los concatena y los compila con Babel (presets: react + env) en un solo script.
 
 ORDEN DE CARGA:
