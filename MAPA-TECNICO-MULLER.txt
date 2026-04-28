@@ -384,7 +384,17 @@ c-extra.jsx (cargado 4º)
 
 [2026-04-28] | RUTA_VERB_PATTERNS (Parche 2: trennbar + prep) | Problema: Solo 10 verbos separables y 8 con preposición fija, insuficientes para generar variedad en niveles A2-B2. | Solución: trennbar expandido de 10 a 20 verbos (abholen, anrufen, aufräumen, auspacken, einladen, mitbringen, nachdenken, vorschlagen, zumachen, zurückkommen). prep expandido de 8 a 18 verbos (sich gewöhnen an, leiden unter, sich beschweren über, sich entscheiden für, sich verabschieden von, sich konzentrieren auf, sich vorbereiten auf, abhängen von, sich sehnen nach, sich fürchten vor). | Líneas: ~1567-1595 | Estado: OK
 
+FIN DEL MAPA TÉCNICO
 [2026-04-28] | RUTA_VERB_PATTERNS (Parche 3: stark + regular) | Problema: Solo 15 verbos irregulares y 24 regulares, insuficientes para generar variedad en niveles B1-C1. | Solución: stark expandido de 15 a 32 verbos (kommen, gehen, bleiben, heißen, singen, trinken, schwimmen, fliegen, ziehen, liegen, sitzen, stehen, vergessen, gewinnen, bitten, raten, werfen, sterben, wachsen). regular expandido de 24 a 52 verbos (28 nuevos: klingeln, lächeln, atmen, zeichnen, rechnen, bedeuten, handeln, zweifeln, wandern, retten, setzen, stellen, legen, füllen, wechseln, mieten, verdienen, erzählen, erklären, bestellen, bezahlen, glauben, probieren, studieren, passieren, diskutieren, trainieren, reparieren, telefonieren, fotografieren). | Líneas: ~1597-1640 | Estado: OK
+
+[2026-04-28] | RUTA_ADVERB_BANK (Parche A) | Problema: Solo 6-14 adverbios por nivel, insuficientes para generar variedad. | Solución: Expandido a 15-30 adverbios por nivel (A0: 15, A1: 25, A2: 30, B1: 32, B2: 30, C1: 30). | Líneas: ~1682-1689 | Estado: OK
+
+[2026-04-28] | RUTA_NOUN_BANK (Parche B) | Problema: Solo 6-8 sustantivos por nivel, insuficientes para generar variedad. | Solución: Expandido a 20-30 sustantivos por nivel (A0: 20, A1: 30, A2: 30, B1: 30, B2: 30, C1: 30). | Líneas: ~1691-1698 | Estado: OK
+
+[2026-04-28] | generateUniqueVerbPhrase (Parche C) | Problema: Solo generaba frases en Präsens, ignorando Präteritum y Perfekt. | Solución: Añadida lógica para 'praeteritum' (usa verb.pt) y 'perfekt' (usa verb.pp + auxiliar haben/sein con detección de verbos de movimiento). Los verbos trennbar en Perfekt forman prefijo+ge+stamm+t/en. | Líneas: ~1633-1670 | Estado: OK
+
+[2026-04-28] | generateUniquePhrasesForLevel (Parche D) | Problema: Solo generaba en Präsens, sin alternancia de tiempos. | Solución: Añadido array `tenses` por nivel (A0-A1: solo praesens; A2: praesens+perfekt; B1+: praesens+praeteritum+perfekt). Se alterna aleatoriamente entre tiempos disponibles. | Líneas: ~1700-1728 | Estado: OK
+FIN DEL MAPA TÉCNICO
 ================================================================================
 FIN DEL MAPA TÉCNICO
 ================================================================================

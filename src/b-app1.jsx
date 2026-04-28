@@ -1655,21 +1655,55 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const noun = nounPhrase || '';
               let conj = '';
               let es = verb.es || '';
-              if (verb.pr) {
-                  conj = verb.pr[p] || verb.pr.i || '';
-              } else if (verb.stamm) {
-                  conj = conjugateRegular(verb.stamm, p);
+              const t = tense || 'praesens';
+              /* Determinar conjugación según tiempo verbal */
+              if (t === 'praeteritum' && verb.pt) {
+                  conj = verb.pt[p] || verb.pt.i || '';
+                  es = es ? `${es} (Präteritum)` : '(Präteritum)';
+              } else if (t === 'perfekt' && verb.pp) {
+                  /* Perfekt: auxiliar haben/sein + Partizip II al final */
+                  const auxVerb = (verb.inf && (verb.inf === 'gehen' || verb.inf === 'kommen' || verb.inf === 'fahren' || verb.inf === 'laufen' || verb.inf === 'fliegen' || verb.inf === 'schwimmen' || verb.inf === 'bleiben' || verb.inf === 'sterben' || verb.inf === 'wachsen' || verb.inf === 'reisen' || verb.inf === 'wandern')) ? 'sein' : 'haben';
+                  const auxConj = auxVerb === 'sein'
+                      ? { i: 'bin', d: 'bist', e: 'ist', w: 'sind', i2: 'seid', s: 'sind' }[p] || 'ist'
+                      : { i: 'habe', d: 'hast', e: 'hat', w: 'haben', i2: 'habt', s: 'haben' }[p] || 'hat';
+                  const pp = verb.pp;
+                  if (verb.inf && verb.inf.match(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/)) {
+                      /* Trennbar: prefijo + ge + stamm + t/en */
+                      const prefix = verb.inf.match(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/)[0];
+                      const stamm = verb.stamm || verb.inf.replace(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/, '');
+                      const ppForm = prefix + 'ge' + stamm + (stamm.endsWith('t') ? 'et' : 't');
+                      conj = `${auxConj} ${ppForm}`;
+                  } else {
+                      conj = `${auxConj} ${pp}`;
+                  }
+                  es = es ? `${es} (Perfekt)` : '(Perfekt)';
+              } else {
+                  /* Präsens (default) */
+                  if (verb.pr) {
+                      conj = verb.pr[p] || verb.pr.i || '';
+                  } else if (verb.stamm) {
+                      conj = conjugateRegular(verb.stamm, p);
+                  }
               }
               if (!conj) return null;
               let de = '';
               if (verb.inf && verb.inf.includes(' ')) {
                   /* Verbo con preposición fija: "denken an" */
                   const [v, prep] = verb.inf.split(' ');
-                  de = adv ? `${subj} ${conj} ${adv} ${prep} ${noun}.` : `${subj} ${conj} ${prep} ${noun}.`;
+                  if (t === 'perfekt' && verb.pp) {
+                      de = adv ? `${subj} ${conj} ${adv} ${prep} ${noun}.` : `${subj} ${conj} ${prep} ${noun}.`;
+                  } else {
+                      de = adv ? `${subj} ${conj} ${adv} ${prep} ${noun}.` : `${subj} ${conj} ${prep} ${noun}.`;
+                  }
               } else if (verb.inf && verb.inf.match(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/)) {
                   /* Verbo separable */
-                  const conjSep = conjugateTrennbar(verb.inf, verb.stamm || verb.inf.replace(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/, ''), p);
-                  de = adv ? `${subj} ${conjSep} ${adv} ${noun}.` : `${subj} ${conjSep} ${noun}.`;
+                  if (t === 'perfekt') {
+                      /* Ya conjugado como aux + pp, el prefijo ya está incluido */
+                      de = adv ? `${subj} ${conj} ${adv} ${noun}.` : `${subj} ${conj} ${noun}.`;
+                  } else {
+                      const conjSep = conjugateTrennbar(verb.inf, verb.stamm || verb.inf.replace(/^(auf|ein|mit|an|aus|vor|zu|fern|statt|teil)/, ''), p);
+                      de = adv ? `${subj} ${conjSep} ${adv} ${noun}.` : `${subj} ${conjSep} ${noun}.`;
+                  }
               } else {
                   de = adv ? `${subj} ${conj} ${adv} ${noun}.` : `${subj} ${conj} ${noun}.`;
               }
@@ -1680,23 +1714,23 @@ const [placementFinished, setPlacementFinished] = useState(false);
           };
           /* Banco de adverbios y complementos por nivel */
           const RUTA_ADVERB_BANK = {
-              A0: ['heute', 'jetzt', 'hier', 'dort', 'auch', 'sehr'],
-              A1: ['heute', 'jetzt', 'hier', 'dort', 'auch', 'sehr', 'oft', 'manchmal', 'immer', 'gern', 'viel', 'schon'],
-              A2: ['heute', 'oft', 'manchmal', 'immer', 'gern', 'viel', 'schon', 'gestern', 'morgen', 'bald', 'endlich', 'regelmäßig', 'täglich', 'selten'],
-              B1: ['gestern', 'morgen', 'bald', 'endlich', 'regelmäßig', 'täglich', 'selten', 'vorher', 'nachher', 'deshalb', 'trotzdem', 'allerdings', 'außerdem', 'jedenfalls'],
-              B2: ['vorher', 'nachher', 'deshalb', 'trotzdem', 'allerdings', 'außerdem', 'jedenfalls', 'inzwischen', 'mittlerweile', 'keinesfalls', 'dementsprechend', 'folglich'],
-              C1: ['inzwischen', 'mittlerweile', 'keinesfalls', 'dementsprechend', 'folglich', 'nichtsdestotrotz', 'insofern', 'demzufolge', 'wohingegen', 'gleichermaßen']
+              A0: ['heute', 'jetzt', 'hier', 'dort', 'auch', 'sehr', 'schon', 'gleich', 'noch', 'nicht', 'gern', 'vielleicht', 'da', 'weg', 'fast'],
+              A1: ['heute', 'jetzt', 'hier', 'dort', 'auch', 'sehr', 'oft', 'manchmal', 'immer', 'gern', 'viel', 'schon', 'gleich', 'noch', 'nicht', 'vielleicht', 'da', 'weg', 'fast', 'zusammen', 'allein', 'lange', 'früh', 'spät', 'richtig'],
+              A2: ['heute', 'oft', 'manchmal', 'immer', 'gern', 'viel', 'schon', 'gestern', 'morgen', 'bald', 'endlich', 'regelmäßig', 'täglich', 'selten', 'früh', 'spät', 'lange', 'zusammen', 'allein', 'richtig', 'wirklich', 'einfach', 'schnell', 'langsam', 'leider', 'hoffentlich', 'natürlich', 'wahrscheinlich', 'plötzlich', 'deshalb'],
+              B1: ['gestern', 'morgen', 'bald', 'endlich', 'regelmäßig', 'täglich', 'selten', 'vorher', 'nachher', 'deshalb', 'trotzdem', 'allerdings', 'außerdem', 'jedenfalls', 'wirklich', 'einfach', 'schnell', 'langsam', 'leider', 'hoffentlich', 'natürlich', 'wahrscheinlich', 'plötzlich', 'deswegen', 'trotz', 'ungefähr', 'mindestens', 'höchstens', 'kaum', 'bereits', 'inzwischen', 'mittlerweile'],
+              B2: ['vorher', 'nachher', 'deshalb', 'trotzdem', 'allerdings', 'außerdem', 'jedenfalls', 'inzwischen', 'mittlerweile', 'keinesfalls', 'dementsprechend', 'folglich', 'deswegen', 'ungefähr', 'mindestens', 'höchstens', 'kaum', 'bereits', 'anschließend', 'zunächst', 'schließlich', 'jeweils', 'insgesamt', 'gegebenenfalls', 'möglicherweise', 'zweifellos', 'demgegenüber', 'demnach', 'infolgedessen', 'unterdessen'],
+              C1: ['inzwischen', 'mittlerweile', 'keinesfalls', 'dementsprechend', 'folglich', 'nichtsdestotrotz', 'insofern', 'demzufolge', 'wohingegen', 'gleichermaßen', 'anschließend', 'zunächst', 'schließlich', 'jeweils', 'insgesamt', 'gegebenenfalls', 'möglicherweise', 'zweifellos', 'demgegenüber', 'demnach', 'infolgedessen', 'unterdessen', 'nichtsdestoweniger', 'infolge', 'demgemäß', 'dahingehend', 'diesbezüglich', 'instande', 'keineswegs', 'ohnedies']
           };
-          /* Banco de sustantivos/complementos por nivel */
+          /* Banco de sustantivos/complementos por nivel (Nominativ, Akkusativ, Dativ, Genitiv) */
           const RUTA_NOUN_BANK = {
-              A0: ['das Buch', 'der Stift', 'die Tasche', 'das Heft', 'der Tisch', 'die Lampe'],
-              A1: ['einen Kaffee', 'das Wasser', 'den Hund', 'die Musik', 'das Haus', 'die Arbeit', 'die Schule', 'den Film'],
-              A2: ['den Zug', 'die Fahrkarte', 'das Formular', 'die Wohnung', 'den Termin', 'die Rechnung', 'den Urlaub', 'die Prüfung'],
-              B1: ['das Projekt', 'die Entscheidung', 'den Vertrag', 'die Bewerbung', 'das Meeting', 'die Erfahrung', 'den Fortschritt', 'die Lösung'],
-              B2: ['die Maßnahme', 'den Bericht', 'die Analyse', 'die Strategie', 'die Entwicklung', 'die Verhandlung', 'die Zusammenarbeit', 'den Prozess'],
-              C1: ['die Reform', 'die These', 'die Argumentation', 'die Differenzierung', 'die Evaluation', 'die Implementierung', 'die Korrelation', 'die Spezifikation']
+              A0: ['das Buch', 'der Stift', 'die Tasche', 'das Heft', 'der Tisch', 'die Lampe', 'der Ball', 'die Blume', 'das Brot', 'der Hund', 'die Katze', 'das Haus', 'der Baum', 'die Sonne', 'das Kind', 'der Freund', 'die Mutter', 'der Vater', 'das Spiel', 'die Tür'],
+              A1: ['einen Kaffee', 'das Wasser', 'den Hund', 'die Musik', 'das Haus', 'die Arbeit', 'die Schule', 'den Film', 'den Freund', 'die Familie', 'das Auto', 'den Bus', 'die Stadt', 'das Geld', 'den Tisch', 'die Wohnung', 'das Zimmer', 'den Park', 'die Straße', 'den Lehrer', 'die Lehrerin', 'das Essen', 'den Computer', 'die Tasche', 'das Handy', 'den Bahnhof', 'die Post', 'das Kino', 'den Markt', 'die Kirche'],
+              A2: ['den Zug', 'die Fahrkarte', 'das Formular', 'die Wohnung', 'den Termin', 'die Rechnung', 'den Urlaub', 'die Prüfung', 'den Arzt', 'die Apotheke', 'das Krankenhaus', 'den Flughafen', 'die Verspätung', 'das Ticket', 'den Koffer', 'die Reise', 'das Hotel', 'den Pass', 'die Adresse', 'den Brief', 'die Firma', 'das Büro', 'den Kollegen', 'die Besprechung', 'das Meeting', 'den Vertrag', 'die Unterschrift', 'das Dokument', 'den Antrag', 'die Bestätigung'],
+              B1: ['das Projekt', 'die Entscheidung', 'den Vertrag', 'die Bewerbung', 'das Meeting', 'die Erfahrung', 'den Fortschritt', 'die Lösung', 'den Vorschlag', 'die Diskussion', 'das Ergebnis', 'den Bericht', 'die Präsentation', 'das Seminar', 'den Kurs', 'die Prüfungsangst', 'das Studium', 'den Abschluss', 'die Karriere', 'den Job', 'die Fähigkeit', 'das Vorstellungsgespräch', 'den Lebenslauf', 'die Qualifikation', 'das Zeugnis', 'den Nachweis', 'die Ausbildung', 'das Praktikum', 'den Arbeitgeber', 'die Selbstständigkeit'],
+              B2: ['die Maßnahme', 'den Bericht', 'die Analyse', 'die Strategie', 'die Entwicklung', 'die Verhandlung', 'die Zusammenarbeit', 'den Prozess', 'die Optimierung', 'das Konzept', 'den Entwurf', 'die Umsetzung', 'das Verfahren', 'den Standard', 'die Richtlinie', 'das Protokoll', 'den Beschluss', 'die Evaluation', 'das Audit', 'den Qualitätsnachweis', 'die Dokumentation', 'den Workflow', 'die Schnittstelle', 'das Modul', 'den Algorithmus', 'die Datenbank', 'das Framework', 'den Quellcode', 'die Architektur', 'die Spezifikation'],
+              C1: ['die Reform', 'die These', 'die Argumentation', 'die Differenzierung', 'die Evaluation', 'die Implementierung', 'die Korrelation', 'die Spezifikation', 'die Abstraktion', 'den Diskurs', 'die Synthese', 'das Paradigma', 'den Konsens', 'die Divergenz', 'das Theorem', 'den Präzedenzfall', 'die Konklusion', 'das Postulat', 'den Widerspruch', 'die Kohärenz', 'die Validität', 'den Indikator', 'die Relevanz', 'das Kriterium', 'den Kontext', 'die Perspektive', 'das Phänomen', 'den Mechanismus', 'die Komplexität', 'die Ambivalenz']
           };
-          /* Genera N frases únicas para un nivel dado */
+          /* Genera N frases únicas para un nivel dado, alternando tiempos verbales */
           const generateUniquePhrasesForLevel = (levelKey, count, usedSet) => {
               const phrases = [];
               const lk = levelKey === 'A0' ? 'A0' : levelKey === 'A1' ? 'A1' : levelKey === 'A2' ? 'A2' : levelKey === 'B1' ? 'B1' : levelKey === 'B2' ? 'B2' : 'C1';
@@ -1704,6 +1738,8 @@ const [placementFinished, setPlacementFinished] = useState(false);
               const nouns = RUTA_NOUN_BANK[lk] || RUTA_NOUN_BANK.A2;
               const persons = ['ich', 'du', 'er_sie_es', 'wir', 'ihr', 'sie_Sie'];
               const verbCategories = lk === 'A0' || lk === 'A1' ? ['regular', 'modal'] : lk === 'A2' ? ['regular', 'modal', 'trennbar'] : lk === 'B1' ? ['regular', 'modal', 'trennbar', 'stark', 'prep'] : ['regular', 'modal', 'trennbar', 'stark', 'prep'];
+              /* Tiempos verbales disponibles según nivel */
+              const tenses = lk === 'A0' || lk === 'A1' ? ['praesens'] : lk === 'A2' ? ['praesens', 'perfekt'] : ['praesens', 'praeteritum', 'perfekt'];
               const allVerbs = [];
               verbCategories.forEach(cat => {
                   const list = RUTA_VERB_PATTERNS[cat] || [];
@@ -1718,7 +1754,9 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   const p = persons[Math.floor(Math.random() * persons.length)];
                   const adv = adverbs[Math.floor(Math.random() * adverbs.length)];
                   const noun = nouns[Math.floor(Math.random() * nouns.length)];
-                  const result = generateUniqueVerbPhrase(v, p, 'praesens', adv, noun);
+                  /* Alternar tiempos: praesens, praeteritum, perfekt según nivel */
+                  const tense = tenses[Math.floor(Math.random() * tenses.length)];
+                  const result = generateUniqueVerbPhrase(v, p, tense, adv, noun);
                   if (result && result.de && !usedSet.has(result.de)) {
                       usedSet.add(result.de);
                       phrases.push({ de: result.de, es: result.es, source: 'generator' });
