@@ -3397,13 +3397,19 @@
                                       ? 'Modo intermedio'
                                       : 'Modo avanzado';
                                const RUTA_MAX_ATT = 3;
-                               const [avatarSpeaking, setAvatarSpeaking] = useState(false);
-                               const [currentAvatarId, setCurrentAvatarId] = useState('plaza');
-                               useEffect(() => {
-                                   if (!avatarSpeaking) return;
-                                   const t = setTimeout(() => setAvatarSpeaking(false), 800);
-                                   return () => clearTimeout(t);
-                               }, [avatarSpeaking]);
+                               if (!window.__RUTA_AVATAR_STATE) window.__RUTA_AVATAR_STATE = { speaking: false, avatarId: 'plaza', timer: null };
+                               const avatarSpeaking = window.__RUTA_AVATAR_STATE.speaking;
+                               const currentAvatarId = window.__RUTA_AVATAR_STATE.avatarId;
+                               const setAvatarSpeaking = (v) => {
+                                   window.__RUTA_AVATAR_STATE.speaking = v;
+                                   if (v) {
+                                       if (window.__RUTA_AVATAR_STATE.timer) clearTimeout(window.__RUTA_AVATAR_STATE.timer);
+                                       window.__RUTA_AVATAR_STATE.timer = setTimeout(() => {
+                                           window.__RUTA_AVATAR_STATE.speaking = false;
+                                       }, 800);
+                                   }
+                               };
+                               const setCurrentAvatarId = (id) => { window.__RUTA_AVATAR_STATE.avatarId = id; };
                                const handlePodcastCheckpointAnswer = (opt) => {
                                    const cp = rutaPodcastUI && rutaPodcastUI.checkpoint;
                                    if (!cp || !ex) return;
