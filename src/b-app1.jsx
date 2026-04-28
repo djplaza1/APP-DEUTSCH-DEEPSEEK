@@ -1503,15 +1503,21 @@ const [placementFinished, setPlacementFinished] = useState(false);
           /* ── GENERADOR PROGRAMÁTICO DE CONJUGACIONES (RUTA) ── */
           /* Genera frases únicas para cada nivel usando patrones de conjugación */
           const RUTA_VERB_PATTERNS = {
-              /* Verbos modales + auxiliares (irregulares) */
-              modal: [
-                  { inf: 'können', es: 'poder', pr: { i: 'kann', d: 'kannst', e: 'kann', w: 'können', i2: 'könnt', s: 'können' }, pt: { i: 'konnte', d: 'konntest', e: 'konnte', w: 'konnten', i2: 'konntet', s: 'konnten' }, pp: 'gekonnt' },
-                  { inf: 'müssen', es: 'tener que', pr: { i: 'muss', d: 'musst', e: 'muss', w: 'müssen', i2: 'müsst', s: 'müssen' }, pt: { i: 'musste', d: 'musstest', e: 'musste', w: 'mussten', i2: 'musstet', s: 'mussten' }, pp: 'gemusst' },
-                  { inf: 'dürfen', es: 'poder (permiso)', pr: { i: 'darf', d: 'darfst', e: 'darf', w: 'dürfen', i2: 'dürft', s: 'dürfen' }, pt: { i: 'durfte', d: 'durftest', e: 'durfte', w: 'durften', i2: 'durftet', s: 'durften' }, pp: 'gedurft' },
-                  { inf: 'wollen', es: 'querer', pr: { i: 'will', d: 'willst', e: 'will', w: 'wollen', i2: 'wollt', s: 'wollen' }, pt: { i: 'wollte', d: 'wolltest', e: 'wollte', w: 'wollten', i2: 'wolltet', s: 'wollten' }, pp: 'gewollt' },
-                  { inf: 'sollen', es: 'deber', pr: { i: 'soll', d: 'sollst', e: 'soll', w: 'sollen', i2: 'sollt', s: 'sollen' }, pt: { i: 'sollte', d: 'solltest', e: 'sollte', w: 'sollten', i2: 'solltet', s: 'sollten' }, pp: 'gesollt' },
-                  { inf: 'mögen', es: 'gustar', pr: { i: 'mag', d: 'magst', e: 'mag', w: 'mögen', i2: 'mögt', s: 'mögen' }, pt: { i: 'mochte', d: 'mochtest', e: 'mochte', w: 'mochten', i2: 'mochtet', s: 'mochten' }, pp: 'gemocht' }
-              ],
+               /* Verbos modales + auxiliares (irregulares) */
+               modal: [
+                   { inf: 'können', es: 'poder', pr: { i: 'kann', d: 'kannst', e: 'kann', w: 'können', i2: 'könnt', s: 'können' }, pt: { i: 'konnte', d: 'konntest', e: 'konnte', w: 'konnten', i2: 'konntet', s: 'konnten' }, pp: 'gekonnt' },
+                   { inf: 'müssen', es: 'tener que', pr: { i: 'muss', d: 'musst', e: 'muss', w: 'müssen', i2: 'müsst', s: 'müssen' }, pt: { i: 'musste', d: 'musstest', e: 'musste', w: 'mussten', i2: 'musstet', s: 'mussten' }, pp: 'gemusst' },
+                   { inf: 'dürfen', es: 'poder (permiso)', pr: { i: 'darf', d: 'darfst', e: 'darf', w: 'dürfen', i2: 'dürft', s: 'dürfen' }, pt: { i: 'durfte', d: 'durftest', e: 'durfte', w: 'durften', i2: 'durftet', s: 'durften' }, pp: 'gedurft' },
+                   { inf: 'wollen', es: 'querer', pr: { i: 'will', d: 'willst', e: 'will', w: 'wollen', i2: 'wollt', s: 'wollen' }, pt: { i: 'wollte', d: 'wolltest', e: 'wollte', w: 'wollten', i2: 'wolltet', s: 'wollten' }, pp: 'gewollt' },
+                   { inf: 'sollen', es: 'deber', pr: { i: 'soll', d: 'sollst', e: 'soll', w: 'sollen', i2: 'sollt', s: 'sollen' }, pt: { i: 'sollte', d: 'solltest', e: 'sollte', w: 'sollten', i2: 'solltet', s: 'sollten' }, pp: 'gesollt' },
+                   { inf: 'mögen', es: 'gustar', pr: { i: 'mag', d: 'magst', e: 'mag', w: 'mögen', i2: 'mögt', s: 'mögen' }, pt: { i: 'mochte', d: 'mochtest', e: 'mochte', w: 'mochten', i2: 'mochtet', s: 'mochten' }, pp: 'gemocht' },
+                   { inf: 'wissen', es: 'saber', pr: { i: 'weiß', d: 'weißt', e: 'weiß', w: 'wissen', i2: 'wisst', s: 'wissen' }, pt: { i: 'wusste', d: 'wusstest', e: 'wusste', w: 'wussten', i2: 'wusstet', s: 'wussten' }, pp: 'gewusst' },
+                   { inf: 'brauchen', es: 'necesitar', pr: { i: 'brauche', d: 'brauchst', e: 'braucht', w: 'brauchen', i2: 'braucht', s: 'brauchen' }, pt: { i: 'brauchte', d: 'brauchtest', e: 'brauchte', w: 'brauchten', i2: 'brauchtet', s: 'brauchten' }, pp: 'gebraucht' },
+                   { inf: 'werden', es: 'volverse/futuro', pr: { i: 'werde', d: 'wirst', e: 'wird', w: 'werden', i2: 'werdet', s: 'werden' }, pt: { i: 'wurde', d: 'wurdest', e: 'wurde', w: 'wurden', i2: 'wurdet', s: 'wurden' }, pp: 'geworden' },
+                   { inf: 'lassen', es: 'dejar/permitir', pr: { i: 'lasse', d: 'lässt', e: 'lässt', w: 'lassen', i2: 'lasst', s: 'lassen' }, pt: { i: 'ließ', d: 'ließest', e: 'ließ', w: 'ließen', i2: 'ließt', s: 'ließen' }, pp: 'gelassen' },
+                   { inf: 'heißen', es: 'llamarse', pr: { i: 'heiße', d: 'heißt', e: 'heißt', w: 'heißen', i2: 'heißt', s: 'heißen' }, pt: { i: 'hieß', d: 'hießest', e: 'hieß', w: 'hießen', i2: 'hießt', s: 'hießen' }, pp: 'geheißen' },
+                   { inf: 'tun', es: 'hacer', pr: { i: 'tue', d: 'tust', e: 'tut', w: 'tun', i2: 'tut', s: 'tun' }, pt: { i: 'tat', d: 'tatest', e: 'tat', w: 'taten', i2: 'tatet', s: 'taten' }, pp: 'getan' }
+               ],
               /* Verbos regulares con prefijos separables */
               trennbar: [
                   { inf: 'aufstehen', es: 'levantarse', stamm: 'steh', prEnd: 'e/st/t/en/t/en', pp: 'aufgestanden' },
@@ -1523,7 +1529,17 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   { inf: 'zuhören', es: 'escuchar', stamm: 'hör', prEnd: 'e/st/t/en/t/en', pp: 'zugehört' },
                   { inf: 'fernsehen', es: 'ver TV', stamm: 'seh', prEnd: 'e/st/t/en/t/en', pp: 'ferngesehen' },
                   { inf: 'stattfinden', es: 'tener lugar', stamm: 'find', prEnd: 'e/st/t/en/t/en', pp: 'stattgefunden' },
-                  { inf: 'teilnehmen', es: 'participar', stamm: 'nehm', prEnd: 'e/st/t/en/t/en', pp: 'teilgenommen' }
+                  { inf: 'teilnehmen', es: 'participar', stamm: 'nehm', prEnd: 'e/st/t/en/t/en', pp: 'teilgenommen' },
+                  { inf: 'abholen', es: 'recoger', stamm: 'hol', prEnd: 'e/st/t/en/t/en', pp: 'abgeholt' },
+                  { inf: 'anrufen', es: 'llamar', stamm: 'ruf', prEnd: 'e/st/t/en/t/en', pp: 'angerufen' },
+                  { inf: 'aufräumen', es: 'ordenar', stamm: 'räum', prEnd: 'e/st/t/en/t/en', pp: 'aufgeräumt' },
+                  { inf: 'auspacken', es: 'desembalar', stamm: 'pack', prEnd: 'e/st/t/en/t/en', pp: 'ausgepackt' },
+                  { inf: 'einladen', es: 'invitar', stamm: 'lad', prEnd: 'e/st/t/en/t/en', pp: 'eingeladen' },
+                  { inf: 'mitbringen', es: 'traer', stamm: 'bring', prEnd: 'e/st/t/en/t/en', pp: 'mitgebracht' },
+                  { inf: 'nachdenken', es: 'reflexionar', stamm: 'denk', prEnd: 'e/st/t/en/t/en', pp: 'nachgedacht' },
+                  { inf: 'vorschlagen', es: 'proponer', stamm: 'schlag', prEnd: 'e/st/t/en/t/en', pp: 'vorgeschlagen' },
+                  { inf: 'zumachen', es: 'cerrar', stamm: 'mach', prEnd: 'e/st/t/en/t/en', pp: 'zugemacht' },
+                  { inf: 'zurückkommen', es: 'volver', stamm: 'komm', prEnd: 'e/st/t/en/t/en', pp: 'zurückgekommen' }
               ],
               /* Verbos con preposición fija */
               prep: [
@@ -1534,7 +1550,17 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   { inf: 'sich interessieren für', es: 'interesarse por', pr: { i: 'interessiere', d: 'interessierst', e: 'interessiert', w: 'interessieren', i2: 'interessiert', s: 'interessieren' }, pp: 'interessiert' },
                   { inf: 'glauben an', es: 'creer en', pr: { i: 'glaube', d: 'glaubst', e: 'glaubt', w: 'glauben', i2: 'glaubt', s: 'glauben' }, pp: 'geglaubt' },
                   { inf: 'sich erinnern an', es: 'recordar', pr: { i: 'erinnere', d: 'erinnerst', e: 'erinnert', w: 'erinnern', i2: 'erinnert', s: 'erinnern' }, pp: 'erinnert' },
-                  { inf: 'bestehen auf', es: 'insistir en', pr: { i: 'bestehe', d: 'bestehst', e: 'besteht', w: 'bestehen', i2: 'besteht', s: 'bestehen' }, pp: 'bestanden' }
+                  { inf: 'bestehen auf', es: 'insistir en', pr: { i: 'bestehe', d: 'bestehst', e: 'besteht', w: 'bestehen', i2: 'besteht', s: 'bestehen' }, pp: 'bestanden' },
+                  { inf: 'sich gewöhnen an', es: 'acostumbrarse a', pr: { i: 'gewöhne', d: 'gewöhnst', e: 'gewöhnt', w: 'gewöhnen', i2: 'gewöhnt', s: 'gewöhnen' }, pp: 'gewöhnt' },
+                  { inf: 'leiden unter', es: 'sufrir por', pr: { i: 'leide', d: 'leidest', e: 'leidet', w: 'leiden', i2: 'leidet', s: 'leiden' }, pp: 'gelitten' },
+                  { inf: 'sich beschweren über', es: 'quejarse de', pr: { i: 'beschwere', d: 'beschwerst', e: 'beschwert', w: 'beschweren', i2: 'beschwert', s: 'beschweren' }, pp: 'beschwert' },
+                  { inf: 'sich entscheiden für', es: 'decidirse por', pr: { i: 'entscheide', d: 'entscheidest', e: 'entscheidet', w: 'entscheiden', i2: 'entscheidet', s: 'entscheiden' }, pp: 'entschieden' },
+                  { inf: 'sich verabschieden von', es: 'despedirse de', pr: { i: 'verabschiede', d: 'verabschiedest', e: 'verabschiedet', w: 'verabschieden', i2: 'verabschiedet', s: 'verabschieden' }, pp: 'verabschiedet' },
+                  { inf: 'sich konzentrieren auf', es: 'concentrarse en', pr: { i: 'konzentriere', d: 'konzentrierst', e: 'konzentriert', w: 'konzentrieren', i2: 'konzentriert', s: 'konzentrieren' }, pp: 'konzentriert' },
+                  { inf: 'sich vorbereiten auf', es: 'prepararse para', pr: { i: 'bereite vor', d: 'bereitest vor', e: 'bereitet vor', w: 'bereiten vor', i2: 'bereitet vor', s: 'bereiten vor' }, pp: 'vorbereitet' },
+                  { inf: 'abhängen von', es: 'depender de', pr: { i: 'hänge ab', d: 'hängst ab', e: 'hängt ab', w: 'hängen ab', i2: 'hängt ab', s: 'hängen ab' }, pp: 'abgehangen' },
+                  { inf: 'sich sehnen nach', es: 'anhelar', pr: { i: 'sehne', d: 'sehnst', e: 'sehnt', w: 'sehnen', i2: 'sehnt', s: 'sehnen' }, pp: 'gesehnt' },
+                  { inf: 'sich fürchten vor', es: 'temer a', pr: { i: 'fürchte', d: 'fürchtest', e: 'fürchtet', w: 'fürchten', i2: 'fürchtet', s: 'fürchten' }, pp: 'gefürchtet' }
               ],
               /* Verbos irregulares con cambio vocálico */
               stark: [
@@ -1552,7 +1578,26 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   { inf: 'helfen', es: 'ayudar', pr: { i: 'helfe', d: 'hilfst', e: 'hilft', w: 'helfen', i2: 'helft', s: 'helfen' }, pt: { i: 'half', d: 'halfst', e: 'half', w: 'halfen', i2: 'halft', s: 'halfen' }, pp: 'geholfen' },
                   { inf: 'treffen', es: 'quedar', pr: { i: 'treffe', d: 'triffst', e: 'trifft', w: 'treffen', i2: 'trefft', s: 'treffen' }, pt: { i: 'traf', d: 'trafst', e: 'traf', w: 'trafen', i2: 'traft', s: 'trafen' }, pp: 'getroffen' },
                   { inf: 'tragen', es: 'llevar', pr: { i: 'trage', d: 'trägst', e: 'trägt', w: 'tragen', i2: 'tragt', s: 'tragen' }, pt: { i: 'trug', d: 'trugst', e: 'trug', w: 'trugen', i2: 'trugt', s: 'trugen' }, pp: 'getragen' },
-                  { inf: 'halten', es: 'sostener', pr: { i: 'halte', d: 'hältst', e: 'hält', w: 'halten', i2: 'haltet', s: 'halten' }, pt: { i: 'hielt', d: 'hieltest', e: 'hielt', w: 'hielten', i2: 'hieltet', s: 'hielten' }, pp: 'gehalten' }
+                  { inf: 'halten', es: 'sostener', pr: { i: 'halte', d: 'hältst', e: 'hält', w: 'halten', i2: 'haltet', s: 'halten' }, pt: { i: 'hielt', d: 'hieltest', e: 'hielt', w: 'hielten', i2: 'hieltet', s: 'hielten' }, pp: 'gehalten' },
+                  { inf: 'kommen', es: 'venir', pr: { i: 'komme', d: 'kommst', e: 'kommt', w: 'kommen', i2: 'kommt', s: 'kommen' }, pt: { i: 'kam', d: 'kamst', e: 'kam', w: 'kamen', i2: 'kamt', s: 'kamen' }, pp: 'gekommen' },
+                  { inf: 'gehen', es: 'ir', pr: { i: 'gehe', d: 'gehst', e: 'geht', w: 'gehen', i2: 'geht', s: 'gehen' }, pt: { i: 'ging', d: 'gingst', e: 'ging', w: 'gingen', i2: 'gingt', s: 'gingen' }, pp: 'gegangen' },
+                  { inf: 'bleiben', es: 'quedarse', pr: { i: 'bleibe', d: 'bleibst', e: 'bleibt', w: 'bleiben', i2: 'bleibt', s: 'bleiben' }, pt: { i: 'blieb', d: 'bliebst', e: 'blieb', w: 'blieben', i2: 'bliebt', s: 'blieben' }, pp: 'geblieben' },
+                  { inf: 'heißen', es: 'llamarse', pr: { i: 'heiße', d: 'heißt', e: 'heißt', w: 'heißen', i2: 'heißt', s: 'heißen' }, pt: { i: 'hieß', d: 'hießest', e: 'hieß', w: 'hießen', i2: 'hießt', s: 'hießen' }, pp: 'geheißen' },
+                  { inf: 'singen', es: 'cantar', pr: { i: 'singe', d: 'singst', e: 'singt', w: 'singen', i2: 'singt', s: 'singen' }, pt: { i: 'sang', d: 'sangst', e: 'sang', w: 'sangen', i2: 'sangt', s: 'sangen' }, pp: 'gesungen' },
+                  { inf: 'trinken', es: 'beber', pr: { i: 'trinke', d: 'trinkst', e: 'trinkt', w: 'trinken', i2: 'trinkt', s: 'trinken' }, pt: { i: 'trank', d: 'trankst', e: 'trank', w: 'tranken', i2: 'trankt', s: 'tranken' }, pp: 'getrunken' },
+                  { inf: 'schwimmen', es: 'nadar', pr: { i: 'schwimme', d: 'schwimmst', e: 'schwimmt', w: 'schwimmen', i2: 'schwimmt', s: 'schwimmen' }, pt: { i: 'schwamm', d: 'schwammst', e: 'schwamm', w: 'schwammen', i2: 'schwammt', s: 'schwammen' }, pp: 'geschwommen' },
+                  { inf: 'fliegen', es: 'volar', pr: { i: 'fliege', d: 'fliegst', e: 'fliegt', w: 'fliegen', i2: 'fliegt', s: 'fliegen' }, pt: { i: 'flog', d: 'flogst', e: 'flog', w: 'flogen', i2: 'flogt', s: 'flogen' }, pp: 'geflogen' },
+                  { inf: 'ziehen', es: 'tirar/mudarse', pr: { i: 'ziehe', d: 'ziehst', e: 'zieht', w: 'ziehen', i2: 'zieht', s: 'ziehen' }, pt: { i: 'zog', d: 'zogst', e: 'zog', w: 'zogen', i2: 'zogt', s: 'zogen' }, pp: 'gezogen' },
+                  { inf: 'liegen', es: 'estar tumbado', pr: { i: 'liege', d: 'liegst', e: 'liegt', w: 'liegen', i2: 'liegt', s: 'liegen' }, pt: { i: 'lag', d: 'lagst', e: 'lag', w: 'lagen', i2: 'lagt', s: 'lagen' }, pp: 'gelegen' },
+                  { inf: 'sitzen', es: 'estar sentado', pr: { i: 'sitze', d: 'sitzt', e: 'sitzt', w: 'sitzen', i2: 'sitzt', s: 'sitzen' }, pt: { i: 'saß', d: 'saßest', e: 'saß', w: 'saßen', i2: 'saßt', s: 'saßen' }, pp: 'gesessen' },
+                  { inf: 'stehen', es: 'estar de pie', pr: { i: 'stehe', d: 'stehst', e: 'steht', w: 'stehen', i2: 'steht', s: 'stehen' }, pt: { i: 'stand', d: 'standst', e: 'stand', w: 'standen', i2: 'standet', s: 'standen' }, pp: 'gestanden' },
+                  { inf: 'vergessen', es: 'olvidar', pr: { i: 'vergesse', d: 'vergisst', e: 'vergisst', w: 'vergessen', i2: 'vergesst', s: 'vergessen' }, pt: { i: 'vergaß', d: 'vergaßest', e: 'vergaß', w: 'vergaßen', i2: 'vergaßt', s: 'vergaßen' }, pp: 'vergessen' },
+                  { inf: 'gewinnen', es: 'ganar', pr: { i: 'gewinne', d: 'gewinnst', e: 'gewinnt', w: 'gewinnen', i2: 'gewinnt', s: 'gewinnen' }, pt: { i: 'gewann', d: 'gewannst', e: 'gewann', w: 'gewannen', i2: 'gewannnt', s: 'gewannen' }, pp: 'gewonnen' },
+                  { inf: 'bitten', es: 'rogar/pedir', pr: { i: 'bitte', d: 'bittest', e: 'bittet', w: 'bitten', i2: 'bittet', s: 'bitten' }, pt: { i: 'bat', d: 'batest', e: 'bat', w: 'baten', i2: 'batet', s: 'baten' }, pp: 'gebeten' },
+                  { inf: 'raten', es: 'aconsejar', pr: { i: 'rate', d: 'rätst', e: 'rät', w: 'raten', i2: 'ratet', s: 'raten' }, pt: { i: 'riet', d: 'rietst', e: 'riet', w: 'rieten', i2: 'rietet', s: 'rieten' }, pp: 'geraten' },
+                  { inf: 'werfen', es: 'lanzar', pr: { i: 'werfe', d: 'wirfst', e: 'wirft', w: 'werfen', i2: 'werft', s: 'werfen' }, pt: { i: 'warf', d: 'warfst', e: 'warf', w: 'warfen', i2: 'warft', s: 'warfen' }, pp: 'geworfen' },
+                  { inf: 'sterben', es: 'morir', pr: { i: 'sterbe', d: 'stirbst', e: 'stirbt', w: 'sterben', i2: 'sterbt', s: 'sterben' }, pt: { i: 'starb', d: 'starbst', e: 'starb', w: 'starben', i2: 'starbt', s: 'starben' }, pp: 'gestorben' },
+                  { inf: 'wachsen', es: 'crecer', pr: { i: 'wachse', d: 'wächst', e: 'wächst', w: 'wachsen', i2: 'wachst', s: 'wachsen' }, pt: { i: 'wuchs', d: 'wuchsest', e: 'wuchs', w: 'wuchsen', i2: 'wuchst', s: 'wuchsen' }, pp: 'gewachsen' }
               ],
               /* Verbos regulares comunes */
               regular: [
@@ -1567,7 +1612,22 @@ const [placementFinished, setPlacementFinished] = useState(false);
                   { inf: 'fragen', es: 'preguntar', stamm: 'frag' }, { inf: 'antworten', es: 'responder', stamm: 'antwort' },
                   { inf: 'wünschen', es: 'desear', stamm: 'wünsch' }, { inf: 'feiern', es: 'celebrar', stamm: 'feier' },
                   { inf: 'lachen', es: 'reír', stamm: 'lach' }, { inf: 'weinen', es: 'llorar', stamm: 'wein' },
-                  { inf: 'öffnen', es: 'abrir', stamm: 'öffn' }, { inf: 'schließen', es: 'cerrar', stamm: 'schließ' }
+                  { inf: 'öffnen', es: 'abrir', stamm: 'öffn' }, { inf: 'schließen', es: 'cerrar', stamm: 'schließ' },
+                  { inf: 'klingeln', es: 'sonar', stamm: 'klingel' }, { inf: 'lächeln', es: 'sonreír', stamm: 'lächel' },
+                  { inf: 'atmen', es: 'respirar', stamm: 'atm' }, { inf: 'zeichnen', es: 'dibujar', stamm: 'zeichn' },
+                  { inf: 'rechnen', es: 'calcular', stamm: 'rechn' }, { inf: 'bedeuten', es: 'significar', stamm: 'bedeut' },
+                  { inf: 'handeln', es: 'actuar/comerciar', stamm: 'handel' }, { inf: 'zweifeln', es: 'dudar', stamm: 'zweifel' },
+                  { inf: 'wandern', es: 'senderismo', stamm: 'wander' }, { inf: 'retten', es: 'salvar', stamm: 'rett' },
+                  { inf: 'setzen', es: 'colocar', stamm: 'setz' }, { inf: 'stellen', es: 'poner de pie', stamm: 'stell' },
+                  { inf: 'legen', es: 'poner tumbado', stamm: 'leg' }, { inf: 'füllen', es: 'llenar', stamm: 'füll' },
+                  { inf: 'wechseln', es: 'cambiar', stamm: 'wechsel' }, { inf: 'mieten', es: 'alquilar', stamm: 'miet' },
+                  { inf: 'verdienen', es: 'ganar dinero', stamm: 'verdien' }, { inf: 'erzählen', es: 'contar/narrar', stamm: 'erzähl' },
+                  { inf: 'erklären', es: 'explicar', stamm: 'erklär' }, { inf: 'bestellen', es: 'pedir', stamm: 'bestell' },
+                  { inf: 'bezahlen', es: 'pagar', stamm: 'bezahl' }, { inf: 'glauben', es: 'creer', stamm: 'glaub' },
+                  { inf: 'probieren', es: 'probar', stamm: 'probier' }, { inf: 'studieren', es: 'estudiar uni', stamm: 'studier' },
+                  { inf: 'passieren', es: 'suceder', stamm: 'passier' }, { inf: 'diskutieren', es: 'discutir', stamm: 'diskutier' },
+                  { inf: 'trainieren', es: 'entrenar', stamm: 'trainier' }, { inf: 'reparieren', es: 'reparar', stamm: 'reparier' },
+                  { inf: 'telefonieren', es: 'telefonear', stamm: 'telefonier' }, { inf: 'fotografieren', es: 'fotografiar', stamm: 'fotografier' }
               ]
           };
           /* Conjuga un verbo regular dado su raíz y persona */
