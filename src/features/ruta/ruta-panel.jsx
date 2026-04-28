@@ -69,12 +69,13 @@ function RutaPanel(rawProps) {
   } = p;
   const ExerciseHelpBtn = window.ExerciseHelpBtn || (() => null);
   /* ── AVATARES DiceBear + animación CSS ── */
+  /* Avatares locales con SVG inline — sin dependencia externa, siempre visibles */
   const RUTA_AVATARS = useMemo(() => [
-    { id: 'plaza', name: 'Plaza Müller',  seed: 'PlazaMuller', style: 'notionists',   bg: '#2563eb',  color: '#60a5fa', url: 'https://api.dicebear.com/9.x/notionists/svg?seed=PlazaMuller&primaryColor=2563eb&secondaryColor=60a5fa' },
-    { id: 'laura', name: 'Laura Müller',  seed: 'Anna',        style: 'adventurer',   bg: '#fda4af',  url: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Anna&backgroundColor=fda4af' },
-    { id: 'anna',  name: 'Anna',          seed: 'LauraMuller', style: 'adventurer',   bg: '#86efac',  url: 'https://api.dicebear.com/9.x/adventurer/svg?seed=LauraMuller&backgroundColor=86efac' },
-    { id: 'hans',  name: 'Hans',          seed: 'Hans',        style: 'notionists',   bg: '#ea580c',  color: '#fdba74', url: 'https://api.dicebear.com/9.x/notionists/svg?seed=Hans&primaryColor=ea580c&secondaryColor=fdba74' },
-    { id: 'maria', name: 'Maria',         seed: 'Maria',       style: 'adventurer',   bg: '#c4b5fd',  url: 'https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=c4b5fd' },
+    { id: 'plaza', name: 'Plaza Müller',  bg: '#2563eb',  fg: '#60a5fa', emoji: '🧑‍🏫' },
+    { id: 'laura', name: 'Laura Müller',  bg: '#e11d48',  fg: '#fda4af', emoji: '👩‍🦰' },
+    { id: 'anna',  name: 'Anna',          bg: '#16a34a',  fg: '#86efac', emoji: '👩' },
+    { id: 'hans',  name: 'Hans',          bg: '#ea580c',  fg: '#fdba74', emoji: '👨' },
+    { id: 'maria', name: 'Maria',         bg: '#7c3aed',  fg: '#c4b5fd', emoji: '👩‍🦳' },
   ], []);
   const [currentAvatarId, setCurrentAvatarId] = useState('plaza');
   const [avatarSpeaking, setAvatarSpeaking] = useState(false);
@@ -87,27 +88,14 @@ function RutaPanel(rawProps) {
     return () => clearTimeout(timer);
   }, [avatarSpeaking]);
   /* Componente Avatar */
-  const [avatarErrors, setAvatarErrors] = useState({});
   const RutaAvatar = useCallback(({ size = 80, avatarId, className = '' }) => {
     const av = RUTA_AVATARS.find(a => a.id === avatarId) || currentAvatar;
     const isSpeaking = avatarSpeaking && avatarId === currentAvatarId;
-    const hasError = avatarErrors[av.id];
-    const initials = av.name.split(' ').map(w => w[0]).join('').slice(0, 2);
+    const emojiSize = Math.round(size * 0.45);
     return (
       <div className={`relative inline-flex flex-col items-center ${className}`} style={{ width: size, height: size + 20 }}>
-        <div className={`rounded-full overflow-hidden border-2 transition-all duration-300 flex items-center justify-center ${isSpeaking ? 'border-emerald-400 shadow-lg shadow-emerald-500/30 scale-105' : 'border-white/20'}`} style={{ width: size, height: size, background: hasError ? av.bg : undefined }}>
-          {hasError ? (
-            <span className="text-white font-black select-none" style={{ fontSize: size * 0.35 }}>{initials}</span>
-          ) : (
-            <img
-              ref={avatarRef}
-              src={av.url}
-              alt={av.name}
-              className={`w-full h-full object-cover transition-all duration-150 ${isSpeaking ? 'animate-ruta-avatar-talk' : ''}`}
-              style={{ filter: isSpeaking ? 'brightness(1.15)' : 'none' }}
-              onError={() => setAvatarErrors(prev => ({ ...prev, [av.id]: true }))}
-            />
-          )}
+        <div className={`rounded-full overflow-hidden border-2 transition-all duration-300 flex items-center justify-center ${isSpeaking ? 'border-emerald-400 shadow-lg shadow-emerald-500/30 scale-105' : 'border-white/20'}`} style={{ width: size, height: size, background: `linear-gradient(135deg, ${av.bg}, ${av.fg || av.bg})` }}>
+          <span ref={avatarRef} className={`select-none leading-none transition-all duration-150 ${isSpeaking ? 'animate-ruta-avatar-talk' : ''}`} style={{ fontSize: emojiSize, filter: isSpeaking ? 'brightness(1.2)' : 'none' }}>{av.emoji}</span>
         </div>
         <p className="text-[10px] font-bold text-white/80 mt-1 truncate max-w-[100px] text-center">{av.name}</p>
         {isSpeaking && (
@@ -119,7 +107,7 @@ function RutaPanel(rawProps) {
         )}
       </div>
     );
-  }, [RUTA_AVATARS, currentAvatar, currentAvatarId, avatarSpeaking, avatarErrors]);
+  }, [RUTA_AVATARS, currentAvatar, currentAvatarId, avatarSpeaking]);
   /* Helper: seleccionar avatar aleatorio y disparar TTS con animación */
   const speakWithAvatar = useCallback((text, avatarId) => {
     if (!text) return;
