@@ -1,4 +1,4 @@
-          const themeShellClass = uiTheme === 'light' ? 'muller-theme-light' : uiTheme === 'hc' ? 'muller-theme-hc' : '';
+﻿          const themeShellClass = uiTheme === 'light' ? 'muller-theme-light' : uiTheme === 'hc' ? 'muller-theme-hc' : '';
 
           const currentPracticeList = practiceActive === 'diff' ? userStats.difficultVocab : (practiceActive === 'norm' ? userStats.normalVocab : userStats.difficultGrammar);
           const currentPracticeItem = currentPracticeList ? currentPracticeList[practiceIndex] : null;
@@ -688,13 +688,7 @@
               persistDailyPatch({ [key]: true });
               saveProgress({ coins: userStats.coins + 5, activityByDay: mergeActivityPoints(12) });
           };
-
-          const finishOnboarding = () => {
-              try { localStorage.setItem(MULLER_ONBOARDING_KEY, '1'); } catch (e) {}
-              setShowOnboarding(false);
-              setOnboardingStep(1);
-          };
-
+// finishOnboarding ahora viene de useOnboardingState()
           const sortedDeVoices = useMemo(() => {
               try {
                   return window.speechSynthesis.getVoices()

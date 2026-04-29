@@ -1,4 +1,4 @@
-﻿        function App() {
+        function App() {
           const [activeTab, setActiveTab] = useState(() => { try { return localStorage.getItem('muller_active_tab_v1') || 'inicio'; } catch { return 'inicio'; } });
           const [showSplash, setShowSplash] = useState(false); 
           const [splashLogoBlink, setSplashLogoBlink] = useState(false);
@@ -162,68 +162,9 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [showDeathModal, setShowDeathModal] = useState(false);
           const [showGrammarPrompt, setShowGrammarPrompt] = useState(false);
           const [customGrammarInput, setCustomGrammarInput] = useState("");
-          const [showHandwriting, setShowHandwriting] = useState(false); // NUEVO: Canvas escritura
-          const [showVocabMixModal, setShowVocabMixModal] = useState(false);
-          const [mixLessonSelection, setMixLessonSelection] = useState({});
-          const [mullerProgresoSnapshot, setMullerProgresoSnapshot] = useState(null);
-          const [audiobookPlaying, setAudiobookPlaying] = useState(false);
-          const [shadowRate, setShadowRate] = useState(0.88);
-          const [shadowShowText, setShadowShowText] = useState(true);
-          const [writingMode, setWritingMode] = useState('free');
-          const [writingGrid, setWritingGrid] = useState(true);
-          const [writingStroke, setWritingStroke] = useState(4);
-          const [writingCopyIdx, setWritingCopyIdx] = useState(0);
-          const [writingPromptIdx, setWritingPromptIdx] = useState(0);
-          const [writingTelcIdx, setWritingTelcIdx] = useState(0);
-          const [writingTelcInputMode, setWritingTelcInputMode] = useState('pen');
-          const [writingTelcTypedText, setWritingTelcTypedText] = useState('');
-          const [writingTelcLastOcrText, setWritingTelcLastOcrText] = useState('');
-          const [writingTelcCoach, setWritingTelcCoach] = useState(null);
-          const [writingDictIdx, setWritingDictIdx] = useState(0);
-          const [writingLetterIdx, setWritingLetterIdx] = useState(0);
-          const [writingGuionWriteIdx, setWritingGuionWriteIdx] = useState(0);
-          const [writingDictReveal, setWritingDictReveal] = useState(false);
-          const [writingDictSource, setWritingDictSource] = useState('builtin');
-          const [writingDictScriptId, setWritingDictScriptId] = useState('__current__');
-          const [writingCanvasKey, setWritingCanvasKey] = useState(0);
-          const [writingCanvasSnapshot, setWritingCanvasSnapshot] = useState({ padKey: 0, data: '' });
-          const [writingVocabIdx, setWritingVocabIdx] = useState(0);
           const [ocrHistoryList, setOcrHistoryList] = useState(() => {
               try { return JSON.parse(localStorage.getItem(MULLER_OCR_HIST_KEY) || '[]'); } catch (e) { return []; }
           });
-          const [pdfStudyDoc, setPdfStudyDoc] = useState(() => {
-              try {
-                  const raw = localStorage.getItem(MULLER_PDF_STUDY_STORAGE_KEY);
-                  return raw ? JSON.parse(raw) : null;
-              } catch (e) {
-                  return null;
-              }
-          });
-          const [pdfStudyPageIdx, setPdfStudyPageIdx] = useState(0);
-          const [pdfStudyExtracting, setPdfStudyExtracting] = useState(false);
-          const [pdfStudyErr, setPdfStudyErr] = useState('');
-          const [pdfStudyBusyMsg, setPdfStudyBusyMsg] = useState('');
-          const [pdfStudyOcrBusy, setPdfStudyOcrBusy] = useState(false);
-          const [pdfStudyLastApplied, setPdfStudyLastApplied] = useState('');
-          const [pdfStudyFullscreen, setPdfStudyFullscreen] = useState(false);
-          const [pdfStudyInkNonce, setPdfStudyInkNonce] = useState(0);
-          const [pdfStudyNotesByPage, setPdfStudyNotesByPage] = useState(() => {
-              try {
-                  const raw = localStorage.getItem(MULLER_PDF_NOTES_STORAGE_KEY);
-                  return raw ? JSON.parse(raw) : {};
-              } catch (e) {
-                  return {};
-              }
-          });
-          const [pdfStudySavedDocs, setPdfStudySavedDocs] = useState(() => {
-              try {
-                  const raw = localStorage.getItem(MULLER_PDF_STUDY_LIBRARY_KEY);
-                  return raw ? JSON.parse(raw) : [];
-              } catch (e) {
-                  return [];
-              }
-          });
-          const [pdfStudyBlobUrl, setPdfStudyBlobUrl] = useState('');
           const [ttsPrefsEpoch, setTtsPrefsEpoch] = useState(0);
           const [ttsDeUri, setTtsDeUri] = useState(() => { try { return localStorage.getItem('muller_tts_de') || ''; } catch (e) { return ''; } });
           const [ttsEsUri, setTtsEsUri] = useState(() => { try { return localStorage.getItem('muller_tts_es') || ''; } catch (e) { return ''; } });
@@ -559,7 +500,9 @@ const [placementFinished, setPlacementFinished] = useState(false);
               } catch (e) {}
           }, [reduceMotionUi]);
           const [uiTheme, setUiTheme] = useState(() => { try { return localStorage.getItem(MULLER_THEME_KEY) || 'dark'; } catch (e) { return 'dark'; } });
-          const { showOnboarding, setShowOnboarding, onboardingStep, setOnboardingStep, onboardingNever, setOnboardingNever, finishOnboarding } = window.useOnboardingState();
+          const [showOnboarding, setShowOnboarding] = useState(() => { try { return !localStorage.getItem(MULLER_ONBOARDING_KEY); } catch (e) { return true; } });
+          const [onboardingStep, setOnboardingStep] = useState(1);
+          const [onboardingNever, setOnboardingNever] = useState(false);
           const [historiaAudioOnly, setHistoriaAudioOnly] = useState(false);
           const [vocabDueFilterOnly, setVocabDueFilterOnly] = useState(false);
           const [showShortcutsModal, setShowShortcutsModal] = useState(false);
@@ -741,7 +684,6 @@ const [placementFinished, setPlacementFinished] = useState(false);
               if (mode === 'dialogue') return 'historia_dialogue';
               return 'historia_base';
           }, [mode, podcastMode, puzzleMode, diktatMode, lueckentextMode, artikelSniperMode, declinaMode, tempusMode, blindMode]);
-          const escrituraExerciseHelpId = useMemo(() => 'escritura_' + writingMode, [writingMode]);
           const bxExerciseHelpId = useMemo(() => 'bx_' + bxCategory, [bxCategory]);
 
           useEffect(() => {
@@ -783,8 +725,6 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const noiseSourceRef = useRef(null);
           const noiseGainRef = useRef(null);
           const submitKeyLockRef = useRef({});
-          const pdfStudyBufferRef = useRef(null);
-          const pdfStudyDocHandleRef = useRef(null);
 
           /* Tras cada commit React los <i data-lucide> se restauran; hay que volver a pintar SVG en todo el documento */
           useLayoutEffect(() => {
