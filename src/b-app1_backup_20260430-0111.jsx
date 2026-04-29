@@ -1,4 +1,4 @@
-        function App() {
+﻿        function App() {
           const [activeTab, setActiveTab] = useState(() => { try { return localStorage.getItem('muller_active_tab_v1') || 'inicio'; } catch { return 'inicio'; } });
           const [showSplash, setShowSplash] = useState(false); 
           const [splashLogoBlink, setSplashLogoBlink] = useState(false);
@@ -560,7 +560,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           }, [reduceMotionUi]);
           const [uiTheme, setUiTheme] = useState(() => { try { return localStorage.getItem(MULLER_THEME_KEY) || 'dark'; } catch (e) { return 'dark'; } });
           const { showOnboarding, setShowOnboarding, onboardingStep, setOnboardingStep, onboardingNever, setOnboardingNever, finishOnboarding } = window.useOnboardingState();
-          const { historiaAudioOnly, setHistoriaAudioOnly } = window.useHistoriaAudioOnly();
+          const [historiaAudioOnly, setHistoriaAudioOnly] = useState(false);
           const [vocabDueFilterOnly, setVocabDueFilterOnly] = useState(false);
           const [showShortcutsModal, setShowShortcutsModal] = useState(false);
           const [userMenuOpen, setUserMenuOpen] = useState(false);

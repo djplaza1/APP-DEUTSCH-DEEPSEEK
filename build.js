@@ -1,9 +1,10 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const babel = require("@babel/core");
 
 const CHUNKS = [
   "src/a-core.jsx",
-    "src/hooks/useOnboarding.js",
+  "src/hooks/useOnboarding.js",
+  "src/hooks/useHistoriaAudioOnly.js",
   "src/hooks/useEscritura.js",
   "src/hooks/usePdfStudy.js",
   "src/features/ruta/ruta-panel.jsx",
@@ -25,5 +26,5 @@ const result = babel.transformSync(code, {
   minified: true
 });
 fs.writeFileSync("dist/app.js", result.code);
-console.log("✔ Build completo -> dist/app.js");
+console.log("? Build completo -> dist/app.js");
 
