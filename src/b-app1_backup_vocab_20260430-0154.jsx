@@ -561,7 +561,7 @@ const [placementFinished, setPlacementFinished] = useState(false);
           const [uiTheme, setUiTheme] = useState(() => { try { return localStorage.getItem(MULLER_THEME_KEY) || 'dark'; } catch (e) { return 'dark'; } });
           const { showOnboarding, setShowOnboarding, onboardingStep, setOnboardingStep, onboardingNever, setOnboardingNever, finishOnboarding } = window.useOnboardingState();
           const { historiaAudioOnly, setHistoriaAudioOnly } = window.useHistoriaAudioOnly();
-          const { vocabDueFilterOnly, setVocabDueFilterOnly } = window.useVocabDueFilterOnly();
+          const [vocabDueFilterOnly, setVocabDueFilterOnly] = useState(false);
           const [showShortcutsModal, setShowShortcutsModal] = useState(false);
           const [userMenuOpen, setUserMenuOpen] = useState(false);
           const userMenuWrapRef = useRef(null);

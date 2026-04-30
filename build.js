@@ -5,6 +5,7 @@ const CHUNKS = [
   "src/a-core.jsx",
   "src/hooks/useOnboarding.js",
   "src/hooks/useHistoriaAudioOnly.js",
+  "src/hooks/useVocabDueFilterOnly.js",
   "src/hooks/useEscritura.js",
   "src/hooks/usePdfStudy.js",
   "src/features/ruta/ruta-panel.jsx",
